@@ -10,7 +10,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
-  <link rel="stylesheet" href="styles.css?v=54" />
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
+  <link rel="stylesheet" href="styles.css?v=64" />
+  <script>
+    try {
+      var p = JSON.parse(localStorage.getItem("quill_q_profile") || "null");
+      if (p && p.profileCompleted) {
+        document.documentElement.classList.add("authed-start");
+      }
+    } catch (e) {}
+  </script>
 </head>
 <body>
   <!-- Landing Page Screen -->
@@ -83,28 +92,34 @@
 
   <!-- Login & Account Setup Screen (Shown after clicking Get Started) -->
   <section class="auth-page landing-hidden" id="auth-page">
-    <!-- Liquid background blobs -->
-    <svg class="landing-blob lb-blue-top-left" viewBox="0 0 200 200" aria-hidden="true">
+    <!-- Liquid background blobs (Blue top-left, Warm yellow right, Coral orange bottom-left, Sage green accent) -->
+    <svg class="auth-bg-blob auth-blob-blue" viewBox="0 0 200 200" aria-hidden="true">
       <path fill="#8cb9ee" d="M0 0 H160 C160 70, 110 140, 45 170 C15 180, 0 170, 0 170 Z"></path>
     </svg>
 
-    <!-- Top header with back button and brand -->
-    <header class="auth-page-header">
-      <button type="button" class="btn-auth-back" id="btn-auth-back">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-        <span>Back</span>
-      </button>
+    <svg class="auth-bg-blob auth-blob-yellow" viewBox="0 0 240 240" aria-hidden="true">
+      <path fill="#f7d58a" d="M240 20 C180 0, 110 40, 80 100 C50 160, 90 220, 160 240 C210 250, 240 210, 240 160 Z"></path>
+    </svg>
 
-      <div class="auth-page-brand">
-        <span class="auth-brand-logo">Quill-Q</span>
-      </div>
-      <div style="width: 80px;"></div>
-    </header>
+    <svg class="auth-bg-blob auth-blob-orange" viewBox="0 0 260 260" aria-hidden="true">
+      <path fill="#f29b71" d="M0 260 L0 100 C50 80, 120 110, 150 160 C180 210, 160 260, 100 260 Z"></path>
+    </svg>
+
+    <svg class="auth-bg-blob auth-blob-green" viewBox="0 0 160 160" aria-hidden="true">
+      <circle cx="80" cy="80" r="70" fill="#a8d5ba" opacity="0.65"></circle>
+    </svg>
 
     <!-- Main Auth Card Container -->
     <div class="auth-page-container">
+      <!-- Top header with back button -->
+      <header class="auth-page-header">
+        <button type="button" class="btn-auth-back" id="btn-auth-back">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          <span>Back</span>
+        </button>
+      </header>
       <!-- Step 1: Sign In with Google -->
       <div class="auth-screen-card" id="auth-step-signin">
         <div class="auth-card-badge">
@@ -323,7 +338,7 @@
           <span>Home</span>
         </a>
         <a href="#" class="nav-item" id="nav-subjects" data-page="subjects">
-          <svg viewBox="0 0 24 24" class="nav-icon" fill="none" stroke="#333" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2 0-1.5-1.5-1.8-1.5-3s1-2 2.5-2H18a3 3 0 0 0 3-3c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/></svg>
+          <i class="fi fi-rr-books nav-icon"></i>
           <span>Subjects</span>
         </a>
         <a href="#" class="nav-item" id="nav-homeworks" data-page="homeworks">
@@ -338,9 +353,9 @@
 
       <!-- Sidebar User Profile Widget -->
       <div class="sidebar-user-card" id="sidebar-user-card">
-        <img src="assets/avatar.jpg" alt="User avatar" class="sidebar-user-avatar" id="sidebar-user-avatar" />
+        <img src="assets/avatar.jpg" alt="User avatar" class="sidebar-user-avatar" id="sidebar-user-avatar" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
         <div class="sidebar-user-info">
-          <span class="sidebar-user-name" id="sidebar-user-name">Roberta</span>
+          <span class="sidebar-user-name" id="sidebar-user-name">Student</span>
           <span class="sidebar-user-role" id="sidebar-user-role">Student</span>
         </div>
         <button type="button" class="sidebar-logout-btn" id="btn-sidebar-logout" title="Sign out" aria-label="Sign out">
@@ -359,14 +374,14 @@
         <!-- HOME VIEW -->
         <div class="view-panel" id="view-home">
           <header class="greeting">
-            <img src="assets/avatar.jpg" alt="Profile picture" class="avatar" id="home-greeting-avatar" />
+            <img src="assets/avatar.jpg" alt="Profile picture" class="avatar" id="home-greeting-avatar" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
             <div class="greeting-user-meta">
-              <h2>Hello,<br /><strong id="home-greeting-name">Roberta</strong></h2>
+              <h2>Hello,<br /><strong id="home-greeting-name">Student</strong></h2>
               <div class="user-role-chip" id="home-user-role-chip">
                 <span class="user-role-icon" id="home-user-role-icon"><i class="fi fi-ss-student"></i></span>
                 <span class="user-role-text" id="home-user-role-text">Student</span>
                 <span class="user-role-dot" id="home-user-role-dot">•</span>
-                <span class="user-role-academic" id="home-user-academic">Year 2</span>
+                <span class="user-role-academic" id="home-user-academic">English Business Grp 1</span>
               </div>
             </div>
           </header>
@@ -1027,54 +1042,7 @@
               </svg>
             </div>
             <ul class="hw-card" id="hw-list">
-              <li>
-                <label>
-                  <input type="checkbox" id="hw-1" checked />
-                  <span class="custom-chk">
-                    <svg viewBox="0 0 20 20" class="chk-svg">
-                      <rect x="2" y="2" width="16" height="16" rx="2.5" class="box-stroke" />
-                      <path d="M4 9.5 L8 14.5 L16.5 2.5" class="tick-stroke" />
-                    </svg>
-                  </span>
-                  <span class="hw-text">Read Act 1 &amp; 2 (Due Mon)</span>
-                </label>
-              </li>
-              <li>
-                <label>
-                  <input type="checkbox" id="hw-2" />
-                  <span class="custom-chk">
-                    <svg viewBox="0 0 20 20" class="chk-svg">
-                      <rect x="2" y="2" width="16" height="16" rx="2.5" class="box-stroke" />
-                      <path d="M4 9.5 L8 14.5 L16.5 2.5" class="tick-stroke" />
-                    </svg>
-                  </span>
-                  <span class="hw-text">Essay: Entrepreneurial Skills<br />(Due Tue)</span>
-                </label>
-              </li>
-              <li>
-                <label>
-                  <input type="checkbox" id="hw-3" />
-                  <span class="custom-chk">
-                    <svg viewBox="0 0 20 20" class="chk-svg">
-                      <rect x="2" y="2" width="16" height="16" rx="2.5" class="box-stroke" />
-                      <path d="M4 9.5 L8 14.5 L16.5 2.5" class="tick-stroke" />
-                    </svg>
-                  </span>
-                  <span class="hw-text">Writing Assignment (Due Wed)</span>
-                </label>
-              </li>
-              <li>
-                <label>
-                  <input type="checkbox" id="hw-4" />
-                  <span class="custom-chk">
-                    <svg viewBox="0 0 20 20" class="chk-svg">
-                      <rect x="2" y="2" width="16" height="16" rx="2.5" class="box-stroke" />
-                      <path d="M4 9.5 L8 14.5 L16.5 2.5" class="tick-stroke" />
-                    </svg>
-                  </span>
-                  <span class="hw-text">Math HW 4 (Due Fri)</span>
-                </label>
-              </li>
+              <!-- Dynamically populated from Firestore & user state -->
             </ul>
           </div>
         </section>
@@ -1189,6 +1157,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-  <script src="app.js?v=19"></script>
+  <script src="app.js?v=24"></script>
 </body>
 </html>

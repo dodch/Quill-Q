@@ -223,6 +223,12 @@ const TIMETABLE = {
     dateLabel: "Saturday, Oct 24",
     activeClassIndex: -1,
     items: []
+  },
+  Sun: {
+    dayName: "Sunday",
+    dateLabel: "Sunday, Oct 25",
+    activeClassIndex: -1,
+    items: []
   }
 };
 
@@ -611,25 +617,24 @@ function updateTodayStatus() {
   }
 }
 
-// --- Render Right Sidebar Quick Timeline ---
-function renderSchedule(dayKey = currentSelectedDay) {
-  const dayData = TIMETABLE[dayKey] || TIMETABLE["Mon"];
+// --- Render Home Quick Timeline (ALWAYS Today's Schedule) ---
+function renderSchedule() {
   const timelineEl = document.getElementById("timeline");
   const scheduleTitleEl = document.getElementById("schedule-title");
   if (!timelineEl) return;
 
   const now = new Date();
   const todayKey = getDayKey(now);
-  const isActualToday = dayKey === todayKey;
+  const dayData = TIMETABLE[todayKey] || { dayName: now.toLocaleDateString("en-US", { weekday: "long" }), items: [] };
 
   if (scheduleTitleEl) {
-    scheduleTitleEl.textContent = isActualToday ? "Today's Schedule" : `${dayData.dayName}'s Schedule`;
+    scheduleTitleEl.textContent = "Today's Schedule";
   }
 
-  if (dayData.items.length === 0) {
+  if (!dayData.items || dayData.items.length === 0) {
     timelineEl.innerHTML = `
-      <li class="tl-item" style="color: #7b7268; padding: 12px 4px;">
-        No classes scheduled for ${dayData.dayName}.
+      <li class="tl-item" style="color: #7b7268; padding: 16px 8px; list-style: none; font-size: 13.5px;">
+        No classes scheduled for today (${dayData.dayName}).
       </li>`;
     return;
   }
@@ -669,10 +674,7 @@ function renderSchedule(dayKey = currentSelectedDay) {
   timelineEl.innerHTML = entries
     .map((entry, idx) => {
       if (entry.type === "break") {
-        let isBreakCurrent = false;
-        if (isActualToday) {
-          isBreakCurrent = currentMinutes >= entry.startMinutes && currentMinutes < entry.endMinutes;
-        }
+        const isBreakCurrent = currentMinutes >= entry.startMinutes && currentMinutes < entry.endMinutes;
 
         return `
           <li class="tl-item tl-item-break${isBreakCurrent ? " current-break" : ""}" style="--item-idx: ${idx};">
@@ -688,11 +690,8 @@ function renderSchedule(dayKey = currentSelectedDay) {
       }
 
       const x = entry.item;
-      let isCurrent = false;
-      if (isActualToday) {
-        const { start, end } = parseTimeRange(x.time);
-        isCurrent = currentMinutes >= start && currentMinutes < end;
-      }
+      const { start, end } = parseTimeRange(x.time);
+      const isCurrent = currentMinutes >= start && currentMinutes < end;
 
       const fullText = `${x.time} — ${x.subject} • ${x.room}`;
       return `
@@ -1028,6 +1027,18 @@ function switchView(page) {
   if (viewSubjects) viewSubjects.classList.add("view-hidden");
   if (viewHomeworks) viewHomeworks.classList.add("view-hidden");
 
+  // Toggle Subjects icon between regular outline and solid filled
+  const subjIcon = document.querySelector("#nav-subjects i");
+  if (subjIcon) {
+    if (page === "subjects") {
+      subjIcon.classList.remove("fi-rr-books");
+      subjIcon.classList.add("fi-sr-books");
+    } else {
+      subjIcon.classList.remove("fi-sr-books");
+      subjIcon.classList.add("fi-rr-books");
+    }
+  }
+
   if (page === "schedule") {
     if (viewSchedule) viewSchedule.classList.remove("view-hidden");
     if (mainEl) mainEl.classList.add("on-schedule-view");
@@ -1057,6 +1068,7 @@ function switchView(page) {
     if (subjectsSide) subjectsSide.classList.add("view-hidden");
     if (homeworksSide) homeworksSide.classList.add("view-hidden");
     updateTodayStatus();
+    renderSchedule();
   }
 }
 
@@ -1096,7 +1108,7 @@ function initNav() {
     })
   );
 
-  // Weekly day card click interaction
+  // Weekly day card click interaction (Schedule view only - never alters Home schedule)
   const dayCards = document.querySelectorAll(".week-paper-card");
   dayCards.forEach((card) => {
     card.addEventListener("click", () => {
@@ -1104,7 +1116,6 @@ function initNav() {
       card.classList.add("active-day");
       currentSelectedDay = card.dataset.day || "Mon";
       renderDetailedSchedule(currentSelectedDay);
-      renderSchedule(currentSelectedDay);
     });
   });
 
@@ -1121,17 +1132,12 @@ function initNav() {
   }
 }
 
-// --- Homework & Reminders Manager (Paper Cards, Baby Pink & Sky Blue, Auto-deletes on Due Date) ---
-const HW_KEY = "quill-q-homework-reminders-v7";
+// --- Homework & Reminders Manager (Server-Synced via Firestore, Auth-Protected, No Hardcoded Tasks) ---
+const HW_KEY = "quill-q-homework-reminders-v8";
+const DEFAULT_TASKS = [];
 
-const DEFAULT_TASKS = [
-  { id: "task-1", subject: "Writing", desc: "Read Act 1 & 2 of Drama", due: "2026-10-26", type: "homework", completed: true },
-  { id: "task-2", subject: "Entrepreneurial Skills (Droit)", desc: "Essay: Entrepreneurial Skills draft", due: "2026-10-27", type: "homework", completed: false },
-  { id: "task-3", subject: "", desc: "Review terminology & definitions for Amphi 6", due: "2026-10-28", type: "reminder", completed: false },
-  { id: "task-4", subject: "British History", desc: "Prepare presentation slides on Roman Britain", due: "2026-10-29", type: "homework", completed: false },
-  { id: "task-5", subject: "Commercial English 1", desc: "Submit trade terminology vocabulary list", due: "2026-10-30", type: "homework", completed: false },
-  { id: "task-6", subject: "", desc: "Library book return deadline", due: "2026-10-31", type: "reminder", completed: false }
-];
+let currentTasks = [];
+let tasksUnsubscribe = null;
 
 function isTaskDueReached(task) {
   if (!task || !task.due) return false;
@@ -1139,7 +1145,6 @@ function isTaskDueReached(task) {
   // 1. If ISO date string YYYY-MM-DD
   const m = String(task.due).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (m) {
-    // Expires after the end of the due day: 23:59:59.999
     const endOfDay = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10), 23, 59, 59, 999);
     return Date.now() > endOfDay.getTime();
   }
@@ -1164,33 +1169,86 @@ function isTaskDueReached(task) {
   return false;
 }
 
-function getStoredTasks() {
-  let list = [];
-  try {
-    const raw = localStorage.getItem(HW_KEY);
-    if (raw) {
-      list = JSON.parse(raw);
-    } else {
-      list = [...DEFAULT_TASKS];
-    }
-  } catch (e) {
-    console.error("Error reading tasks from storage:", e);
-    list = [...DEFAULT_TASKS];
-  }
-
-  // Auto-delete: filter out any tasks that have reached their due date
-  const active = list.filter((t) => !isTaskDueReached(t));
-  if (active.length !== list.length) {
-    saveStoredTasks(active);
-  }
-  return active;
+function isMyTask(task) {
+  if (!task) return false;
+  const myUid = currentUser ? currentUser.uid : (currentProfile ? currentProfile.uid : null);
+  return !!(myUid && task.userId && task.userId === myUid);
 }
 
-function saveStoredTasks(tasks) {
-  try {
-    localStorage.setItem(HW_KEY, JSON.stringify(tasks));
-  } catch (e) {
-    console.error("Error saving tasks to storage:", e);
+function isTaskCompletedByMe(task) {
+  if (!task) return false;
+  const myUid = currentUser ? currentUser.uid : (currentProfile ? currentProfile.uid : null);
+  if (myUid && task.completedBy && typeof task.completedBy[myUid] !== "undefined") {
+    return !!task.completedBy[myUid];
+  }
+  return !!task.completed;
+}
+
+function getStoredTasks() {
+  return currentTasks.filter((t) => !isTaskDueReached(t));
+}
+
+function bindUserTasks(user) {
+  if (tasksUnsubscribe) {
+    tasksUnsubscribe();
+    tasksUnsubscribe = null;
+  }
+
+  if (user) {
+    // 1. Instant local read for snappy UI
+    const local = localStorage.getItem("quill_q_shared_tasks");
+    if (local) {
+      try {
+        currentTasks = JSON.parse(local).filter((t) => !isTaskDueReached(t));
+      } catch (e) {
+        currentTasks = [];
+      }
+    } else {
+      currentTasks = [];
+    }
+    renderHomeworksView();
+    syncHomeHomeworkNote();
+
+    // 2. Server-side real-time listener from Firestore shared collection
+    if (db) {
+      try {
+        tasksUnsubscribe = db.collection("homeworks")
+          .onSnapshot((snapshot) => {
+            const list = [];
+            snapshot.forEach((doc) => {
+              list.push({ id: doc.id, ...doc.data() });
+            });
+            list.sort((a, b) => (a.due || "").localeCompare(b.due || ""));
+
+            const active = [];
+            list.forEach((t) => {
+              if (isTaskDueReached(t)) {
+                // Auto-cleanup: only delete on server if this user is the author
+                if (isMyTask(t) && db) {
+                  db.collection("homeworks").doc(t.id).delete().catch(console.warn);
+                }
+              } else {
+                active.push(t);
+              }
+            });
+
+            currentTasks = active;
+            try {
+              localStorage.setItem("quill_q_shared_tasks", JSON.stringify(active));
+            } catch (e) {}
+            renderHomeworksView();
+            syncHomeHomeworkNote();
+          }, (err) => {
+            console.warn("Firestore homeworks real-time sync warning:", err);
+          });
+      } catch (subErr) {
+        console.warn("Could not attach homeworks listener:", subErr);
+      }
+    }
+  } else {
+    currentTasks = [];
+    renderHomeworksView();
+    syncHomeHomeworkNote();
   }
 }
 
@@ -1224,11 +1282,28 @@ function renderHomeworksView() {
   const container = document.getElementById("hw-tasks-list");
   if (!container) return;
 
+  const isLoggedIn = !!currentUser || (currentProfile && currentProfile.profileCompleted);
+
+  if (!isLoggedIn) {
+    container.innerHTML = `
+      <div class="hw-empty-state" style="grid-column: 1 / -1; padding: 40px 20px; text-align: center;">
+        <div class="hw-empty-icon" style="font-size:36px; margin-bottom:12px;">🔒</div>
+        <h4 class="hw-empty-text" style="font-size:20px; font-weight:700; color:#1a1816; margin:0 0 6px;">Sign in required</h4>
+        <p class="hw-empty-hint" style="font-size:14px; color:#786e63; margin:0 0 16px;">Sign in with Google to create, view, and server-sync your homework and reminders.</p>
+        <button type="button" class="btn-create-account" id="btn-hw-login-trigger" style="max-width: 220px; margin: 0 auto; display: inline-flex;">Sign In to Quill-Q →</button>
+      </div>`;
+    const btnLoginTrigger = document.getElementById("btn-hw-login-trigger");
+    if (btnLoginTrigger) {
+      btnLoginTrigger.addEventListener("click", navigateToAuth);
+    }
+    return;
+  }
+
   const tasks = getStoredTasks();
 
   if (!tasks.length) {
     container.innerHTML = `
-      <div class="hw-empty-state" style="grid-column: 1 / -1;">
+      <div class="hw-empty-state" style="grid-column: 1 / -1; padding: 40px 20px; text-align: center;">
         <div class="hw-empty-icon" style="font-size:36px; margin-bottom:12px;">✨</div>
         <h4 class="hw-empty-text" style="font-size:20px; font-weight:700; color:#1a1816; margin:0 0 6px;">All clear!</h4>
         <p class="hw-empty-hint" style="font-size:14px; color:#786e63; margin:0;">No active homework or reminders. Use Quick Actions on the side to add one.</p>
@@ -1236,10 +1311,16 @@ function renderHomeworksView() {
     return;
   }
 
-  container.innerHTML = tasks.map((task) => `
+  container.innerHTML = tasks.map((task) => {
+    const isCompleted = isTaskCompletedByMe(task);
+    const isMine = isMyTask(task);
+    const authorName = task.userName || "Student";
+    const authorRole = task.userRole || "student";
+
+    return `
     <div class="hw-paper-item">
       <div class="hw-paper-shadow" aria-hidden="true"></div>
-      <article class="hw-task-card hw-card-${task.type} ${task.completed ? "is-completed" : ""}" data-id="${task.id}" data-type="${task.type}">
+      <article class="hw-task-card hw-card-${task.type} ${isCompleted ? "is-completed" : ""}" data-id="${task.id}" data-type="${task.type}">
         <div class="hw-paper-top">
           <div class="hw-paper-meta">
             ${task.type === "reminder"
@@ -1249,7 +1330,28 @@ function renderHomeworksView() {
                  <span class="hw-paper-type">Homework</span>`
             }
           </div>
-          <button type="button" class="hw-chk-btn" data-id="${task.id}" aria-label="Toggle completed">
+          ${isMine ? `
+            <button type="button" class="hw-del-btn" data-id="${task.id}" title="Delete (Added by you)" aria-label="Delete task">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          ` : `<div style="width:20px;"></div>`}
+        </div>
+        <div class="hw-paper-body">
+          <p class="hw-paper-desc">${escapeHtml(task.desc)}</p>
+        </div>
+        <div class="hw-paper-footer">
+          <div class="hw-paper-info">
+            <span class="hw-paper-due">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              ${escapeHtml(formatDueDisplay(task.due))}
+            </span>
+            <span class="hw-paper-sep">•</span>
+            <span class="hw-paper-author-simple">${escapeHtml(authorName)}${isMine ? ' <span class="hw-author-you">(You)</span>' : ''}</span>
+          </div>
+          <button type="button" class="hw-chk-btn" data-id="${task.id}" aria-label="Toggle completed" title="${isCompleted ? 'Mark incomplete' : 'Mark completed'}">
             <span class="hw-chk-box">
               <svg viewBox="0 0 16 16" class="hw-chk-svg">
                 <path d="M3 8.5 L6.5 12 L13 4" />
@@ -1257,30 +1359,85 @@ function renderHomeworksView() {
             </span>
           </button>
         </div>
-        <div class="hw-paper-body">
-          <p class="hw-paper-desc">${escapeHtml(task.desc)}</p>
-        </div>
-        <div class="hw-paper-footer">
-          <span class="hw-paper-due">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            ${escapeHtml(formatDueDisplay(task.due))}
-          </span>
-        </div>
       </article>
     </div>
-  `).join("");
+  `}).join("");
 
   // Attach event listeners for checkboxes
   container.querySelectorAll(".hw-chk-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
+      if (!currentUser && auth && auth.currentUser) {
+        currentUser = auth.currentUser;
+      }
+      if (!currentUser && currentProfile && currentProfile.uid) {
+        currentUser = { uid: currentProfile.uid, displayName: currentProfile.displayName };
+      }
+      if (!currentUser) {
+        alert("Please sign in to update tasks.");
+        navigateToAuth();
+        return;
+      }
       const id = btn.dataset.id;
-      const all = getStoredTasks();
-      const item = all.find((t) => t.id === id);
+      const item = currentTasks.find((t) => t.id === id);
       if (item) {
-        item.completed = !item.completed;
-        saveStoredTasks(all);
+        const myUid = currentUser.uid;
+        if (!item.completedBy) item.completedBy = {};
+        const nextState = !item.completedBy[myUid];
+        item.completedBy[myUid] = nextState;
+        item.completed = nextState;
+
+        try {
+          localStorage.setItem("quill_q_shared_tasks", JSON.stringify(currentTasks));
+        } catch (e) {}
         renderHomeworksView();
         syncHomeHomeworkNote();
+
+        if (db) {
+          try {
+            await db.collection("homeworks").doc(id).update({
+              [`completedBy.${myUid}`]: nextState,
+              updatedAt: new Date().toISOString()
+            });
+          } catch (e) {
+            console.warn("Firestore task update error:", e);
+          }
+        }
+      }
+    });
+  });
+
+  // Attach delete handlers - user can ONLY delete tasks created by them
+  container.querySelectorAll(".hw-del-btn").forEach((delBtn) => {
+    delBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const id = delBtn.dataset.id;
+      const targetTask = currentTasks.find((t) => t.id === id);
+      if (targetTask && !isMyTask(targetTask)) {
+        alert("You can only delete reminders or homework added by you.");
+        return;
+      }
+      if (confirm("Delete this task permanently?")) {
+        if (!currentUser && auth && auth.currentUser) {
+          currentUser = auth.currentUser;
+        }
+        if (!currentUser && currentProfile && currentProfile.uid) {
+          currentUser = { uid: currentProfile.uid, displayName: currentProfile.displayName };
+        }
+        currentTasks = currentTasks.filter((t) => t.id !== id);
+        try {
+          localStorage.setItem("quill_q_shared_tasks", JSON.stringify(currentTasks));
+        } catch (err) {}
+        renderHomeworksView();
+        syncHomeHomeworkNote();
+
+        if (db) {
+          try {
+            await db.collection("homeworks").doc(id).delete();
+          } catch (e) {
+            console.error("Error deleting task from server:", e);
+            alert("Could not delete from server: " + (e.message || "Permission denied"));
+          }
+        }
       }
     });
   });
@@ -1289,36 +1446,90 @@ function renderHomeworksView() {
 function syncHomeHomeworkNote() {
   const hwList = document.getElementById("hw-list");
   if (!hwList) return;
+
+  const isLoggedIn = !!currentUser || (currentProfile && currentProfile.profileCompleted);
+  if (!isLoggedIn) {
+    hwList.innerHTML = `<li style="list-style:none; padding:10px 0; color:#7d756c; font-size:13px;">
+      <a href="#" id="hw-home-signin-link" style="text-decoration:underline; font-weight:700; color:#1a1816;">Sign in</a> to view homework & reminders
+    </li>`;
+    const link = document.getElementById("hw-home-signin-link");
+    if (link) {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        navigateToAuth();
+      });
+    }
+    return;
+  }
+
   const tasks = getStoredTasks().slice(0, 5); // top 5
   if (!tasks.length) {
     hwList.innerHTML = `<li style="list-style:none; padding:10px 0; color:#7d756c; font-size:14px;">No upcoming homework!</li>`;
     return;
   }
 
-  hwList.innerHTML = tasks.map((t, idx) => `
+  hwList.innerHTML = tasks.map((t, idx) => {
+    const isCompleted = isTaskCompletedByMe(t);
+    const isMine = isMyTask(t);
+    const authorName = t.userName || "Student";
+
+    return `
     <li>
       <label>
-        <input type="checkbox" id="hw-home-chk-${idx}" ${t.completed ? "checked" : ""} data-id="${t.id}" />
+        <input type="checkbox" id="hw-home-chk-${idx}" ${isCompleted ? "checked" : ""} data-id="${t.id}" />
         <span class="custom-chk">
           <svg viewBox="0 0 20 20" class="chk-svg">
             <rect x="2" y="2" width="16" height="16" rx="2.5" class="box-stroke" />
             <path d="M4 9.5 L8 14.5 L16.5 2.5" class="tick-stroke" />
           </svg>
         </span>
-        <span class="hw-text">${escapeHtml(t.desc)} <small style="opacity:0.8">(${escapeHtml(formatDueDisplay(t.due) || (t.type === "reminder" ? "Reminder" : t.subject))})</small></span>
+        <span class="hw-text">
+          ${escapeHtml(t.desc)}
+          <small class="hw-note-sub">
+            (${escapeHtml(formatDueDisplay(t.due) || (t.type === "reminder" ? "Reminder" : t.subject))} • by ${escapeHtml(authorName)}${isMine ? ' (You)' : ''})
+          </small>
+        </span>
       </label>
     </li>
-  `).join("");
+  `}).join("");
 
   hwList.querySelectorAll("input[type=checkbox]").forEach((chk) => {
-    chk.addEventListener("change", () => {
+    chk.addEventListener("change", async () => {
+      if (!currentUser && auth && auth.currentUser) {
+        currentUser = auth.currentUser;
+      }
+      if (!currentUser && currentProfile && currentProfile.uid) {
+        currentUser = { uid: currentProfile.uid, displayName: currentProfile.displayName };
+      }
+      if (!currentUser) {
+        alert("Please sign in to update tasks.");
+        navigateToAuth();
+        return;
+      }
       const id = chk.dataset.id;
-      const all = getStoredTasks();
-      const item = all.find((t) => t.id === id);
+      const item = currentTasks.find((t) => t.id === id);
       if (item) {
-        item.completed = chk.checked;
-        saveStoredTasks(all);
+        const myUid = currentUser.uid;
+        if (!item.completedBy) item.completedBy = {};
+        const nextState = chk.checked;
+        item.completedBy[myUid] = nextState;
+        item.completed = nextState;
+
+        try {
+          localStorage.setItem("quill_q_shared_tasks", JSON.stringify(currentTasks));
+        } catch (e) {}
         renderHomeworksView();
+
+        if (db) {
+          try {
+            await db.collection("homeworks").doc(id).update({
+              [`completedBy.${myUid}`]: nextState,
+              updatedAt: new Date().toISOString()
+            });
+          } catch (e) {
+            console.warn("Firestore task update error:", e);
+          }
+        }
       }
     });
   });
@@ -1339,6 +1550,11 @@ function initHomeworksManager() {
   const modalSubmitText = document.getElementById("modal-submit-text");
 
   function openModal(type) {
+    if (!currentUser && (!currentProfile || !currentProfile.profileCompleted)) {
+      alert("Please sign in to add homework and study reminders.");
+      navigateToAuth();
+      return;
+    }
     if (!modal) return;
     modalTypeInput.value = type;
     if (type === "reminder") {
@@ -1355,7 +1571,6 @@ function initHomeworksManager() {
       if (modalSubject) modalSubject.setAttribute("required", "required");
     }
     modalDesc.value = "";
-    // Default due date to tomorrow
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     if (modalDue) {
@@ -1397,8 +1612,21 @@ function initHomeworksManager() {
 
   // Form submission
   if (modalForm) {
-    modalForm.addEventListener("submit", (e) => {
+    modalForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (!currentUser && auth && auth.currentUser) {
+        currentUser = auth.currentUser;
+      }
+      if (!currentUser && currentProfile && currentProfile.uid) {
+        currentUser = { uid: currentProfile.uid, displayName: currentProfile.displayName };
+      }
+      if (!currentUser) {
+        alert("Please sign in to save your homework and reminders.");
+        closeModal();
+        navigateToAuth();
+        return;
+      }
+
       const desc = modalDesc.value.trim();
       if (!desc) return;
 
@@ -1406,29 +1634,67 @@ function initHomeworksManager() {
       const subject = type === "reminder" ? "" : (modalSubject.value || "General");
       const due = modalDue.value.trim() || new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
+      const myUid = currentUser.uid;
+      const myName = currentProfile
+        ? (currentProfile.role === "teacher"
+            ? (currentProfile.displayName.startsWith("Prof") ? currentProfile.displayName : `Prof. ${currentProfile.displayName}`)
+            : (currentProfile.displayName || currentUser.displayName || "Student"))
+        : (currentUser.displayName || "Student");
+      const myRole = currentProfile ? currentProfile.role : "student";
+
+      const taskId = "task-" + Date.now();
       const newTask = {
-        id: "task-" + Date.now(),
+        id: taskId,
         subject,
         desc,
         due,
         type,
-        completed: false
+        completed: false,
+        completedBy: {},
+        userId: myUid,
+        userName: myName,
+        userRole: myRole,
+        createdAt: new Date().toISOString()
       };
 
-      const tasks = getStoredTasks();
-      tasks.unshift(newTask); // add to top
-      saveStoredTasks(tasks);
-
+      currentTasks.unshift(newTask);
+      try {
+        localStorage.setItem("quill_q_shared_tasks", JSON.stringify(currentTasks));
+      } catch (e) {}
       renderHomeworksView();
       syncHomeHomeworkNote();
       closeModal();
+
+      if (db) {
+        try {
+          await db.collection("homeworks").doc(taskId).set(newTask);
+        } catch (dbErr) {
+          console.error("Error saving task to server:", dbErr);
+          alert("Error saving to server: " + (dbErr.message || "Permission denied"));
+        }
+      }
     });
   }
 
   // Periodic auto-cleanup: checks every 30 seconds for expired tasks and auto-prunes
   setInterval(() => {
-    renderHomeworksView();
-    syncHomeHomeworkNote();
+    const active = currentTasks.filter((t) => {
+      if (isTaskDueReached(t)) {
+        if (db && isMyTask(t)) {
+          db.collection("homeworks").doc(t.id).delete().catch(console.warn);
+        }
+        return false;
+      }
+      return true;
+    });
+    if (active.length !== currentTasks.length) {
+      currentTasks = active;
+      try {
+        localStorage.setItem("quill_q_shared_tasks", JSON.stringify(active));
+      } catch (e) {}
+      renderHomeworksView();
+      syncHomeHomeworkNote();
+    }
   }, 30000);
 
   // Initial render
@@ -1492,6 +1758,7 @@ let currentUser = null;
 let currentProfile = null;
 
 function navigateToDashboard() {
+  document.documentElement.classList.add("authed-start");
   const landingPage = document.getElementById("landing-page");
   const authPage = document.getElementById("auth-page");
   const dashboardApp = document.getElementById("dashboard-app");
@@ -1509,6 +1776,7 @@ function navigateToDashboard() {
 }
 
 function navigateToLanding() {
+  document.documentElement.classList.remove("authed-start");
   const landingPage = document.getElementById("landing-page");
   const authPage = document.getElementById("auth-page");
   const dashboardApp = document.getElementById("dashboard-app");
@@ -1522,6 +1790,7 @@ function navigateToLanding() {
 }
 
 function navigateToAuth() {
+  document.documentElement.classList.remove("authed-start");
   const landingPage = document.getElementById("landing-page");
   const authPage = document.getElementById("auth-page");
   const dashboardApp = document.getElementById("dashboard-app");
@@ -1541,61 +1810,62 @@ function navigateToAuth() {
 }
 
 function applyProfileToUI(profile) {
+  const homeAvatar = document.getElementById("home-greeting-avatar");
+  const homeName = document.getElementById("home-greeting-name");
+  const homeRoleIcon = document.getElementById("home-user-role-icon");
+  const homeRoleText = document.getElementById("home-user-role-text");
+  const homeRoleAcademic = document.getElementById("home-user-academic");
+  const sideAvatar = document.getElementById("sidebar-user-avatar");
+  const sideName = document.getElementById("sidebar-user-name");
+  const sideRole = document.getElementById("sidebar-user-role");
+  const btnGetStarted = document.getElementById("btn-get-started");
+
   if (!profile) {
-    // Default guest profile
-    const homeAvatar = document.getElementById("home-greeting-avatar");
-    const homeName = document.getElementById("home-greeting-name");
-    const homeRoleChip = document.getElementById("home-user-role-chip");
-    const homeRoleText = document.getElementById("home-user-role-text");
-    const homeRoleAcademic = document.getElementById("home-user-academic");
-    const sideAvatar = document.getElementById("sidebar-user-avatar");
-    const sideName = document.getElementById("sidebar-user-name");
-    const sideRole = document.getElementById("sidebar-user-role");
-
-    if (homeAvatar) homeAvatar.src = "assets/avatar.jpg";
-    if (homeName) homeName.textContent = "Roberta";
+    if (homeAvatar) {
+      homeAvatar.src = "assets/avatar.jpg";
+      homeAvatar.alt = "Default avatar";
+    }
+    if (homeName) homeName.textContent = "Student";
+    if (homeRoleIcon) homeRoleIcon.innerHTML = '<i class="fi fi-ss-student"></i>';
     if (homeRoleText) homeRoleText.textContent = "Student";
-    if (homeRoleAcademic) homeRoleAcademic.textContent = "Year 2";
-    if (sideAvatar) sideAvatar.src = "assets/avatar.jpg";
-    if (sideName) sideName.textContent = "Roberta";
-    if (sideRole) sideRole.textContent = "Student";
-
-    const btnGetStarted = document.getElementById("btn-get-started");
+    if (homeRoleAcademic) homeRoleAcademic.textContent = "English Business Grp 1";
+    if (sideAvatar) {
+      sideAvatar.src = "assets/avatar.jpg";
+      sideAvatar.alt = "Default avatar";
+    }
+    if (sideName) sideName.textContent = "Student";
+    if (sideRole) sideRole.textContent = "Student • English Business Grp 1";
     if (btnGetStarted) btnGetStarted.textContent = "Get Started";
     return;
   }
 
   const isTeacher = profile.role === "teacher";
   const roleDisplay = isTeacher ? "Teacher" : "Student";
-  const academicDisplay = profile.academicDetail || (isTeacher ? "Faculty" : "Undergrad");
-  const displayName = profile.displayName || "Roberta";
-  const firstName = profile.firstName || displayName.split(" ")[0];
+  const academicDisplay = profile.academicDetail || (isTeacher ? "Teaching Faculty" : "English Business Grp 1");
+  const displayName = (profile.displayName || (profile.firstName ? `${profile.firstName} ${profile.surname || ""}`.trim() : "") || (isTeacher ? "Professor" : "Student")).trim();
+  const firstName = profile.firstName || displayName.split(" ")[0] || displayName;
   const greetingName = isTeacher ? (displayName.startsWith("Prof") ? displayName : `Prof. ${displayName}`) : firstName;
+  const avatarUrl = profile.photoURL || "assets/avatar.jpg";
 
   // Update Home Greeting
-  const homeAvatar = document.getElementById("home-greeting-avatar");
-  const homeName = document.getElementById("home-greeting-name");
-  const homeRoleIcon = document.getElementById("home-user-role-icon");
-  const homeRoleText = document.getElementById("home-user-role-text");
-  const homeRoleAcademic = document.getElementById("home-user-academic");
-
-  if (homeAvatar) homeAvatar.src = avatarUrl;
+  if (homeAvatar) {
+    homeAvatar.src = avatarUrl;
+    homeAvatar.alt = displayName;
+  }
   if (homeName) homeName.textContent = greetingName;
   if (homeRoleIcon) homeRoleIcon.innerHTML = isTeacher ? '<i class="fi fi-sr-chalkboard-user"></i>' : '<i class="fi fi-ss-student"></i>';
   if (homeRoleText) homeRoleText.textContent = roleDisplay;
   if (homeRoleAcademic) homeRoleAcademic.textContent = academicDisplay;
 
   // Update Sidebar User Card
-  const sideAvatar = document.getElementById("sidebar-user-avatar");
-  const sideName = document.getElementById("sidebar-user-name");
-  const sideRole = document.getElementById("sidebar-user-role");
-
-  if (sideAvatar) sideAvatar.src = avatarUrl;
-  if (sideName) sideName.textContent = profile.displayName || firstName;
+  if (sideAvatar) {
+    sideAvatar.src = avatarUrl;
+    sideAvatar.alt = displayName;
+  }
+  if (sideName) sideName.textContent = displayName;
   if (sideRole) sideRole.textContent = `${roleDisplay} • ${academicDisplay}`;
 
   // Update Landing button text
-  const btnGetStarted = document.getElementById("btn-get-started");
   if (btnGetStarted) btnGetStarted.textContent = "Enter Dashboard →";
 }
 
@@ -1619,6 +1889,12 @@ function initFirebaseAuthAndProfile() {
     try {
       currentProfile = JSON.parse(cachedProfileStr);
       applyProfileToUI(currentProfile);
+      if (currentProfile && currentProfile.uid) {
+        bindUserTasks({ uid: currentProfile.uid });
+      }
+      if (currentProfile && currentProfile.profileCompleted) {
+        navigateToDashboard();
+      }
     } catch (e) {
       console.warn("Failed parsing cached profile", e);
     }
@@ -1769,7 +2045,7 @@ function initFirebaseAuthAndProfile() {
   // "Get Started" Click Handler
   if (btnGetStarted) {
     btnGetStarted.addEventListener("click", () => {
-      if (currentUser && currentProfile && currentProfile.profileCompleted) {
+      if (currentProfile && currentProfile.profileCompleted) {
         navigateToDashboard();
         return;
       }
@@ -1823,6 +2099,7 @@ function initFirebaseAuthAndProfile() {
           currentProfile = profileData;
           localStorage.setItem("quill_q_profile", JSON.stringify(profileData));
           applyProfileToUI(profileData);
+          bindUserTasks(user);
           navigateToDashboard();
         } else {
           // New user -> reveal Role selection and profile creation form right on page!
@@ -1893,7 +2170,7 @@ function initFirebaseAuthAndProfile() {
         gender: gender,
         academicDetail: academicDetail,
         profileCompleted: true,
-        updatedAt: firebase.firestore ? firebase.firestore.FieldValue.serverTimestamp() : new Date().toISOString()
+        updatedAt: new Date().toISOString()
       };
 
       try {
@@ -1911,6 +2188,7 @@ function initFirebaseAuthAndProfile() {
         currentProfile = profilePayload;
         localStorage.setItem("quill_q_profile", JSON.stringify(profilePayload));
         applyProfileToUI(profilePayload);
+        bindUserTasks(currentUser);
 
         navigateToDashboard();
       } catch (saveErr) {
@@ -1918,6 +2196,7 @@ function initFirebaseAuthAndProfile() {
         currentProfile = profilePayload;
         localStorage.setItem("quill_q_profile", JSON.stringify(profilePayload));
         applyProfileToUI(profilePayload);
+        bindUserTasks(currentUser);
         navigateToDashboard();
       } finally {
         if (btnSubmitOnboardingText) btnSubmitOnboardingText.textContent = "Create Account & Enter Dashboard";
@@ -1940,6 +2219,7 @@ function initFirebaseAuthAndProfile() {
         currentUser = null;
         currentProfile = null;
         localStorage.removeItem("quill_q_profile");
+        bindUserTasks(null);
         applyProfileToUI(null);
         navigateToLanding();
       }
@@ -1951,6 +2231,7 @@ function initFirebaseAuthAndProfile() {
     auth.onAuthStateChanged(async (user) => {
       if (user) {
         currentUser = user;
+        bindUserTasks(user);
         if (!currentProfile || currentProfile.uid !== user.uid) {
           if (db) {
             try {
@@ -1959,6 +2240,7 @@ function initFirebaseAuthAndProfile() {
                 currentProfile = snap.data();
                 localStorage.setItem("quill_q_profile", JSON.stringify(currentProfile));
                 applyProfileToUI(currentProfile);
+                navigateToDashboard();
               }
             } catch (err) {
               console.warn("Auth state profile fetch error:", err);
@@ -1966,11 +2248,15 @@ function initFirebaseAuthAndProfile() {
           }
         } else {
           applyProfileToUI(currentProfile);
+          if (currentProfile && currentProfile.profileCompleted) {
+            navigateToDashboard();
+          }
         }
       } else {
         currentUser = null;
         currentProfile = null;
         localStorage.removeItem("quill_q_profile");
+        bindUserTasks(null);
         applyProfileToUI(null);
       }
     });
@@ -1991,7 +2277,7 @@ function initPageNavigation() {
 // Sync default day with actual current day
 function syncDefaultDay() {
   const todayKey = getDayKey();
-  if (TIMETABLE[todayKey]) {
+  if (TIMETABLE[todayKey] && TIMETABLE[todayKey].items && TIMETABLE[todayKey].items.length > 0) {
     currentSelectedDay = todayKey;
   } else {
     currentSelectedDay = "Mon";
@@ -2010,16 +2296,17 @@ document.addEventListener("DOMContentLoaded", () => {
   syncDefaultDay();
   updateTodayStatus();
   renderDetailedSchedule(currentSelectedDay);
-  renderSchedule(currentSelectedDay);
+  renderSchedule();
   renderDate();
   initNav();
   initHomeworksManager();
   initSearch();
   initSubjectFilters();
 
-  // Refresh dynamic status and time every 30 seconds
+  // Refresh dynamic status, schedule, and time every 30 seconds
   setInterval(() => {
     updateTodayStatus();
+    renderSchedule();
     renderDate();
   }, 30000);
 });
