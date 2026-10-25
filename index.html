@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
-  <link rel="stylesheet" href="styles.css?v=66" />
+  <link rel="stylesheet" href="styles.css?v=75" />
   <script>
     try {
       var p = JSON.parse(localStorage.getItem("quill_q_profile") || "null");
@@ -414,8 +414,39 @@
       </div>
     </aside>
 
+    <!-- Mobile Top Navigation Bar -->
+    <header class="mobile-top-bar" id="mobile-top-bar">
+      <div class="mobile-bar-left">
+        <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle navigation menu">
+          <i class="fi fi-rr-menu-burger"></i>
+        </button>
+      </div>
+      <div class="mobile-bar-brand" id="mobile-bar-brand">
+        <span style="font-family: 'Patrick Hand', cursive; font-size: 26px; font-weight: 700; color: #1a1816;">Quill-Q</span>
+      </div>
+      <div class="mobile-bar-right">
+        <button type="button" class="mobile-search-toggle-btn" id="mobile-search-toggle-btn" aria-label="Toggle search">
+          <i class="fi fi-rr-search"></i>
+        </button>
+      </div>
+
+      <!-- Expandable Mobile Search Field -->
+      <div class="mobile-search-expand-wrap" id="mobile-search-expand-wrap">
+        <div class="mobile-search-inner">
+          <i class="fi fi-rr-search mobile-search-inline-icon"></i>
+          <input type="search" id="mobile-search-input" placeholder="Search courses, homework, rooms..." autocomplete="off" />
+          <button type="button" class="mobile-search-close-btn" id="mobile-search-close-btn" aria-label="Close search">
+            <i class="fi fi-rr-cross-small"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Mobile Drawer Backdrop Overlay -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
     <!-- Main -->
-    <main class="main">
+    <main class="main" data-current-page="home">
       <section class="col-left">
         <!-- HOME VIEW -->
         <div class="view-panel" id="view-home">
@@ -1289,6 +1320,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-  <script src="app.js?v=30"></script>
+  <script src="app.js?v=35"></script>
 </body>
 </html>

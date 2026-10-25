@@ -601,7 +601,7 @@ function renderSchedule() {
             <span class="tl-dot tl-dot-break"></span>
             <span class="tl-text tl-break-cutout">
               <span class="tl-content">
-                <span class="tl-break-pill">☕ ${entry.durationText}</span>
+                <span class="tl-break-pill"><i class="fi fi-rr-coffee"></i> ${entry.durationText}</span>
                 <span class="tl-break-time">${entry.time}</span>
                 <span class="tl-break-label">${isBreakCurrent ? "Break in Progress" : "Recess / Free Time"}</span>
               </span>
@@ -949,6 +949,10 @@ function switchView(page) {
   if (viewHomeworks) viewHomeworks.classList.add("view-hidden");
   if (viewProfile) viewProfile.classList.add("view-hidden");
 
+  if (mainEl) {
+    mainEl.setAttribute("data-current-page", page || "home");
+  }
+
   // Toggle Subjects icon between regular outline and solid filled
   const subjIcon = document.querySelector("#nav-subjects i");
   if (subjIcon) {
@@ -1026,6 +1030,33 @@ function initSubjectFilters() {
 }
 
 function initNav() {
+  const sidebar = document.querySelector(".sidebar");
+  const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+  const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+
+  const closeMobileSidebar = () => {
+    if (sidebar) sidebar.classList.remove("mobile-open");
+    if (sidebarBackdrop) sidebarBackdrop.classList.remove("active");
+  };
+
+  const toggleMobileSidebar = () => {
+    if (sidebar) sidebar.classList.toggle("mobile-open");
+    if (sidebarBackdrop) sidebarBackdrop.classList.toggle("active");
+  };
+
+  if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleMobileSidebar();
+    });
+  }
+
+  if (sidebarBackdrop) {
+    sidebarBackdrop.addEventListener("click", () => {
+      closeMobileSidebar();
+    });
+  }
+
   const items = document.querySelectorAll(".nav-item");
   items.forEach((item) =>
     item.addEventListener("click", (e) => {
@@ -1034,6 +1065,7 @@ function initNav() {
       item.classList.add("active");
       const page = item.dataset.page || "home";
       switchView(page);
+      closeMobileSidebar();
     })
   );
 
@@ -1057,6 +1089,7 @@ function initNav() {
       const navHw = document.getElementById("nav-homeworks");
       if (navHw) navHw.classList.add("active");
       switchView("homeworks");
+      closeMobileSidebar();
     });
   }
 
@@ -1070,7 +1103,51 @@ function initNav() {
       const navProf = document.getElementById("nav-profile");
       if (navProf) navProf.classList.add("active");
       switchView("profile");
+      closeMobileSidebar();
     });
+  }
+
+  // Dynamic slide-out on scroll down, slide-in on scroll up for mobile top bar
+  const mobileTopBar = document.getElementById("mobile-top-bar");
+  if (mobileTopBar) {
+    let lastScrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+    let ticking = false;
+
+    const onScroll = () => {
+      const currentScrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+      const mobileSearchWrap = document.getElementById("mobile-search-expand-wrap");
+      const isSearchOpen = mobileSearchWrap && mobileSearchWrap.classList.contains("open");
+      const isSidebarOpen = sidebar && sidebar.classList.contains("mobile-open");
+
+      // Always keep visible if drawer or search input is open
+      if (isSearchOpen || isSidebarOpen) {
+        mobileTopBar.classList.remove("nav-hidden");
+        lastScrollY = currentScrollY;
+        ticking = false;
+        return;
+      }
+
+      const diff = currentScrollY - lastScrollY;
+
+      // Scroll Down (threshold of 8px to prevent jitter) -> slide out
+      if (diff > 8 && currentScrollY > 60) {
+        mobileTopBar.classList.add("nav-hidden");
+      }
+      // Scroll Up -> slide back in immediately
+      else if (diff < -8 || currentScrollY <= 15) {
+        mobileTopBar.classList.remove("nav-hidden");
+      }
+
+      lastScrollY = Math.max(0, currentScrollY);
+      ticking = false;
+    };
+
+    window.addEventListener("scroll", () => {
+      if (!ticking) {
+        window.requestAnimationFrame(onScroll);
+        ticking = true;
+      }
+    }, { passive: true });
   }
 }
 
@@ -1764,10 +1841,35 @@ function initHomeworksManager() {
 
 // --- Course search filters timelines and homework tasks ---
 function initSearch() {
-  const input = document.getElementById("search-input");
-  if (!input) return;
-  input.addEventListener("input", () => {
-    const q = input.value.trim().toLowerCase();
+  const desktopInput = document.getElementById("search-input");
+  const mobileInput = document.getElementById("mobile-search-input");
+  const mobileSearchToggleBtn = document.getElementById("mobile-search-toggle-btn");
+  const mobileSearchCloseBtn = document.getElementById("mobile-search-close-btn");
+  const mobileSearchWrap = document.getElementById("mobile-search-expand-wrap");
+
+  if (mobileSearchToggleBtn && mobileSearchWrap) {
+    mobileSearchToggleBtn.addEventListener("click", () => {
+      mobileSearchWrap.classList.add("open");
+      if (mobileInput) {
+        mobileInput.focus();
+      }
+    });
+  }
+
+  if (mobileSearchCloseBtn && mobileSearchWrap) {
+    mobileSearchCloseBtn.addEventListener("click", () => {
+      mobileSearchWrap.classList.remove("open");
+      if (mobileInput) {
+        mobileInput.value = "";
+        executeFilter("");
+      }
+      if (desktopInput) {
+        desktopInput.value = "";
+      }
+    });
+  }
+
+  const executeFilter = (q) => {
     // Quick timeline on Home page
     const items = document.querySelectorAll(".timeline .tl-item");
     items.forEach((item) => {
@@ -1798,7 +1900,27 @@ function initSearch() {
       const text = item.textContent.toLowerCase();
       item.style.display = q && !text.includes(q) ? "none" : "";
     });
-  });
+  };
+
+  if (desktopInput) {
+    desktopInput.addEventListener("input", () => {
+      const q = desktopInput.value.trim().toLowerCase();
+      if (mobileInput && mobileInput.value !== desktopInput.value) {
+        mobileInput.value = desktopInput.value;
+      }
+      executeFilter(q);
+    });
+  }
+
+  if (mobileInput) {
+    mobileInput.addEventListener("input", () => {
+      const q = mobileInput.value.trim().toLowerCase();
+      if (desktopInput && desktopInput.value !== mobileInput.value) {
+        desktopInput.value = mobileInput.value;
+      }
+      executeFilter(q);
+    });
+  }
 }
 
 // --- Firebase & User Profile Management ---
