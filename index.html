@@ -143,71 +143,106 @@
       <div class="auth-screen-card view-hidden" id="auth-step-onboarding">
         <div class="onboarding-header">
           <div class="onboarding-avatar-wrap">
-            <img src="assets/avatar.jpg" alt="Profile avatar" class="onboarding-avatar" id="onboarding-preview-avatar" />
+            <div class="onboarding-avatar-circle" id="onboarding-avatar-circle">
+              <img 
+                src="assets/avatar.jpg" 
+                alt="Avatar" 
+                class="onboarding-avatar-img" 
+                id="onboarding-preview-avatar" 
+                referrerpolicy="no-referrer"
+                onerror="this.style.display='none'; const init = document.getElementById('onboarding-avatar-initial'); if(init) init.style.display='flex';" 
+              />
+              <span class="onboarding-avatar-initial" id="onboarding-avatar-initial" style="display: none;">Q</span>
+            </div>
             <span class="onboarding-avatar-badge" id="onboarding-avatar-badge">🎓</span>
           </div>
           <h2 class="auth-card-title" id="onboarding-title">Create Your Profile</h2>
-          <p class="auth-card-subtitle">Select whether you are a Student or Teacher and fill in your details.</p>
+          <p class="auth-card-subtitle">Tell us a bit about yourself to personalize your Quill-Q workspace.</p>
         </div>
 
         <form class="onboarding-form" id="onboarding-form">
-          <!-- Role Selection: Student vs Teacher -->
+          <!-- Role Selector: Student vs Teacher -->
           <div class="onboarding-group">
             <label class="onboarding-label">Are you a Student or Teacher? <span class="required-star">*</span></label>
-            <div class="role-selector-grid">
-              <label class="role-card selected" id="role-label-student">
-                <input type="radio" name="accountRole" value="student" checked class="role-radio" id="role-radio-student" />
-                <div class="role-card-badge">✓</div>
-                <div class="role-card-icon">🎓</div>
-                <div class="role-card-body">
-                  <span class="role-card-title">Student</span>
-                  <span class="role-card-desc">Track assignments, classes, timetable & reminders</span>
+            <div class="role-selector-row">
+              <button type="button" class="role-chip selected" id="role-label-student" data-role="student">
+                <span class="role-chip-icon">🎓</span>
+                <div class="role-chip-info">
+                  <span class="role-chip-title">Student</span>
+                  <span class="role-chip-desc">Assignments & Timetable</span>
                 </div>
-              </label>
+                <span class="role-chip-check">✓</span>
+              </button>
 
-              <label class="role-card" id="role-label-teacher">
-                <input type="radio" name="accountRole" value="teacher" class="role-radio" id="role-radio-teacher" />
-                <div class="role-card-badge">✓</div>
-                <div class="role-card-icon">👨‍🏫</div>
-                <div class="role-card-body">
-                  <span class="role-card-title">Teacher</span>
-                  <span class="role-card-desc">Manage lectures, departments & course resources</span>
+              <button type="button" class="role-chip" id="role-label-teacher" data-role="teacher">
+                <span class="role-chip-icon">👨‍🏫</span>
+                <div class="role-chip-info">
+                  <span class="role-chip-title">Teacher</span>
+                  <span class="role-chip-desc">Lectures & Courses</span>
                 </div>
-              </label>
+                <span class="role-chip-check">✓</span>
+              </button>
             </div>
+            <input type="hidden" name="accountRole" id="role-selected-val" value="student" />
           </div>
 
-          <!-- Name & Age Row -->
-          <div class="onboarding-row">
-            <div class="onboarding-group flex-2">
-              <label class="onboarding-label" for="onboarding-name">Full Name <span class="required-star">*</span></label>
-              <input type="text" class="modal-form-input" id="onboarding-name" placeholder="e.g. Roberta Higgins" required autocomplete="name" />
+          <!-- Student: Name & Surname Row -->
+          <div class="onboarding-row" id="row-student-name">
+            <div class="onboarding-group flex-1">
+              <label class="onboarding-label" for="onboarding-name">Name <span class="required-star">*</span></label>
+              <input type="text" class="modal-form-input" id="onboarding-name" placeholder="First Name" autocomplete="given-name" />
             </div>
             <div class="onboarding-group flex-1">
-              <label class="onboarding-label" for="onboarding-age">Age <span class="required-star">*</span></label>
-              <input type="number" min="5" max="110" class="modal-form-input" id="onboarding-age" placeholder="e.g. 21" required />
+              <label class="onboarding-label" for="onboarding-surname">Surname <span class="required-star">*</span></label>
+              <input type="text" class="modal-form-input" id="onboarding-surname" placeholder="Surname" autocomplete="family-name" />
             </div>
           </div>
 
-          <!-- Gender Selection -->
-          <div class="onboarding-group">
-            <label class="onboarding-label" for="onboarding-gender">Gender <span class="required-star">*</span></label>
-            <select class="modal-form-select" id="onboarding-gender" required>
-              <option value="" disabled selected>Select gender</option>
-              <option value="female">Female</option>
-              <option value="male">Male</option>
-              <option value="non-binary">Non-binary / Other</option>
-              <option value="prefer-not-to-say">Prefer not to say</option>
+          <!-- Teacher: Select Name from Schedule Dropdown -->
+          <div class="onboarding-group view-hidden" id="group-teacher-name">
+            <label class="onboarding-label" for="onboarding-teacher-select">Select Your Teacher Name <span class="required-star">*</span></label>
+            <select class="modal-form-select" id="onboarding-teacher-select">
+              <option value="" disabled selected>Select your name from the schedule</option>
+              <option value="نسرين بن الصادق">نسرين بن الصادق (Writing)</option>
+              <option value="عيادي روضة">عيادي روضة (British History)</option>
+              <option value="غربي إيمان">غربي إيمان (Financial English 1)</option>
+              <option value="بن شهيدة مريم">بن شهيدة مريم (Drama / Poetry / Novel)</option>
+              <option value="شنيس علي صلاح">شنيس علي صلاح (Entrepreneurial Skills - Droit)</option>
+              <option value="الشرقي سهلة">الشرقي سهلة (Commercial English 1)</option>
+              <option value="رانية الإدريس">رانية الإدريس (Introduction to Linguistics)</option>
+              <option value="عنيف حافظ">عنيف حافظ (Literary Trends)</option>
+              <option value="كعمون وسيم">كعمون وسيم (US History)</option>
+              <option value="العفاس نجلاء">العفاس نجلاء (Grammar in Context)</option>
+              <option value="بن علي حافظ">بن علي حافظ (Other Languages - French)</option>
+              <option value="مريم الهماصي">مريم الهماصي (Other Languages - Arabic)</option>
+              <option value="غمامي سناء">غمامي سناء (Drama / Poetry / Novel)</option>
+              <option value="كلثوم بالوافي">كلثوم بالوافي (Drama / Poetry / Novel)</option>
+              <option value="غربي أحمد عبد العزيز">غربي أحمد عبد العزيز (Financial English 1)</option>
+              <option value="الغندري أحلام">الغندري أحلام (Entrepreneurial Skills)</option>
             </select>
           </div>
 
-          <!-- Conditional Class / Department Field -->
-          <div class="onboarding-group" id="onboarding-group-academic">
-            <label class="onboarding-label" id="onboarding-academic-label" for="onboarding-academic-input">
-              Class / Year / Grade <span class="required-star">*</span>
-            </label>
-            <input type="text" class="modal-form-input" id="onboarding-academic-input" placeholder="e.g. Year 2 - British Studies" required autocomplete="off" />
-            <p class="onboarding-hint" id="onboarding-academic-hint">Enter your class, cohort, or academic year.</p>
+          <!-- Gender & Department / Subject Row -->
+          <div class="onboarding-row">
+            <div class="onboarding-group flex-1">
+              <label class="onboarding-label" for="onboarding-gender">Gender <span class="required-star">*</span></label>
+              <select class="modal-form-select" id="onboarding-gender" required>
+                <option value="" disabled selected>Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+
+            <div class="onboarding-group flex-1" id="onboarding-group-academic">
+              <label class="onboarding-label" id="onboarding-academic-label" for="onboarding-academic-select">
+                Department / Group <span class="required-star">*</span>
+              </label>
+              <select class="modal-form-select" id="onboarding-academic-select" required>
+                <option value="" disabled selected>Select group</option>
+                <option value="English Business Grp 1">English Business Grp 1</option>
+                <option value="English Business Grp 2">English Business Grp 2</option>
+              </select>
+            </div>
           </div>
 
           <div class="onboarding-actions">

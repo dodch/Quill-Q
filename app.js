@@ -1568,8 +1568,9 @@ function applyProfileToUI(profile) {
   const isTeacher = profile.role === "teacher";
   const roleDisplay = isTeacher ? "Teacher" : "Student";
   const academicDisplay = profile.academicDetail || (isTeacher ? "Faculty" : "Undergrad");
-  const avatarUrl = profile.photoURL || "assets/avatar.jpg";
-  const firstName = (profile.displayName || "Roberta").split(" ")[0];
+  const displayName = profile.displayName || "Roberta";
+  const firstName = profile.firstName || displayName.split(" ")[0];
+  const greetingName = isTeacher ? (displayName.startsWith("Prof") ? displayName : `Prof. ${displayName}`) : firstName;
 
   // Update Home Greeting
   const homeAvatar = document.getElementById("home-greeting-avatar");
@@ -1579,7 +1580,7 @@ function applyProfileToUI(profile) {
   const homeRoleAcademic = document.getElementById("home-user-academic");
 
   if (homeAvatar) homeAvatar.src = avatarUrl;
-  if (homeName) homeName.textContent = firstName;
+  if (homeName) homeName.textContent = greetingName;
   if (homeRoleIcon) homeRoleIcon.textContent = isTeacher ? "👨‍🏫" : "🎓";
   if (homeRoleText) homeRoleText.textContent = roleDisplay;
   if (homeRoleAcademic) homeRoleAcademic.textContent = academicDisplay;
@@ -1632,31 +1633,81 @@ function initFirebaseAuthAndProfile() {
 
   const onboardingForm = document.getElementById("onboarding-form");
   const onboardingPreviewAvatar = document.getElementById("onboarding-preview-avatar");
+  const onboardingAvatarInitial = document.getElementById("onboarding-avatar-initial");
   const onboardingAvatarBadge = document.getElementById("onboarding-avatar-badge");
+  const rowStudentName = document.getElementById("row-student-name");
+  const groupTeacherName = document.getElementById("group-teacher-name");
+  const onboardingTeacherSelect = document.getElementById("onboarding-teacher-select");
   const onboardingName = document.getElementById("onboarding-name");
-  const onboardingAge = document.getElementById("onboarding-age");
+  const onboardingSurname = document.getElementById("onboarding-surname");
   const onboardingGender = document.getElementById("onboarding-gender");
   const onboardingAcademicLabel = document.getElementById("onboarding-academic-label");
-  const onboardingAcademicInput = document.getElementById("onboarding-academic-input");
-  const onboardingAcademicHint = document.getElementById("onboarding-academic-hint");
+  const onboardingAcademicSelect = document.getElementById("onboarding-academic-select");
   const roleLabelStudent = document.getElementById("role-label-student");
   const roleLabelTeacher = document.getElementById("role-label-teacher");
-  const roleRadioStudent = document.getElementById("role-radio-student");
-  const roleRadioTeacher = document.getElementById("role-radio-teacher");
+  const roleSelectedVal = document.getElementById("role-selected-val");
   const btnSubmitOnboarding = document.getElementById("btn-submit-onboarding");
   const btnSubmitOnboardingText = document.getElementById("btn-submit-onboarding-text");
   const btnSidebarLogout = document.getElementById("btn-sidebar-logout");
+
+  const SCHEDULE_SUBJECTS = [
+    "Writing",
+    "British History",
+    "Financial English 1",
+    "Drama / Poetry / Novel",
+    "Commercial English 1",
+    "Entrepreneurial Skills (Droit)",
+    "Introduction to Linguistics",
+    "Literary Trends",
+    "US History",
+    "Grammar in Context",
+    "Other Languages (French)",
+    "Other Languages (Arabic)",
+    "Activités pratiques (TEFL)"
+  ];
+
+  const SCHEDULE_TEACHERS = [
+    { name: "نسرين بن الصادق", subject: "Writing", gender: "Female" },
+    { name: "عيادي روضة", subject: "British History", gender: "Female" },
+    { name: "غربي إيمان", subject: "Financial English 1", gender: "Female" },
+    { name: "بن شهيدة مريم", subject: "Drama / Poetry / Novel", gender: "Female" },
+    { name: "شنيس علي صلاح", subject: "Entrepreneurial Skills (Droit)", gender: "Male" },
+    { name: "الشرقي سهلة", subject: "Commercial English 1", gender: "Female" },
+    { name: "رانية الإدريس", subject: "Introduction to Linguistics", gender: "Female" },
+    { name: "عنيف حافظ", subject: "Literary Trends", gender: "Male" },
+    { name: "كعمون وسيم", subject: "US History", gender: "Male" },
+    { name: "العفاس نجلاء", subject: "Grammar in Context", gender: "Female" },
+    { name: "بن علي حافظ", subject: "Other Languages (French)", gender: "Male" },
+    { name: "مريم الهماصي", subject: "Other Languages (Arabic)", gender: "Female" },
+    { name: "غمامي سناء", subject: "Drama / Poetry / Novel", gender: "Female" },
+    { name: "كلثوم بالوافي", subject: "Drama / Poetry / Novel", gender: "Female" },
+    { name: "غربي أحمد عبد العزيز", subject: "Financial English 1", gender: "Male" },
+    { name: "الغندري أحلام", subject: "Entrepreneurial Skills (Droit)", gender: "Female" }
+  ];
 
   function showOnboardingStep(user) {
     if (stepSignin) stepSignin.classList.add("view-hidden");
     if (stepOnboarding) stepOnboarding.classList.remove("view-hidden");
 
     if (user) {
+      const initialChar = (user.displayName || "Q").trim().charAt(0).toUpperCase() || "Q";
+      if (onboardingAvatarInitial) onboardingAvatarInitial.textContent = initialChar;
+
       if (onboardingPreviewAvatar) {
-        onboardingPreviewAvatar.src = user.photoURL || "assets/avatar.jpg";
+        if (user.photoURL) {
+          onboardingPreviewAvatar.style.display = "block";
+          onboardingPreviewAvatar.src = user.photoURL;
+        } else {
+          onboardingPreviewAvatar.src = "assets/avatar.jpg";
+        }
       }
-      if (onboardingName && !onboardingName.value) {
-        onboardingName.value = user.displayName || "";
+
+      if (user.displayName) {
+        const parts = user.displayName.trim().split(" ");
+        const first = parts[0] || "";
+        const sur = parts.slice(1).join(" ") || "";
+        if (onboardingName && !onboardingName.value) onboardingName.value = first;
+        if (onboardingSurname && !onboardingSurname.value) onboardingSurname.value = sur;
       }
     }
 
@@ -1665,31 +1716,66 @@ function initFirebaseAuthAndProfile() {
   }
 
   function selectRole(role) {
-    if (role === "teacher") {
-      if (roleRadioTeacher) roleRadioTeacher.checked = true;
+    const isTeacher = role === "teacher";
+    if (roleSelectedVal) roleSelectedVal.value = role;
+
+    if (isTeacher) {
       if (roleLabelTeacher) roleLabelTeacher.classList.add("selected");
       if (roleLabelStudent) roleLabelStudent.classList.remove("selected");
       if (onboardingAvatarBadge) onboardingAvatarBadge.textContent = "👨‍🏫";
-      if (onboardingAcademicLabel) onboardingAcademicLabel.innerHTML = 'Department / Subject Taught <span class="required-star">*</span>';
-      if (onboardingAcademicInput) {
-        onboardingAcademicInput.placeholder = "e.g. Department of English Literature";
+
+      // Show Teacher Name dropdown, hide manual student name inputs
+      if (rowStudentName) rowStudentName.classList.add("view-hidden");
+      if (groupTeacherName) groupTeacherName.classList.remove("view-hidden");
+
+      if (onboardingTeacherSelect) {
+        onboardingTeacherSelect.innerHTML = `
+          <option value="" disabled selected>Select your name from the schedule</option>
+          ${SCHEDULE_TEACHERS.map((t) => `<option value="${t.name}">${t.name} (${t.subject})</option>`).join("")}
+        `;
       }
-      if (onboardingAcademicHint) {
-        onboardingAcademicHint.textContent = "Enter your department, faculty, or course specialty.";
+
+      if (onboardingAcademicLabel) onboardingAcademicLabel.innerHTML = 'Subject Taught <span class="required-star">*</span>';
+      if (onboardingAcademicSelect) {
+        onboardingAcademicSelect.innerHTML = `
+          <option value="" disabled selected>Select your subject</option>
+          ${SCHEDULE_SUBJECTS.map((s) => `<option value="${s}">${s}</option>`).join("")}
+        `;
       }
     } else {
-      if (roleRadioStudent) roleRadioStudent.checked = true;
       if (roleLabelStudent) roleLabelStudent.classList.add("selected");
       if (roleLabelTeacher) roleLabelTeacher.classList.remove("selected");
       if (onboardingAvatarBadge) onboardingAvatarBadge.textContent = "🎓";
-      if (onboardingAcademicLabel) onboardingAcademicLabel.innerHTML = 'Class / Year / Grade <span class="required-star">*</span>';
-      if (onboardingAcademicInput) {
-        onboardingAcademicInput.placeholder = "e.g. Year 2 - British Studies, Class 3B";
-      }
-      if (onboardingAcademicHint) {
-        onboardingAcademicHint.textContent = "Enter your class, cohort, or academic year.";
+
+      // Show Student Name & Surname inputs, hide Teacher Name dropdown
+      if (rowStudentName) rowStudentName.classList.remove("view-hidden");
+      if (groupTeacherName) groupTeacherName.classList.add("view-hidden");
+
+      if (onboardingAcademicLabel) onboardingAcademicLabel.innerHTML = 'Department / Group <span class="required-star">*</span>';
+      if (onboardingAcademicSelect) {
+        onboardingAcademicSelect.innerHTML = `
+          <option value="" disabled>Select group</option>
+          <option value="English Business Grp 1" selected>English Business Grp 1</option>
+          <option value="English Business Grp 2">English Business Grp 2</option>
+        `;
       }
     }
+  }
+
+  // Teacher name selection change -> auto-select subject and gender
+  if (onboardingTeacherSelect) {
+    onboardingTeacherSelect.addEventListener("change", () => {
+      const selectedName = onboardingTeacherSelect.value;
+      const matchedTeacher = SCHEDULE_TEACHERS.find((t) => t.name === selectedName);
+      if (matchedTeacher) {
+        if (onboardingAcademicSelect) {
+          onboardingAcademicSelect.value = matchedTeacher.subject;
+        }
+        if (onboardingGender) {
+          onboardingGender.value = matchedTeacher.gender;
+        }
+      }
+    });
   }
 
   // Role card clicking
@@ -1794,19 +1880,35 @@ function initFirebaseAuthAndProfile() {
         return;
       }
 
-      const selectedRole = roleRadioTeacher && roleRadioTeacher.checked ? "teacher" : "student";
-      const name = (onboardingName ? onboardingName.value.trim() : "") || currentUser.displayName || "Student";
-      const age = onboardingAge ? parseInt(onboardingAge.value, 10) : 20;
-      const gender = onboardingGender ? onboardingGender.value : "prefer-not-to-say";
-      const academicDetail = onboardingAcademicInput ? onboardingAcademicInput.value.trim() : "";
+      const selectedRole = roleSelectedVal ? roleSelectedVal.value : "student";
+      let fullName = "";
+      let firstName = "";
+      let surname = "";
+
+      if (selectedRole === "teacher") {
+        fullName = onboardingTeacherSelect ? onboardingTeacherSelect.value : "";
+        if (!fullName) {
+          alert("Please select your teacher name from the schedule.");
+          return;
+        }
+        firstName = fullName;
+      } else {
+        firstName = onboardingName ? onboardingName.value.trim() : "";
+        surname = onboardingSurname ? onboardingSurname.value.trim() : "";
+        fullName = (firstName && surname) ? `${firstName} ${surname}` : (firstName || surname || currentUser.displayName || "Student");
+      }
+
+      const gender = onboardingGender ? onboardingGender.value : "Male";
+      const academicDetail = onboardingAcademicSelect ? onboardingAcademicSelect.value : (selectedRole === "teacher" ? "Writing" : "English Business Grp 1");
 
       const profilePayload = {
         uid: currentUser.uid,
-        displayName: name,
+        displayName: fullName,
+        firstName: firstName,
+        surname: surname,
         email: currentUser.email || "",
         photoURL: currentUser.photoURL || "assets/avatar.jpg",
         role: selectedRole,
-        age: age || null,
         gender: gender,
         academicDetail: academicDetail,
         profileCompleted: true,

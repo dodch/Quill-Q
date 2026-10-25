@@ -3167,205 +3167,340 @@ a { color: inherit; text-decoration: none; }
   margin-top: 4px;
 }
 
-/* ========== Onboarding / Profile Setup Modal ========== */
-.onboarding-modal-card {
-  background: #fdfaf3;
-  border: 2.5px solid #1a1816;
-  border-radius: 26px 24px 26px 22px / 22px 26px 22px 24px;
-  box-shadow: 8px 10px 0px #1a1816;
-  padding: 34px 32px;
-  width: 100%;
-  max-width: 520px;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-  animation: modal-scale-up 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* ========== Fullscreen Auth / Login Screen ========== */
+.auth-page {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #f7f4ea;
+  padding: 20px 20px 40px;
   box-sizing: border-box;
+  overflow-y: auto;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-.onboarding-modal-card::-webkit-scrollbar {
-  width: 6px;
+.auth-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 500px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
 }
-.onboarding-modal-card::-webkit-scrollbar-thumb {
-  background: #dfdacd;
-  border-radius: 4px;
-}
-.onboarding-header {
-  text-align: center;
-  margin-bottom: 24px;
-}
-.onboarding-avatar-wrap {
-  position: relative;
-  width: 68px;
-  height: 68px;
-  margin: 0 auto 12px;
-}
-.onboarding-avatar {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  border: 2px solid #1a1816;
-  object-fit: cover;
-  box-shadow: 3px 3px 0px #1a1816;
-  background: #eee;
-}
-.onboarding-avatar-badge {
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
+.btn-auth-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
   background: #ffffff;
-  border: 1.6px solid #1a1816;
+  color: #1a1816;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1.8px solid #1a1816;
+  border-radius: 999px;
+  box-shadow: 2px 2px 0px #1a1816;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-auth-back:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #1a1816;
+  background: #fffdf8;
+}
+.btn-auth-back:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #1a1816;
+}
+.auth-page-brand {
+  display: flex;
+  align-items: center;
+}
+.auth-brand-logo {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1816;
+  letter-spacing: -0.3px;
+}
+.auth-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 500px;
+  margin: auto 0;
+}
+.auth-screen-card {
+  width: 100%;
+  background: #fdfaf3;
+  border: 2.2px solid #1a1816;
+  border-radius: 22px;
+  box-shadow: 6px 8px 0px #1a1816;
+  padding: 24px 26px 26px;
+  box-sizing: border-box;
+  text-align: center;
+  animation: modal-scale-up 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.auth-card-badge {
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 12px;
   border-radius: 50%;
-  width: 26px;
-  height: 26px;
+  background: #fdf1dc;
+  border: 2px solid #1a1816;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  box-shadow: 1px 2px 0px #1a1816;
+  box-shadow: 2.5px 2.5px 0px #1a1816;
 }
-.onboarding-title {
-  font-size: 26px;
+.auth-card-title {
+  font-size: 24px;
   font-weight: 700;
   color: #1a1816;
   margin-bottom: 6px;
 }
-.onboarding-subtitle {
-  font-size: 14px;
+.auth-card-subtitle {
+  font-size: 13.5px;
+  line-height: 1.4;
   color: #555;
-  line-height: 1.45;
+  margin-bottom: 20px;
+}
+.auth-perks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1.5px dashed #dfdacd;
+  text-align: left;
+}
+.auth-perk-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #444;
+  font-weight: 500;
+}
+.perk-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #d5ecd0;
+  border: 1.2px solid #1a1816;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a1816;
+  flex-shrink: 0;
+}
+
+/* ========== Onboarding Profile Step ========== */
+.onboarding-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.onboarding-avatar-wrap {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 10px;
+}
+.onboarding-avatar-circle {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 2px solid #1a1816;
+  overflow: hidden;
+  background: #fdf1dc;
+  box-shadow: 2.5px 2.5px 0px #1a1816;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.onboarding-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.onboarding-avatar-initial {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1816;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.onboarding-avatar-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #ffffff;
+  border: 1.5px solid #1a1816;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  box-shadow: 1px 1px 0px #1a1816;
 }
 .onboarding-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 13px;
+  text-align: left;
 }
 .onboarding-group {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 5px;
 }
 .onboarding-row {
   display: flex;
-  gap: 14px;
+  gap: 10px;
 }
 .flex-1 { flex: 1; }
 .flex-2 { flex: 2; }
 .onboarding-label {
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 600;
   color: #1a1816;
 }
 .required-star {
   color: #e07a5f;
 }
-.onboarding-hint {
-  font-size: 12px;
-  color: #777;
-  margin-top: 2px;
-}
 
-/* Role Selector Grid */
-.role-selector-grid {
+/* Role Selector Chips */
+.role-selector-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-top: 2px;
+  gap: 12px;
+  margin-top: 3px;
 }
-.role-card {
-  position: relative;
+.role-chip {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  padding: 16px 14px;
+  padding: 10px 12px;
   background: #ffffff;
-  border: 2px solid #ded9cb;
-  border-radius: 16px;
+  border: 1.8px solid #ded9cb;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
   user-select: none;
+  font-family: inherit;
 }
-.role-radio {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-.role-card:hover {
+.role-chip:hover {
   border-color: #1a1816;
-  transform: translateY(-2px);
-  box-shadow: 3px 4px 0px rgba(26, 24, 22, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 2px 3px 0px rgba(26, 24, 22, 0.12);
 }
-.role-card.selected {
-  border: 2.2px solid #1a1816;
+.role-chip.selected {
+  border: 2px solid #1a1816;
   background: #fef8eb;
-  box-shadow: 4px 5px 0px #1a1816;
+  box-shadow: 3px 4px 0px #1a1816;
 }
-.role-card-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 20px;
-  height: 20px;
+.role-chip-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.role-chip-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.role-chip-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1a1816;
+  line-height: 1.2;
+}
+.role-chip-desc {
+  font-size: 10.5px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+.role-chip-check {
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   border: 1.5px solid #ded9cb;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: transparent;
+  flex-shrink: 0;
   transition: all 0.2s ease;
 }
-.role-card.selected .role-card-badge {
-  border-color: #1a1816;
+.role-chip.selected .role-chip-check {
   background: #1a1816;
+  border-color: #1a1816;
   color: #ffffff;
 }
-.role-card-icon {
-  font-size: 28px;
-  line-height: 1;
-}
-.role-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.role-card-title {
-  font-size: 16px;
-  font-weight: 700;
+
+/* Form Inputs within Onboarding */
+.auth-page .modal-form-input,
+.auth-page .modal-form-select {
+  width: 100%;
+  height: 42px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1.8px solid #1a1816;
+  border-radius: 10px;
+  background: #ffffff;
   color: #1a1816;
+  font-family: inherit;
+  box-sizing: border-box;
 }
-.role-card-desc {
-  font-size: 11.5px;
-  color: #666;
-  line-height: 1.35;
+.auth-page .modal-form-input:focus,
+.auth-page .modal-form-select:focus {
+  outline: none;
+  background: #fffdf8;
+  box-shadow: 0 0 0 2px #ef8e60;
 }
 
 /* Action button */
 .onboarding-actions {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 .btn-create-account {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 15px 24px;
+  gap: 10px;
+  padding: 13px 20px;
   background: #1a1816;
   color: #ffffff;
   font-family: inherit;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   border: none;
-  border-radius: 14px;
-  box-shadow: 4px 5px 0px #ef8e60;
+  border-radius: 12px;
+  box-shadow: 3px 4px 0px #ef8e60;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .btn-create-account:hover {
   transform: translate(-1px, -1px);
-  box-shadow: 5px 7px 0px #ef8e60;
+  box-shadow: 4px 6px 0px #ef8e60;
   background: #2b2825;
 }
 .btn-create-account:active {
@@ -3373,7 +3508,7 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 1px 2px 0px #ef8e60;
 }
 .btn-arrow-icon {
-  font-size: 18px;
+  font-size: 17px;
   transition: transform 0.2s ease;
 }
 .btn-create-account:hover .btn-arrow-icon {
