@@ -11,11 +11,13 @@
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
-  <link rel="stylesheet" href="styles.css?v=64" />
+  <link rel="stylesheet" href="styles.css?v=66" />
   <script>
     try {
       var p = JSON.parse(localStorage.getItem("quill_q_profile") || "null");
-      if (p && p.profileCompleted) {
+      var adminEmails = ["dodchadam@gmail.com", "dotchadam@gmail.com"];
+      var isSuperAdmin = p && (p.role === "admin" || (p.email && adminEmails.indexOf(p.email.toLowerCase().trim()) !== -1));
+      if (p && p.profileCompleted && (isSuperAdmin || p.status === "approved")) {
         document.documentElement.classList.add("authed-start");
       }
     } catch (e) {}
@@ -280,6 +282,50 @@
     </div>
   </section>
 
+  <!-- Pending Approval Screen for newly registered students and teachers -->
+  <section class="landing-page view-hidden" id="pending-approval-page">
+    <div class="landing-blob lb-blue-top-left" aria-hidden="true"></div>
+    <div class="landing-blob lb-orange-top-right" aria-hidden="true"></div>
+    <div class="landing-blob lb-yellow-bottom-left" aria-hidden="true"></div>
+
+    <div class="auth-container">
+      <div class="auth-card" style="text-align: center; max-width: 480px;">
+        <div class="pending-badge-wrap" style="margin-bottom: 18px;">
+          <div style="font-size: 48px; line-height: 1; color: #e89838;"><i class="fi fi-rr-time-quarter-to"></i></div>
+        </div>
+        <h2 class="auth-card-title" style="margin-bottom: 10px;">Approval in Progress!</h2>
+        <p class="auth-card-subtitle" style="margin-bottom: 20px; font-size: 15px; line-height: 1.55; color: #5a544c;">
+          Welcome to Quill-Q, <strong id="pending-user-name" style="color: #1a1816;">there</strong>! Your profile has been submitted and is currently waiting for admin approval from <strong>Adam</strong>.
+        </p>
+
+        <div class="pending-user-summary-card" style="background: #faf6ed; border: 2px dashed #ded6c5; border-radius: 14px; padding: 14px 18px; margin-bottom: 24px; text-align: left; display: flex; align-items: center; gap: 14px;">
+          <img src="assets/avatar.jpg" id="pending-user-avatar" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #1a1816;" alt="User avatar" />
+          <div>
+            <div id="pending-user-fullname" style="font-weight: 700; color: #1a1816; font-size: 15px;">Student</div>
+            <div id="pending-user-role-badge" style="font-size: 13px; color: #7a7063;">Student • English Business Grp 1</div>
+            <div style="margin-top: 4px; display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; color: #d97706; background: #fef3c7; padding: 2px 8px; border-radius: 6px; border: 1px solid #fde68a;">
+              <i class="fi fi-rr-clock" style="font-size: 11px;"></i> Pending Review
+            </div>
+          </div>
+        </div>
+
+        <p style="font-size: 13.5px; color: #877d71; margin-bottom: 24px;">
+          Once the admin approves your account, you'll get immediate access to all lectures, schedules, and homework sync.
+        </p>
+
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <button type="button" class="btn-create-account" id="btn-pending-refresh" style="flex: 1; justify-content: center; padding: 12px 18px;">
+            <span>Check Status</span>
+            <i class="fi fi-rr-refresh" style="font-size: 14px;"></i>
+          </button>
+          <button type="button" class="task-btn-cancel" id="btn-pending-signout" style="padding: 12px 18px; border-radius: 14px; font-weight: 700; border: 2px solid #1a1816; background: #fff; box-shadow: 2px 2px 0px #1a1816;">
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Dashboard App Screen -->
   <div class="app dashboard-hidden" id="dashboard-app">
     <!-- Decorative blobs (Matches Reference Layout Exactly) -->
@@ -351,10 +397,10 @@
         </a>
       </nav>
 
-      <!-- Sidebar User Profile Widget -->
-      <div class="sidebar-user-card" id="sidebar-user-card">
+      <!-- Sidebar User Profile Widget (Clickable: opens Profile & Admin section) -->
+      <div class="sidebar-user-card" id="sidebar-user-card" title="Click to view Profile & Admin" style="cursor: pointer;">
         <img src="assets/avatar.jpg" alt="User avatar" class="sidebar-user-avatar" id="sidebar-user-avatar" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
-        <div class="sidebar-user-info">
+        <div class="sidebar-user-info" id="sidebar-user-info-click" style="flex: 1; cursor: pointer;">
           <span class="sidebar-user-name" id="sidebar-user-name">Student</span>
           <span class="sidebar-user-role" id="sidebar-user-role">Student</span>
         </div>
@@ -1014,6 +1060,73 @@
             <!-- Dynamically populated from JavaScript -->
           </div>
         </div>
+
+        <!-- DEDICATED PROFILE & ADMIN DASHBOARD VIEW -->
+        <div class="view-panel view-hidden" id="view-profile">
+          <div class="profile-view-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px;">
+            <div class="profile-view-title-wrap">
+              <h2 class="subjects-view-title" style="margin: 0; font-family: 'Patrick Hand', cursive; font-size: 32px; color: #1a1816;">My Profile &amp; Account</h2>
+              <p style="margin: 2px 0 0; font-size: 14.5px; color: #72685d;">Manage your personal profile and system administration</p>
+            </div>
+          </div>
+
+          <!-- Profile Info Bento Card -->
+          <div class="profile-cards-grid">
+            <div class="profile-hero-card" style="background: #fdfaf3; border: 2.5px solid #1a1816; border-radius: 20px; padding: 24px; box-shadow: 4px 6px 0px #1a1816; margin-bottom: 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+              <div style="position: relative;">
+                <img src="assets/avatar.jpg" alt="User avatar" id="profile-page-avatar" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #1a1816; object-fit: cover; box-shadow: 2px 3px 0px #1a1816;" />
+                <span id="profile-page-badge" style="position: absolute; bottom: 0; right: 0; background: #e89838; color: #1a1816; width: 28px; height: 28px; border-radius: 50%; border: 2px solid #1a1816; display: flex; align-items: center; justify-content: center; font-size: 14px;">👑</span>
+              </div>
+              <div style="flex: 1; min-width: 200px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                  <h3 id="profile-page-fullname" style="font-family: 'Patrick Hand', cursive; font-size: 26px; margin: 0; color: #1a1816;">Adam</h3>
+                  <span id="profile-page-role-pill" class="user-role-badge" style="font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #e89838; color: #1a1816; border: 1.5px solid #1a1816; font-weight: 700; text-transform: uppercase;">ADMIN</span>
+                </div>
+                <div id="profile-page-email" style="font-size: 14px; color: #695f54; margin-bottom: 6px;">dotchadam@gmail.com</div>
+                <div style="display: flex; gap: 14px; flex-wrap: wrap; font-size: 13.5px; color: #433d36;">
+                  <div><strong style="color: #1a1816;">Role:</strong> <span id="profile-page-role-text">Administrator</span></div>
+                  <div><strong style="color: #1a1816;">Group / Subject:</strong> <span id="profile-page-academic-text">Super Admin</span></div>
+                  <div><strong style="color: #1a1816;">Status:</strong> <span id="profile-page-status-text" style="color: #166534; font-weight: 700;">Approved</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ADMIN ONLY SECTION: User Approvals & Management -->
+            <div class="admin-panel-box view-hidden" id="admin-management-panel" style="background: #ffffff; border: 2.5px solid #1a1816; border-radius: 20px; padding: 24px; box-shadow: 4px 6px 0px #1a1816;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 2px dashed #e5dfd3; padding-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 22px; color: #1a1816; display: flex; align-items: center;"><i class="fi fi-sr-shield-check"></i></span>
+                  <div>
+                    <h3 style="font-family: 'Patrick Hand', cursive; font-size: 24px; margin: 0; color: #1a1816;">Admin Dashboard: Member Approvals</h3>
+                    <p style="margin: 0; font-size: 13px; color: #72685d;">Approve or decline new students and teachers who register</p>
+                  </div>
+                </div>
+                <button type="button" class="btn-create-account" id="btn-refresh-admin-users" style="padding: 6px 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                  <span>Refresh Users</span>
+                  <i class="fi fi-rr-refresh" style="font-size: 13px;"></i>
+                </button>
+              </div>
+
+              <!-- Admin Tabs: Pending Review vs Approved Members -->
+              <div style="display: flex; gap: 8px; margin-bottom: 18px;">
+                <button type="button" class="admin-tab-btn active" id="tab-admin-pending" style="padding: 7px 16px; border-radius: 10px; font-weight: 700; border: 2px solid #1a1816; background: #e89838; cursor: pointer;">
+                  Pending (<span id="admin-pending-count">0</span>)
+                </button>
+                <button type="button" class="admin-tab-btn" id="tab-admin-approved" style="padding: 7px 16px; border-radius: 10px; font-weight: 700; border: 2px solid #1a1816; background: #f4efe4; cursor: pointer;">
+                  Approved Members (<span id="admin-approved-count">0</span>)
+                </button>
+              </div>
+
+              <!-- User List Container -->
+              <div id="admin-users-list" style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="text-align: center; padding: 30px 10px; color: #7c7266;">
+                  <div style="font-size: 24px; margin-bottom: 6px;"><i class="fi fi-rr-spinner" style="display: inline-block; animation: spin 1s infinite linear;"></i></div>
+                  <div>Loading registrations...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="col-right">
@@ -1152,11 +1265,30 @@
     </div>
   </div>
 
+  <!-- Custom Dialog Modal (Replaces browser alert and confirm) -->
+  <div class="task-modal-backdrop view-hidden" id="custom-dialog-modal" style="z-index: 9999;">
+    <div class="task-modal-card custom-dialog-card" role="alertdialog" aria-modal="true">
+      <div class="custom-dialog-body">
+        <div class="custom-dialog-icon" id="custom-dialog-icon">ℹ️</div>
+        <div class="custom-dialog-text-wrap">
+          <h4 class="custom-dialog-title" id="custom-dialog-title">Notice</h4>
+          <p class="custom-dialog-message" id="custom-dialog-message"></p>
+        </div>
+      </div>
+      <div class="task-modal-actions custom-dialog-actions" id="custom-dialog-actions">
+        <button type="button" class="task-btn-cancel" id="custom-dialog-cancel" style="display:none;">Cancel</button>
+        <button type="button" class="task-btn-save" id="custom-dialog-confirm">
+          <span id="custom-dialog-confirm-text">OK</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase SDKs (Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-  <script src="app.js?v=24"></script>
+  <script src="app.js?v=30"></script>
 </body>
 </html>

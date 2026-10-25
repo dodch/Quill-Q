@@ -1,53 +1,28 @@
 // ===== School-Q Dashboard =====
-// Groupe: 2ANG-AFF 1 Timetable
+// Dynamic Server-Synced Schedule (Protected by Firestore Security Rules)
 
-const TIMETABLE = {
+let TIMETABLE = {
+  Mon: { dayName: "Monday", dateLabel: "Monday, Oct 19", activeClassIndex: 1, items: [] },
+  Tue: { dayName: "Tuesday", dateLabel: "Tuesday, Oct 20", activeClassIndex: 1, items: [] },
+  Wed: { dayName: "Wednesday", dateLabel: "Wednesday, Oct 21", activeClassIndex: 1, items: [] },
+  Thu: { dayName: "Thursday", dateLabel: "Thursday, Oct 22", activeClassIndex: 0, items: [] },
+  Fri: { dayName: "Friday", dateLabel: "Friday, Oct 23", activeClassIndex: 1, items: [] },
+  Sat: { dayName: "Saturday", dateLabel: "Saturday, Oct 24", activeClassIndex: -1, items: [] },
+  Sun: { dayName: "Sunday", dateLabel: "Sunday, Oct 25", activeClassIndex: -1, items: [] }
+};
+
+// Default seed data used by Super Admin to initialize the Firestore /schedules collection
+const DEFAULT_TIMETABLE_SEED = {
   Mon: {
     dayName: "Monday",
     dateLabel: "Monday, Oct 19",
-    activeClassIndex: 1, // Writing as current active class
+    activeClassIndex: 1,
     items: [
-      {
-        time: "08:30 AM – 10:00 AM",
-        subject: "Entrepreneurial Skills (Droit)",
-        prof: "شنيس علي صلاح",
-        room: "Salle-14",
-        color: "#e8987a",
-        icon: "law"
-      },
-      {
-        time: "10:00 AM – 11:30 AM",
-        subject: "Writing",
-        prof: "نسرين بن الصادق",
-        room: "Salle-15",
-        color: "#f6cf7c",
-        current: true,
-        icon: "writing"
-      },
-      {
-        time: "11:30 AM – 01:00 PM",
-        subject: "British History",
-        prof: "عيادي روضة",
-        room: "Amphi 1",
-        color: "#a9c6ec",
-        icon: "history"
-      },
-      {
-        time: "01:30 PM – 02:30 PM",
-        subject: "Financial English 1",
-        prof: "غربي إيمان",
-        room: "Amphi 6",
-        color: "#5bae86",
-        icon: "finance"
-      },
-      {
-        time: "02:30 PM – 04:00 PM",
-        subject: "Drama / Poetry / Novel",
-        prof: "بن شهيدة مريم",
-        room: "lab-3",
-        color: "#e0835f",
-        icon: "theater"
-      }
+      { time: "08:30 AM – 10:00 AM", subject: "Entrepreneurial Skills (Droit)", prof: "شنيس علي صلاح", room: "Salle-14", color: "#e8987a", icon: "law" },
+      { time: "10:00 AM – 11:30 AM", subject: "Writing", prof: "نسرين بن الصادق", room: "Salle-15", color: "#f6cf7c", current: true, icon: "writing" },
+      { time: "11:30 AM – 01:00 PM", subject: "British History", prof: "عيادي روضة", room: "Amphi 1", color: "#a9c6ec", icon: "history" },
+      { time: "01:30 PM – 02:30 PM", subject: "Financial English 1", prof: "غربي إيمان", room: "Amphi 6", color: "#5bae86", icon: "finance" },
+      { time: "02:30 PM – 04:00 PM", subject: "Drama / Poetry / Novel", prof: "بن شهيدة مريم", room: "lab-3", color: "#e0835f", icon: "theater" }
     ]
   },
   Tue: {
@@ -55,39 +30,10 @@ const TIMETABLE = {
     dateLabel: "Tuesday, Oct 20",
     activeClassIndex: 1,
     items: [
-      {
-        time: "08:30 AM – 10:00 AM",
-        subject: "Other Languages (French)",
-        prof: "بن علي حافظ",
-        room: "Salle-14",
-        color: "#e8987a",
-        icon: "language"
-      },
-      {
-        time: "10:00 AM – 11:30 AM",
-        subject: "Other Languages (Arabic)",
-        prof: "مريم الهماصي",
-        room: "Salle-02",
-        color: "#f6cf7c",
-        current: true,
-        icon: "language"
-      },
-      {
-        time: "12:30 PM – 02:00 PM",
-        subject: "Grammar in Context",
-        prof: "العفاس نجلاء",
-        room: "Amphi 4",
-        color: "#a9c6ec",
-        icon: "grammar"
-      },
-      {
-        time: "02:00 PM – 03:30 PM",
-        subject: "Grammar in Context",
-        prof: "العفاس نجلاء",
-        room: "Salle-18",
-        color: "#5bae86",
-        icon: "grammar"
-      }
+      { time: "08:30 AM – 10:00 AM", subject: "Other Languages (French)", prof: "بن علي حافظ", room: "Salle-14", color: "#e8987a", icon: "language" },
+      { time: "10:00 AM – 11:30 AM", subject: "Other Languages (Arabic)", prof: "مريم الهماصي", room: "Salle-02", color: "#f6cf7c", current: true, icon: "language" },
+      { time: "12:30 PM – 02:00 PM", subject: "Grammar in Context", prof: "العفاس نجلاء", room: "Amphi 4", color: "#a9c6ec", icon: "grammar" },
+      { time: "02:00 PM – 03:30 PM", subject: "Grammar in Context", prof: "العفاس نجلاء", room: "Salle-18", color: "#5bae86", icon: "grammar" }
     ]
   },
   Wed: {
@@ -95,39 +41,10 @@ const TIMETABLE = {
     dateLabel: "Wednesday, Oct 21",
     activeClassIndex: 1,
     items: [
-      {
-        time: "08:30 AM – 10:00 AM",
-        subject: "Drama / Poetry / Novel",
-        prof: "غمامي سناء",
-        room: "Salle-15",
-        color: "#e8987a",
-        icon: "theater"
-      },
-      {
-        time: "10:00 AM – 11:30 AM",
-        subject: "Literary Trends",
-        prof: "عنيف حافظ",
-        room: "Amphi 1",
-        color: "#f6cf7c",
-        current: true,
-        icon: "literature"
-      },
-      {
-        time: "01:00 PM – 02:30 PM",
-        subject: "Financial English 1",
-        prof: "غربي أحمد عبد العزيز",
-        room: "Salle-15",
-        color: "#a9c6ec",
-        icon: "finance"
-      },
-      {
-        time: "02:30 PM – 04:00 PM",
-        subject: "Drama / Poetry / Novel",
-        prof: "كلثوم بالوافي",
-        room: "Salle-16",
-        color: "#5bae86",
-        icon: "theater"
-      }
+      { time: "08:30 AM – 10:00 AM", subject: "Drama / Poetry / Novel", prof: "غمامي سناء", room: "Salle-15", color: "#e8987a", icon: "theater" },
+      { time: "10:00 AM – 11:30 AM", subject: "Literary Trends", prof: "عنيف حافظ", room: "Amphi 1", color: "#f6cf7c", current: true, icon: "literature" },
+      { time: "01:00 PM – 02:30 PM", subject: "Financial English 1", prof: "غربي أحمد عبد العزيز", room: "Salle-15", color: "#a9c6ec", icon: "finance" },
+      { time: "02:30 PM – 04:00 PM", subject: "Drama / Poetry / Novel", prof: "كلثوم بالوافي", room: "Salle-16", color: "#5bae86", icon: "theater" }
     ]
   },
   Thu: {
@@ -135,39 +52,10 @@ const TIMETABLE = {
     dateLabel: "Thursday, Oct 22",
     activeClassIndex: 0,
     items: [
-      {
-        time: "09:30 AM – 11:00 AM",
-        subject: "Introduction to Linguistics",
-        prof: "رانية الإدريس",
-        room: "Amphi 3",
-        color: "#f6cf7c",
-        current: true,
-        icon: "linguistics"
-      },
-      {
-        time: "11:00 AM – 12:30 PM",
-        subject: "Introduction to Linguistics",
-        prof: "رانية الإدريس",
-        room: "Salle-10",
-        color: "#e8987a",
-        icon: "linguistics"
-      },
-      {
-        time: "01:30 PM – 03:00 PM",
-        subject: "US History",
-        prof: "كعمون وسيم",
-        room: "Amphi 4",
-        color: "#a9c6ec",
-        icon: "history"
-      },
-      {
-        time: "03:00 PM – 04:30 PM",
-        subject: "US History",
-        prof: "كعمون وسيم",
-        room: "Salle-12",
-        color: "#5bae86",
-        icon: "history"
-      }
+      { time: "09:30 AM – 11:00 AM", subject: "Introduction to Linguistics", prof: "رانية الإدريس", room: "Amphi 3", color: "#f6cf7c", current: true, icon: "linguistics" },
+      { time: "11:00 AM – 12:30 PM", subject: "Introduction to Linguistics", prof: "رانية الإدريس", room: "Salle-10", color: "#e8987a", icon: "linguistics" },
+      { time: "01:30 PM – 03:00 PM", subject: "US History", prof: "كعمون وسيم", room: "Amphi 4", color: "#a9c6ec", icon: "history" },
+      { time: "03:00 PM – 04:30 PM", subject: "US History", prof: "كعمون وسيم", room: "Salle-12", color: "#5bae86", icon: "history" }
     ]
   },
   Fri: {
@@ -175,62 +63,94 @@ const TIMETABLE = {
     dateLabel: "Friday, Oct 23",
     activeClassIndex: 1,
     items: [
-      {
-        time: "08:30 AM – 10:00 AM",
-        subject: "British History",
-        prof: "عيادي روضة",
-        room: "Salle-13",
-        color: "#e8987a",
-        icon: "history"
-      },
-      {
-        time: "10:00 AM – 11:30 AM",
-        subject: "Commercial English 1",
-        prof: "الشرقي سهلة",
-        room: "Amphi 4",
-        color: "#f6cf7c",
-        current: true,
-        icon: "business"
-      },
-      {
-        time: "11:30 AM – 01:00 PM",
-        subject: "Commercial English 1",
-        prof: "الشرقي سهلة",
-        room: "Salle-10",
-        color: "#a9c6ec",
-        icon: "business"
-      },
-      {
-        time: "01:30 PM – 03:00 PM",
-        subject: "Entrepreneurial Skills",
-        prof: "الغندري أحلام",
-        room: "Salle-12",
-        color: "#5bae86",
-        icon: "law"
-      },
-      {
-        time: "04:00 PM – 05:30 PM",
-        subject: "Activités pratiques (TEFL)",
-        prof: "رانية الإدريس",
-        room: "Salle-11",
-        color: "#e0835f",
-        icon: "tefl"
-      }
+      { time: "08:30 AM – 10:00 AM", subject: "British History", prof: "عيادي روضة", room: "Salle-13", color: "#e8987a", icon: "history" },
+      { time: "10:00 AM – 11:30 AM", subject: "Commercial English 1", prof: "الشرقي سهلة", room: "Amphi 4", color: "#f6cf7c", current: true, icon: "business" },
+      { time: "11:30 AM – 01:00 PM", subject: "Commercial English 1", prof: "الشرقي سهلة", room: "Salle-10", color: "#a9c6ec", icon: "business" },
+      { time: "01:30 PM – 03:00 PM", subject: "Entrepreneurial Skills", prof: "الغندري أحلام", room: "Salle-12", color: "#5bae86", icon: "law" },
+      { time: "04:00 PM – 05:30 PM", subject: "Activités pratiques (TEFL)", prof: "رانية الإدريس", room: "Salle-11", color: "#e0835f", icon: "tefl" }
     ]
   },
-  Sat: {
-    dayName: "Saturday",
-    dateLabel: "Saturday, Oct 24",
-    activeClassIndex: -1,
-    items: []
-  },
-  Sun: {
-    dayName: "Sunday",
-    dateLabel: "Sunday, Oct 25",
-    activeClassIndex: -1,
-    items: []
-  }
+  Sat: { dayName: "Saturday", dateLabel: "Saturday, Oct 24", activeClassIndex: -1, items: [] },
+  Sun: { dayName: "Sunday", dateLabel: "Sunday, Oct 25", activeClassIndex: -1, items: [] }
 };
+
+let scheduleUnsubscribe = null;
+
+function bindServerSchedule(user) {
+  if (scheduleUnsubscribe) {
+    try { scheduleUnsubscribe(); } catch (e) {}
+    scheduleUnsubscribe = null;
+  }
+
+  const profile = currentProfile;
+  const isSuperAdmin = isSuperAdminUser(profile);
+  const isApproved = profile && (profile.status === "approved" || isSuperAdmin);
+
+  // Unapproved users cannot fetch schedule
+  if (!user || !isApproved) {
+    TIMETABLE = {
+      Mon: { dayName: "Monday", dateLabel: "Monday, Oct 19", activeClassIndex: -1, items: [] },
+      Tue: { dayName: "Tuesday", dateLabel: "Tuesday, Oct 20", activeClassIndex: -1, items: [] },
+      Wed: { dayName: "Wednesday", dateLabel: "Wednesday, Oct 21", activeClassIndex: -1, items: [] },
+      Thu: { dayName: "Thursday", dateLabel: "Thursday, Oct 22", activeClassIndex: -1, items: [] },
+      Fri: { dayName: "Friday", dateLabel: "Friday, Oct 23", activeClassIndex: -1, items: [] },
+      Sat: { dayName: "Saturday", dateLabel: "Saturday, Oct 24", activeClassIndex: -1, items: [] },
+      Sun: { dayName: "Sunday", dateLabel: "Sunday, Oct 25", activeClassIndex: -1, items: [] }
+    };
+    updateTodayStatus();
+    renderDetailedSchedule(currentSelectedDay);
+    renderSchedule();
+    return;
+  }
+
+  // Load cached schedule if present
+  const localSched = localStorage.getItem("quill_q_server_schedule");
+  if (localSched) {
+    try {
+      TIMETABLE = JSON.parse(localSched);
+      updateTodayStatus();
+      renderDetailedSchedule(currentSelectedDay);
+      renderSchedule();
+    } catch (e) {}
+  }
+
+  if (db) {
+    try {
+      scheduleUnsubscribe = db.collection("schedules").onSnapshot(async (snapshot) => {
+        if (snapshot.empty && isSuperAdmin) {
+          // Initialize server collection from seed once
+          console.log("Seeding Firestore /schedules collection as Super Admin...");
+          const batch = db.batch();
+          Object.keys(DEFAULT_TIMETABLE_SEED).forEach((dayKey) => {
+            const ref = db.collection("schedules").doc(dayKey);
+            batch.set(ref, DEFAULT_TIMETABLE_SEED[dayKey]);
+          });
+          try {
+            await batch.commit();
+          } catch (seedErr) {
+            console.warn("Schedule seeding error:", seedErr);
+          }
+          return;
+        }
+
+        snapshot.forEach((doc) => {
+          if (doc.exists) {
+            TIMETABLE[doc.id] = doc.data();
+          }
+        });
+
+        localStorage.setItem("quill_q_server_schedule", JSON.stringify(TIMETABLE));
+        updateTodayStatus();
+        renderDetailedSchedule(currentSelectedDay);
+        renderSchedule();
+      }, (err) => {
+        console.warn("Firestore schedule listener warning (Access denied if unapproved):", err);
+      });
+    } catch (err) {
+      console.warn("Could not bind server schedule:", err);
+    }
+  }
+}
 
 let currentSelectedDay = "Mon";
 
@@ -1016,6 +936,7 @@ function switchView(page) {
   const viewSchedule = document.getElementById("view-schedule");
   const viewSubjects = document.getElementById("view-subjects");
   const viewHomeworks = document.getElementById("view-homeworks");
+  const viewProfile = document.getElementById("view-profile");
   const hwNote = document.getElementById("sticky-homework-note");
   const subjectsSide = document.getElementById("subjects-side-wrap");
   const homeworksSide = document.getElementById("homeworks-side-wrap");
@@ -1026,6 +947,7 @@ function switchView(page) {
   if (viewSchedule) viewSchedule.classList.add("view-hidden");
   if (viewSubjects) viewSubjects.classList.add("view-hidden");
   if (viewHomeworks) viewHomeworks.classList.add("view-hidden");
+  if (viewProfile) viewProfile.classList.add("view-hidden");
 
   // Toggle Subjects icon between regular outline and solid filled
   const subjIcon = document.querySelector("#nav-subjects i");
@@ -1059,7 +981,14 @@ function switchView(page) {
     if (hwNote) hwNote.classList.add("view-hidden");
     if (subjectsSide) subjectsSide.classList.add("view-hidden");
     if (homeworksSide) homeworksSide.classList.remove("view-hidden");
-    renderHomeworksView();
+  } else if (page === "profile") {
+    const viewProfile = document.getElementById("view-profile");
+    if (viewProfile) viewProfile.classList.remove("view-hidden");
+    if (mainEl) mainEl.classList.remove("on-schedule-view");
+    if (hwNote) hwNote.classList.remove("view-hidden");
+    if (subjectsSide) subjectsSide.classList.add("view-hidden");
+    if (homeworksSide) homeworksSide.classList.add("view-hidden");
+    renderProfileView();
   } else {
     // Default Home view: homework note stays as is
     if (viewHome) viewHome.classList.remove("view-hidden");
@@ -1128,6 +1057,19 @@ function initNav() {
       const navHw = document.getElementById("nav-homeworks");
       if (navHw) navHw.classList.add("active");
       switchView("homeworks");
+    });
+  }
+
+  // Clicking sidebar user card (avatar or name) navigates to Profile & Admin view
+  const sidebarUserCard = document.getElementById("sidebar-user-card");
+  if (sidebarUserCard) {
+    sidebarUserCard.addEventListener("click", (e) => {
+      // Don't trigger if logout button was clicked
+      if (e.target.closest("#btn-sidebar-logout")) return;
+      items.forEach((i) => i.classList.remove("active"));
+      const navProf = document.getElementById("nav-profile");
+      if (navProf) navProf.classList.add("active");
+      switchView("profile");
     });
   }
 }
@@ -1258,6 +1200,116 @@ function escapeHtml(str) {
     tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
   );
 }
+
+// ===== Custom Popups (Alert & Confirm Dialogs) =====
+let dialogResolveFn = null;
+
+function showCustomAlert(message, title = "Notice", iconHtml = '<i class="fi fi-rr-info"></i>') {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("custom-dialog-modal");
+    const iconEl = document.getElementById("custom-dialog-icon");
+    const titleEl = document.getElementById("custom-dialog-title");
+    const msgEl = document.getElementById("custom-dialog-message");
+    const cancelBtn = document.getElementById("custom-dialog-cancel");
+    const confirmBtn = document.getElementById("custom-dialog-confirm");
+    const confirmText = document.getElementById("custom-dialog-confirm-text");
+
+    if (!modal) {
+      window.alert(message);
+      resolve(true);
+      return;
+    }
+
+    if (iconEl) iconEl.innerHTML = iconHtml;
+    if (titleEl) titleEl.textContent = title;
+    if (msgEl) msgEl.textContent = message;
+    if (confirmText) confirmText.textContent = "OK";
+    if (confirmBtn) {
+      confirmBtn.classList.remove("btn-danger");
+      confirmBtn.className = "task-btn-save";
+    }
+    if (cancelBtn) cancelBtn.style.display = "none";
+
+    dialogResolveFn = () => {
+      modal.classList.add("view-hidden");
+      dialogResolveFn = null;
+      resolve(true);
+    };
+
+    modal.classList.remove("view-hidden");
+  });
+}
+
+function showCustomConfirm(message, title = "Are you sure?", iconHtml = '<i class="fi fi-rr-interrogation"></i>', confirmBtnLabel = "Confirm", cancelBtnLabel = "Cancel", isDanger = false) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("custom-dialog-modal");
+    const iconEl = document.getElementById("custom-dialog-icon");
+    const titleEl = document.getElementById("custom-dialog-title");
+    const msgEl = document.getElementById("custom-dialog-message");
+    const cancelBtn = document.getElementById("custom-dialog-cancel");
+    const confirmBtn = document.getElementById("custom-dialog-confirm");
+    const confirmText = document.getElementById("custom-dialog-confirm-text");
+
+    if (!modal) {
+      const res = window.confirm(message);
+      resolve(res);
+      return;
+    }
+
+    if (iconEl) iconEl.innerHTML = iconHtml;
+    if (titleEl) titleEl.textContent = title;
+    if (msgEl) msgEl.textContent = message;
+    if (confirmText) confirmText.textContent = confirmBtnLabel;
+    if (confirmBtn) {
+      confirmBtn.className = isDanger ? "task-btn-save btn-danger" : "task-btn-save";
+    }
+    if (cancelBtn) {
+      cancelBtn.textContent = cancelBtnLabel;
+      cancelBtn.style.display = "inline-flex";
+    }
+
+    dialogResolveFn = (result) => {
+      modal.classList.add("view-hidden");
+      dialogResolveFn = null;
+      resolve(result);
+    };
+
+    modal.classList.remove("view-hidden");
+  });
+}
+
+// Global modal event listeners for custom dialog
+(function initCustomDialogListeners() {
+  const modal = document.getElementById("custom-dialog-modal");
+  const cancelBtn = document.getElementById("custom-dialog-cancel");
+  const confirmBtn = document.getElementById("custom-dialog-confirm");
+
+  if (confirmBtn) {
+    confirmBtn.addEventListener("click", () => {
+      if (dialogResolveFn) dialogResolveFn(true);
+    });
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", () => {
+      if (dialogResolveFn) dialogResolveFn(false);
+    });
+  }
+
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        if (dialogResolveFn) dialogResolveFn(false);
+      }
+    });
+  }
+
+  // Intercept standard window.alert calls
+  window.alert = function (msg) {
+    return showCustomAlert(String(msg || ""), "Notice", "💡");
+  };
+})();
+
 
 function formatDueDisplay(dueStr) {
   if (!dueStr) return "";
@@ -1413,10 +1465,18 @@ function renderHomeworksView() {
       const id = delBtn.dataset.id;
       const targetTask = currentTasks.find((t) => t.id === id);
       if (targetTask && !isMyTask(targetTask)) {
-        alert("You can only delete reminders or homework added by you.");
+        await showCustomAlert("You can only delete reminders or homework added by you.", "Permission Denied", '<i class="fi fi-rr-lock"></i>');
         return;
       }
-      if (confirm("Delete this task permanently?")) {
+      const confirmed = await showCustomConfirm(
+        "Delete this task permanently from the schedule?",
+        "Delete Task",
+        '<i class="fi fi-rr-trash"></i>',
+        "Delete",
+        "Cancel",
+        true
+      );
+      if (confirmed) {
         if (!currentUser && auth && auth.currentUser) {
           currentUser = auth.currentUser;
         }
@@ -1435,7 +1495,7 @@ function renderHomeworksView() {
             await db.collection("homeworks").doc(id).delete();
           } catch (e) {
             console.error("Error deleting task from server:", e);
-            alert("Could not delete from server: " + (e.message || "Permission denied"));
+            await showCustomAlert("Could not delete from server: " + (e.message || "Permission denied"), "Delete Failed", '<i class="fi fi-rr-cross-circle"></i>');
           }
         }
       }
@@ -1758,13 +1818,25 @@ let currentUser = null;
 let currentProfile = null;
 
 function navigateToDashboard() {
+  const profile = currentProfile;
+  const isSuperAdmin = isSuperAdminUser(profile);
+  const isApproved = profile && (profile.status === "approved" || isSuperAdmin);
+
+  // Hard barrier: if not approved and not super admin, route immediately to pending page
+  if (profile && !isApproved) {
+    navigateToPendingApproval(profile);
+    return;
+  }
+
   document.documentElement.classList.add("authed-start");
   const landingPage = document.getElementById("landing-page");
   const authPage = document.getElementById("auth-page");
+  const pendingPage = document.getElementById("pending-approval-page");
   const dashboardApp = document.getElementById("dashboard-app");
 
   if (landingPage) landingPage.classList.add("landing-hidden");
   if (authPage) authPage.classList.add("landing-hidden");
+  if (pendingPage) pendingPage.classList.add("view-hidden");
   if (dashboardApp) {
     dashboardApp.classList.remove("dashboard-hidden");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1779,9 +1851,11 @@ function navigateToLanding() {
   document.documentElement.classList.remove("authed-start");
   const landingPage = document.getElementById("landing-page");
   const authPage = document.getElementById("auth-page");
+  const pendingPage = document.getElementById("pending-approval-page");
   const dashboardApp = document.getElementById("dashboard-app");
 
   if (authPage) authPage.classList.add("landing-hidden");
+  if (pendingPage) pendingPage.classList.add("view-hidden");
   if (dashboardApp) dashboardApp.classList.add("dashboard-hidden");
   if (landingPage) {
     landingPage.classList.remove("landing-hidden");
@@ -1793,9 +1867,11 @@ function navigateToAuth() {
   document.documentElement.classList.remove("authed-start");
   const landingPage = document.getElementById("landing-page");
   const authPage = document.getElementById("auth-page");
+  const pendingPage = document.getElementById("pending-approval-page");
   const dashboardApp = document.getElementById("dashboard-app");
 
   if (landingPage) landingPage.classList.add("landing-hidden");
+  if (pendingPage) pendingPage.classList.add("view-hidden");
   if (dashboardApp) dashboardApp.classList.add("dashboard-hidden");
   if (authPage) {
     authPage.classList.remove("landing-hidden");
@@ -1807,6 +1883,38 @@ function navigateToAuth() {
   const stepOnboarding = document.getElementById("auth-step-onboarding");
   if (stepSignin) stepSignin.classList.remove("view-hidden");
   if (stepOnboarding) stepOnboarding.classList.add("view-hidden");
+}
+
+function navigateToPendingApproval(profile) {
+  document.documentElement.classList.remove("authed-start");
+  const landingPage = document.getElementById("landing-page");
+  const authPage = document.getElementById("auth-page");
+  const pendingPage = document.getElementById("pending-approval-page");
+  const dashboardApp = document.getElementById("dashboard-app");
+
+  if (landingPage) landingPage.classList.add("landing-hidden");
+  if (authPage) authPage.classList.add("landing-hidden");
+  if (dashboardApp) dashboardApp.classList.add("dashboard-hidden");
+
+  if (pendingPage) {
+    pendingPage.classList.remove("view-hidden");
+    const pName = document.getElementById("pending-user-name");
+    const pFullName = document.getElementById("pending-user-fullname");
+    const pRoleBadge = document.getElementById("pending-user-role-badge");
+    const pAvatar = document.getElementById("pending-user-avatar");
+
+    const displayName = profile ? (profile.displayName || profile.firstName || "there") : "there";
+    const firstName = displayName.split(" ")[0];
+    const roleText = (profile && profile.role === "teacher") ? "Teacher" : "Student";
+    const academicText = profile ? (profile.academicDetail || "English Business Grp 1") : "English Business Grp 1";
+
+    if (pName) pName.textContent = firstName;
+    if (pFullName) pFullName.textContent = displayName;
+    if (pRoleBadge) pRoleBadge.textContent = `${roleText} • ${academicText}`;
+    if (pAvatar && profile && profile.photoURL) pAvatar.src = profile.photoURL;
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 }
 
 function applyProfileToUI(profile) {
@@ -1839,12 +1947,13 @@ function applyProfileToUI(profile) {
     return;
   }
 
+  const isAdmin = isSuperAdminUser(profile);
   const isTeacher = profile.role === "teacher";
-  const roleDisplay = isTeacher ? "Teacher" : "Student";
-  const academicDisplay = profile.academicDetail || (isTeacher ? "Teaching Faculty" : "English Business Grp 1");
-  const displayName = (profile.displayName || (profile.firstName ? `${profile.firstName} ${profile.surname || ""}`.trim() : "") || (isTeacher ? "Professor" : "Student")).trim();
+  const roleDisplay = isAdmin ? "Admin" : (isTeacher ? "Teacher" : "Student");
+  const academicDisplay = isAdmin ? "Administrator" : (profile.academicDetail || (isTeacher ? "Teaching Faculty" : "English Business Grp 1"));
+  const displayName = (profile.displayName || (profile.firstName ? `${profile.firstName} ${profile.surname || ""}`.trim() : "") || (isAdmin ? "Adam" : (isTeacher ? "Professor" : "Student"))).trim();
   const firstName = profile.firstName || displayName.split(" ")[0] || displayName;
-  const greetingName = isTeacher ? (displayName.startsWith("Prof") ? displayName : `Prof. ${displayName}`) : firstName;
+  const greetingName = isAdmin ? displayName : (isTeacher ? (displayName.startsWith("Prof") ? displayName : `Prof. ${displayName}`) : firstName);
   const avatarUrl = profile.photoURL || "assets/avatar.jpg";
 
   // Update Home Greeting
@@ -1853,7 +1962,9 @@ function applyProfileToUI(profile) {
     homeAvatar.alt = displayName;
   }
   if (homeName) homeName.textContent = greetingName;
-  if (homeRoleIcon) homeRoleIcon.innerHTML = isTeacher ? '<i class="fi fi-sr-chalkboard-user"></i>' : '<i class="fi fi-ss-student"></i>';
+  if (homeRoleIcon) {
+    homeRoleIcon.innerHTML = isAdmin ? '<i class="fi fi-sr-shield-check"></i>' : (isTeacher ? '<i class="fi fi-sr-chalkboard-user"></i>' : '<i class="fi fi-ss-student"></i>');
+  }
   if (homeRoleText) homeRoleText.textContent = roleDisplay;
   if (homeRoleAcademic) homeRoleAcademic.textContent = academicDisplay;
 
@@ -1864,6 +1975,9 @@ function applyProfileToUI(profile) {
   }
   if (sideName) sideName.textContent = displayName;
   if (sideRole) sideRole.textContent = `${roleDisplay} • ${academicDisplay}`;
+
+  // Update Profile page & Admin dashboard if present
+  renderProfileView();
 
   // Update Landing button text
   if (btnGetStarted) btnGetStarted.textContent = "Enter Dashboard →";
@@ -1888,12 +2002,32 @@ function initFirebaseAuthAndProfile() {
   if (cachedProfileStr) {
     try {
       currentProfile = JSON.parse(cachedProfileStr);
+      if (isSuperAdminUser(currentProfile)) {
+        currentProfile.role = "admin";
+        currentProfile.status = "approved";
+        currentProfile.academicDetail = "Super Admin";
+        localStorage.setItem("quill_q_profile", JSON.stringify(currentProfile));
+        if (db && currentProfile.uid) {
+          try {
+            db.collection("users").doc(currentProfile.uid).update({
+              role: "admin",
+              status: "approved",
+              academicDetail: "Super Admin"
+            }).catch(() => {});
+          } catch (e) {}
+        }
+      }
       applyProfileToUI(currentProfile);
       if (currentProfile && currentProfile.uid) {
         bindUserTasks({ uid: currentProfile.uid });
+        bindServerSchedule({ uid: currentProfile.uid });
       }
       if (currentProfile && currentProfile.profileCompleted) {
-        navigateToDashboard();
+        if (isSuperAdminUser(currentProfile) || currentProfile.status === "approved") {
+          navigateToDashboard();
+        } else {
+          navigateToPendingApproval(currentProfile);
+        }
       }
     } catch (e) {
       console.warn("Failed parsing cached profile", e);
@@ -2099,8 +2233,17 @@ function initFirebaseAuthAndProfile() {
           currentProfile = profileData;
           localStorage.setItem("quill_q_profile", JSON.stringify(profileData));
           applyProfileToUI(profileData);
-          bindUserTasks(user);
-          navigateToDashboard();
+
+          const isAdmin = isSuperAdminUser(profileData);
+          const isApproved = profileData.status === "approved" || isAdmin;
+
+          if (isApproved) {
+            bindUserTasks(user);
+            navigateToDashboard();
+          } else {
+            bindUserTasks(null);
+            navigateToPendingApproval(profileData);
+          }
         } else {
           // New user -> reveal Role selection and profile creation form right on page!
           showOnboardingStep(user);
@@ -2132,7 +2275,9 @@ function initFirebaseAuthAndProfile() {
         return;
       }
 
-      const selectedRole = roleSelectedVal ? roleSelectedVal.value : "student";
+      const userEmail = (currentUser.email || "").toLowerCase().trim();
+      const isAdminAccount = userEmail === "dodchadam@gmail.com" || userEmail === "dotchadam@gmail.com";
+      const selectedRole = isAdminAccount ? "admin" : (roleSelectedVal ? roleSelectedVal.value : "student");
       let fullName = "";
       let firstName = "";
       let surname = "";
@@ -2147,28 +2292,33 @@ function initFirebaseAuthAndProfile() {
       } else {
         firstName = onboardingName ? onboardingName.value.trim() : "";
         surname = onboardingSurname ? onboardingSurname.value.trim() : "";
-        fullName = (firstName && surname) ? `${firstName} ${surname}` : (firstName || surname || currentUser.displayName || "Student");
+        fullName = (firstName && surname) ? `${firstName} ${surname}` : (firstName || surname || currentUser.displayName || (isAdminAccount ? "Adam" : "Student"));
       }
 
       const gender = onboardingGender ? onboardingGender.value : "Male";
       let academicDetail = "";
-      if (selectedRole === "teacher") {
+      if (isAdminAccount) {
+        academicDetail = "Super Admin";
+      } else if (selectedRole === "teacher") {
         const matchedTeacher = SCHEDULE_TEACHERS.find((t) => t.name === fullName);
         academicDetail = matchedTeacher ? matchedTeacher.subject : (onboardingTeacherSubjectVal ? onboardingTeacherSubjectVal.value : "Teaching Faculty");
       } else {
         academicDetail = onboardingAcademicSelect ? onboardingAcademicSelect.value : "English Business Grp 1";
       }
 
+      const userStatus = isAdminAccount ? "approved" : "pending";
+
       const profilePayload = {
         uid: currentUser.uid,
         displayName: fullName,
         firstName: firstName,
         surname: surname,
-        email: currentUser.email || "",
+        email: userEmail,
         photoURL: currentUser.photoURL || "assets/avatar.jpg",
         role: selectedRole,
         gender: gender,
         academicDetail: academicDetail,
+        status: userStatus,
         profileCompleted: true,
         updatedAt: new Date().toISOString()
       };
@@ -2188,16 +2338,26 @@ function initFirebaseAuthAndProfile() {
         currentProfile = profilePayload;
         localStorage.setItem("quill_q_profile", JSON.stringify(profilePayload));
         applyProfileToUI(profilePayload);
-        bindUserTasks(currentUser);
 
-        navigateToDashboard();
+        if (userStatus === "approved" || isAdminAccount) {
+          bindUserTasks(currentUser);
+          navigateToDashboard();
+        } else {
+          bindUserTasks(null);
+          navigateToPendingApproval(profilePayload);
+        }
       } catch (saveErr) {
         console.error("Error saving profile:", saveErr);
         currentProfile = profilePayload;
         localStorage.setItem("quill_q_profile", JSON.stringify(profilePayload));
         applyProfileToUI(profilePayload);
-        bindUserTasks(currentUser);
-        navigateToDashboard();
+        if (userStatus === "approved" || isAdminAccount) {
+          bindUserTasks(currentUser);
+          navigateToDashboard();
+        } else {
+          bindUserTasks(null);
+          navigateToPendingApproval(profilePayload);
+        }
       } finally {
         if (btnSubmitOnboardingText) btnSubmitOnboardingText.textContent = "Create Account & Enter Dashboard";
         if (btnSubmitOnboarding) btnSubmitOnboarding.disabled = false;
@@ -2205,10 +2365,75 @@ function initFirebaseAuthAndProfile() {
     });
   }
 
+  // Pending Approval page buttons (Check status & Sign out)
+  const btnPendingRefresh = document.getElementById("btn-pending-refresh");
+  if (btnPendingRefresh) {
+    btnPendingRefresh.addEventListener("click", async () => {
+      if (!currentUser && auth && auth.currentUser) {
+        currentUser = auth.currentUser;
+      }
+      if (!currentUser) {
+        navigateToAuth();
+        return;
+      }
+      if (db) {
+        btnPendingRefresh.disabled = true;
+        btnPendingRefresh.innerHTML = "<span>Checking...</span>";
+        try {
+          const snap = await db.collection("users").doc(currentUser.uid).get();
+          if (snap.exists && snap.data()) {
+            const data = snap.data();
+            currentProfile = data;
+            localStorage.setItem("quill_q_profile", JSON.stringify(data));
+            applyProfileToUI(data);
+
+            if (data.status === "approved" || isSuperAdminUser(data)) {
+              bindUserTasks(currentUser);
+              await showCustomAlert("Congratulations! Your account has been approved by the admin.", "Approved", '<i class="fi fi-rr-badge-check"></i>');
+              navigateToDashboard();
+              return;
+            } else if (data.status === "declined") {
+              await showCustomAlert("Your account registration request has not been approved. Please contact the administrator.", "Registration Status", '<i class="fi fi-rr-cross-circle"></i>');
+            } else {
+              await showCustomAlert("Your profile is still awaiting review by the administrator.", "Pending Review", '<i class="fi fi-rr-time-quarter-to"></i>');
+            }
+          }
+        } catch (e) {
+          console.warn("Status check error", e);
+        } finally {
+          btnPendingRefresh.disabled = false;
+          btnPendingRefresh.innerHTML = '<span>Check Status</span> <i class="fi fi-rr-refresh" style="font-size: 14px;"></i>';
+        }
+      }
+    });
+  }
+
+  const btnPendingSignout = document.getElementById("btn-pending-signout");
+  if (btnPendingSignout) {
+    btnPendingSignout.addEventListener("click", async () => {
+      if (auth) {
+        try { await auth.signOut(); } catch (e) {}
+      }
+      currentUser = null;
+      currentProfile = null;
+      localStorage.removeItem("quill_q_profile");
+      applyProfileToUI(null);
+      navigateToLanding();
+    });
+  }
+
   // Sidebar Logout
   if (btnSidebarLogout) {
     btnSidebarLogout.addEventListener("click", async () => {
-      if (confirm("Are you sure you want to sign out of Quill-Q?")) {
+      const confirmed = await showCustomConfirm(
+        "Are you sure you want to sign out of Quill-Q?",
+        "Sign Out",
+        '<i class="fi fi-rr-sign-out-alt"></i>',
+        "Sign Out",
+        "Cancel",
+        false
+      );
+      if (confirmed) {
         if (auth) {
           try {
             await auth.signOut();
@@ -2220,6 +2445,7 @@ function initFirebaseAuthAndProfile() {
         currentProfile = null;
         localStorage.removeItem("quill_q_profile");
         bindUserTasks(null);
+        bindServerSchedule(null);
         applyProfileToUI(null);
         navigateToLanding();
       }
@@ -2231,25 +2457,35 @@ function initFirebaseAuthAndProfile() {
     auth.onAuthStateChanged(async (user) => {
       if (user) {
         currentUser = user;
-        bindUserTasks(user);
-        if (!currentProfile || currentProfile.uid !== user.uid) {
+        let profile = currentProfile;
+        if (!profile || profile.uid !== user.uid) {
           if (db) {
             try {
               const snap = await db.collection("users").doc(user.uid).get();
               if (snap.exists && snap.data() && snap.data().profileCompleted) {
-                currentProfile = snap.data();
-                localStorage.setItem("quill_q_profile", JSON.stringify(currentProfile));
-                applyProfileToUI(currentProfile);
-                navigateToDashboard();
+                profile = snap.data();
+                currentProfile = profile;
+                localStorage.setItem("quill_q_profile", JSON.stringify(profile));
               }
             } catch (err) {
               console.warn("Auth state profile fetch error:", err);
             }
           }
-        } else {
-          applyProfileToUI(currentProfile);
-          if (currentProfile && currentProfile.profileCompleted) {
+        }
+
+        if (profile && profile.profileCompleted) {
+          applyProfileToUI(profile);
+          const isAdmin = isSuperAdminUser(profile);
+          const isApproved = profile.status === "approved" || isAdmin;
+
+          if (isApproved) {
+            bindUserTasks(user);
+            bindServerSchedule(user);
             navigateToDashboard();
+          } else {
+            bindUserTasks(null);
+            bindServerSchedule(null);
+            navigateToPendingApproval(profile);
           }
         }
       } else {
@@ -2257,10 +2493,280 @@ function initFirebaseAuthAndProfile() {
         currentProfile = null;
         localStorage.removeItem("quill_q_profile");
         bindUserTasks(null);
+        bindServerSchedule(null);
         applyProfileToUI(null);
       }
     });
   }
+}
+
+// ===== Profile View & Admin Dashboard Management =====
+let adminUsersListener = null;
+let currentAdminTab = "pending";
+let cachedAdminUsers = [];
+
+function isSuperAdminUser(profile) {
+  if (!profile) return false;
+  const email = (profile.email || "").toLowerCase().trim();
+  return profile.role === "admin" || email === "dodchadam@gmail.com" || email === "dotchadam@gmail.com";
+}
+
+function renderProfileView() {
+  const pAvatar = document.getElementById("profile-page-avatar");
+  const pBadge = document.getElementById("profile-page-badge");
+  const pFullName = document.getElementById("profile-page-fullname");
+  const pRolePill = document.getElementById("profile-page-role-pill");
+  const pEmail = document.getElementById("profile-page-email");
+  const pRoleText = document.getElementById("profile-page-role-text");
+  const pAcademicText = document.getElementById("profile-page-academic-text");
+  const pStatusText = document.getElementById("profile-page-status-text");
+  const adminPanel = document.getElementById("admin-management-panel");
+
+  const profile = currentProfile;
+  if (!profile) return;
+
+  const isAdmin = isSuperAdminUser(profile);
+  const isTeacher = profile.role === "teacher";
+  const displayName = profile.displayName || profile.firstName || (isAdmin ? "Adam" : "Student");
+
+  if (pAvatar) pAvatar.src = profile.photoURL || "assets/avatar.jpg";
+  if (pBadge) {
+    pBadge.innerHTML = isAdmin ? '<i class="fi fi-sr-shield-check"></i>' : (isTeacher ? '<i class="fi fi-sr-chalkboard-user"></i>' : '<i class="fi fi-ss-student"></i>');
+  }
+  if (pFullName) pFullName.textContent = displayName;
+  if (pEmail) pEmail.textContent = profile.email || "No email";
+  if (pRolePill) {
+    pRolePill.textContent = isAdmin ? "ADMIN" : (isTeacher ? "TEACHER" : "STUDENT");
+    pRolePill.style.background = isAdmin ? "#e89838" : (isTeacher ? "#a9c6ec" : "#98d6aa");
+  }
+  if (pRoleText) pRoleText.textContent = isAdmin ? "Administrator" : (isTeacher ? "Teacher" : "Student");
+  if (pAcademicText) pAcademicText.textContent = isAdmin ? "Super Admin" : (profile.academicDetail || "English Business Grp 1");
+  if (pStatusText) {
+    const isApproved = profile.status === "approved" || isAdmin;
+    pStatusText.textContent = isApproved ? "Approved" : "Pending Approval";
+    pStatusText.style.color = isApproved ? "#166534" : "#b45309";
+  }
+
+  // Admin section: visible strictly to dotchadam@gmail.com / admin role
+  if (adminPanel) {
+    if (isAdmin) {
+      adminPanel.classList.remove("view-hidden");
+      initAdminDashboard();
+    } else {
+      adminPanel.classList.add("view-hidden");
+    }
+  }
+}
+
+function initAdminDashboard() {
+  const tabPending = document.getElementById("tab-admin-pending");
+  const tabApproved = document.getElementById("tab-admin-approved");
+  const btnRefresh = document.getElementById("btn-refresh-admin-users");
+
+  if (tabPending && !tabPending.dataset.bound) {
+    tabPending.dataset.bound = "true";
+    tabPending.addEventListener("click", () => {
+      currentAdminTab = "pending";
+      tabPending.style.background = "#e89838";
+      if (tabApproved) tabApproved.style.background = "#f4efe4";
+      renderAdminUsersList();
+    });
+  }
+
+  if (tabApproved && !tabApproved.dataset.bound) {
+    tabApproved.dataset.bound = "true";
+    tabApproved.addEventListener("click", () => {
+      currentAdminTab = "approved";
+      tabApproved.style.background = "#e89838";
+      if (tabPending) tabPending.style.background = "#f4efe4";
+      renderAdminUsersList();
+    });
+  }
+
+  if (btnRefresh && !btnRefresh.dataset.bound) {
+    btnRefresh.dataset.bound = "true";
+    btnRefresh.addEventListener("click", () => {
+      fetchAdminUsers();
+    });
+  }
+
+  fetchAdminUsers();
+}
+
+function fetchAdminUsers() {
+  if (!db) return;
+  const listEl = document.getElementById("admin-users-list");
+  if (listEl) {
+    listEl.innerHTML = `
+      <div style="text-align: center; padding: 24px; color: #7a7063;">
+        <div style="font-size: 22px; margin-bottom: 6px;"><i class="fi fi-rr-refresh" style="display:inline-block; animation: spin 1s infinite linear;"></i></div>
+        <div>Fetching member registrations...</div>
+      </div>`;
+  }
+
+  if (adminUsersListener) {
+    try { adminUsersListener(); } catch (e) {}
+  }
+
+  try {
+    adminUsersListener = db.collection("users").onSnapshot((snapshot) => {
+      const users = [];
+      snapshot.forEach((doc) => {
+        users.push({ id: doc.id, ...doc.data() });
+      });
+      cachedAdminUsers = users;
+      updateAdminCounts();
+      renderAdminUsersList();
+    }, (err) => {
+      console.warn("Admin users fetch error:", err);
+      if (listEl) {
+        listEl.innerHTML = `<div style="text-align:center; padding:18px; color:#dc2626;">Could not fetch members: ${err.message}</div>`;
+      }
+    });
+  } catch (err) {
+    console.error("Admin listener init error:", err);
+  }
+}
+
+function updateAdminCounts() {
+  const pendingCountEl = document.getElementById("admin-pending-count");
+  const approvedCountEl = document.getElementById("admin-approved-count");
+
+  const pending = cachedAdminUsers.filter((u) => u.status === "pending" && !isSuperAdminUser(u));
+  const approved = cachedAdminUsers.filter((u) => u.status === "approved" || isSuperAdminUser(u));
+
+  if (pendingCountEl) pendingCountEl.textContent = pending.length;
+  if (approvedCountEl) approvedCountEl.textContent = approved.length;
+}
+
+function renderAdminUsersList() {
+  const listEl = document.getElementById("admin-users-list");
+  if (!listEl) return;
+
+  const users = cachedAdminUsers.filter((u) => {
+    if (currentAdminTab === "pending") {
+      return u.status === "pending" && !isSuperAdminUser(u);
+    } else {
+      return u.status === "approved" || isSuperAdminUser(u);
+    }
+  });
+
+  if (!users.length) {
+    listEl.innerHTML = `
+      <div style="text-align: center; padding: 30px; background: #faf6ed; border-radius: 14px; border: 2px dashed #ded6c5;">
+        <div style="font-size: 24px; margin-bottom: 6px; color: #1a1816;"><i class="fi fi-rr-check-circle"></i></div>
+        <strong style="color: #1a1816; font-size: 15px;">No ${currentAdminTab} users</strong>
+        <p style="color: #7a7063; font-size: 13.5px; margin: 4px 0 0;">All registrations have been processed.</p>
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = users.map((user) => {
+    const isTeacher = user.role === "teacher";
+    const isAdmin = isSuperAdminUser(user);
+    const roleBadge = isAdmin ? "Admin" : (isTeacher ? "Teacher" : "Student");
+    const academicDetail = user.academicDetail || (isTeacher ? "Teaching Faculty" : "English Business Grp 1");
+    const name = user.displayName || user.firstName || "Member";
+    const status = user.status || "pending";
+    const avatar = user.photoURL || "assets/avatar.jpg";
+
+    return `
+      <div class="admin-user-row" data-id="${user.id}">
+        <div class="admin-user-meta">
+          <img src="${avatar}" class="admin-user-avatar" alt="${escapeHtml(name)}" onerror="this.src='assets/avatar.jpg'" />
+          <div>
+            <div class="admin-user-title">
+              <span>${escapeHtml(name)}</span>
+              <span class="user-role-badge" style="font-size: 10px; padding: 1px 6px; border-radius: 6px; border: 1px solid #1a1816; background: ${isAdmin ? '#e89838' : (isTeacher ? '#a9c6ec' : '#d1fae5')};">
+                ${roleBadge}
+              </span>
+              <span class="${status === 'approved' ? 'status-badge-approved' : 'status-badge-pending'}">
+                ● ${status === 'approved' ? 'Approved' : 'Pending'}
+              </span>
+            </div>
+            <div class="admin-user-sub">
+              <span>${escapeHtml(user.email || 'No email')}</span> • <span>${escapeHtml(academicDetail)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-user-actions">
+          ${status === 'pending' ? `
+            <button type="button" class="btn-admin-approve" data-id="${user.id}" data-name="${escapeHtml(name)}" title="Approve member">
+              Approve ✓
+            </button>
+            <button type="button" class="btn-admin-decline" data-id="${user.id}" data-name="${escapeHtml(name)}" title="Decline member">
+              Decline ✕
+            </button>
+          ` : `
+            ${!isAdmin ? `
+              <button type="button" class="btn-admin-decline" data-id="${user.id}" data-action="revoke" data-name="${escapeHtml(name)}" title="Revoke approval">
+                Revoke Access
+              </button>
+            ` : `<span style="font-size: 12px; font-weight: 700; color: #b45309;">Super Admin</span>`}
+          `}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // Attach button events
+  listEl.querySelectorAll(".btn-admin-approve").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const uid = btn.dataset.id;
+      const userName = btn.dataset.name;
+      const confirmed = await showCustomConfirm(
+        `Approve ${userName} to join Quill-Q? They will immediately receive access to timetable & homework.`,
+        "Approve Member",
+        '<i class="fi fi-rr-check"></i>',
+        "Approve",
+        "Cancel",
+        false
+      );
+      if (confirmed) {
+        try {
+          await db.collection("users").doc(uid).update({
+            status: "approved",
+            approvedAt: new Date().toISOString()
+          });
+          await showCustomAlert(`${userName} has been approved successfully!`, "Success", '<i class="fi fi-rr-badge-check"></i>');
+        } catch (e) {
+          await showCustomAlert("Could not approve user: " + (e.message || "Permission denied"), "Error", '<i class="fi fi-rr-cross-circle"></i>');
+        }
+      }
+    });
+  });
+
+  listEl.querySelectorAll(".btn-admin-decline").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const uid = btn.dataset.id;
+      const userName = btn.dataset.name;
+      const isRevoke = btn.dataset.action === "revoke";
+      const actionPrompt = isRevoke
+        ? `Revoke access for ${userName}? They will be placed back into pending approval.`
+        : `Decline registration for ${userName}?`;
+      
+      const confirmed = await showCustomConfirm(
+        actionPrompt,
+        isRevoke ? "Revoke Access" : "Decline Member",
+        '<i class="fi fi-rr-exclamation"></i>',
+        isRevoke ? "Revoke" : "Decline",
+        "Cancel",
+        true
+      );
+      if (confirmed) {
+        try {
+          await db.collection("users").doc(uid).update({
+            status: "declined",
+            declinedAt: new Date().toISOString()
+          });
+          await showCustomAlert(`Access status updated for ${userName}.`, "Updated", '<i class="fi fi-rr-info"></i>');
+        } catch (e) {
+          await showCustomAlert("Could not update user: " + (e.message || "Permission denied"), "Error", '<i class="fi fi-rr-cross-circle"></i>');
+        }
+      }
+    });
+  });
 }
 
 // --- Page Navigation (Brand Logo -> Landing) ---
