@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quill-Q</title>
+  <meta name="description" content="Quill-Q student dashboard – see what's happening now, what's next, your subjects, homework and weekly schedule." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=53" />
+</head>
+<body>
+  <!-- Landing Page Screen -->
+  <section class="landing-page" id="landing-page">
+    <!-- Decorative liquid background blob in top left -->
+    <svg class="landing-blob lb-blue-top-left" viewBox="0 0 200 200" aria-hidden="true">
+      <path fill="#8cb9ee">
+        <animate 
+          attributeName="d" 
+          dur="10s" 
+          repeatCount="indefinite"
+          values="
+            M0 0 H160 C160 70, 110 140, 45 170 C15 180, 0 170, 0 170 Z;
+            M0 0 H175 C150 90, 130 150, 50 160 C20 165, 0 150, 0 150 Z;
+            M0 0 H150 C165 60, 105 130, 40 180 C10 190, 0 180, 0 180 Z;
+            M0 0 H160 C160 70, 110 140, 45 170 C15 180, 0 170, 0 170 Z
+          " />
+      </path>
+    </svg>
+
+    <!-- Header / Brand Bar -->
+    <header class="landing-header">
+      <div class="landing-brand">
+        <span class="landing-logo">Quill-Q</span>
+      </div>
+      <div class="landing-divider" aria-hidden="true"></div>
+      <div class="landing-tagline-wrap">
+        <p class="landing-tagline">We Believe That Education<br />Is For Everyone</p>
+        <!-- Mini doodle sparkles & sketched plus -->
+        <div class="landing-mini-doodles-box" aria-hidden="true">
+          <!-- Sparkle star -->
+          <svg class="sparkle-star-svg" viewBox="0 0 28 28" fill="none" stroke="#222" stroke-linecap="round">
+            <line x1="14" y1="2" x2="14" y2="26" stroke-width="1.8" />
+            <line x1="2" y1="14" x2="26" y2="14" stroke-width="1.8" />
+            <line x1="5.5" y1="5.5" x2="22.5" y2="22.5" stroke-width="1.5" />
+            <line x1="5.5" y1="22.5" x2="22.5" y2="5.5" stroke-width="1.5" />
+            <circle cx="14" cy="14" r="2.5" fill="#f29b71" stroke="#222" stroke-width="1.2" />
+          </svg>
+          <!-- Sketched Plus with yellow organic backdrop -->
+          <svg class="sketched-plus-box" viewBox="0 0 38 38" fill="none" stroke="#222" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="19" cy="19" rx="15" ry="13" fill="#f7d58a" stroke="none" />
+            <!-- 3D sketched plus -->
+            <path d="M15 8 h8 v6 h6 v8 h-6 v6 h-8 v-6 h-6 v-8 h6 z" fill="#fffef9" stroke="#222" stroke-width="1.6" />
+            <line x1="17" y1="11" x2="21" y2="15" stroke="#222" stroke-width="1.2" />
+            <line x1="23" y1="17" x2="27" y2="21" stroke="#222" stroke-width="1.2" />
+            <line x1="11" y1="17" x2="15" y2="21" stroke="#222" stroke-width="1.2" />
+            <line x1="17" y1="23" x2="21" y2="27" stroke="#222" stroke-width="1.2" />
+          </svg>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Hero Section -->
+    <div class="landing-hero">
+      <div class="landing-hero-left">
+        <h1 class="landing-title">Welcome to<br />Quill-Q</h1>
+        <p class="landing-subtitle">
+          A unified, active, and organized workspace for your university life. Stay on top of your subjects, live schedule, and homework.
+        </p>
+        <button class="btn-get-started" id="btn-get-started" type="button">
+          Get Started
+        </button>
+      </div>
+
+      <div class="landing-hero-right">
+        <img src="assets/landingpageuni.png" alt="Quill-Q illustration featuring notebooks, stationery, reminders, and doodles" class="landing-hero-illustration" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Dashboard App Screen -->
+  <div class="app dashboard-hidden" id="dashboard-app">
+    <!-- Decorative blobs (Matches Reference Layout Exactly) -->
+    <svg class="blob blob-yellow-right" viewBox="0 0 100 240" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M 100,0 C 70,8 35,40 18,90 C 2,135 30,165 18,205 C 10,225 35,238 100,240 Z" />
+    </svg>
+    <svg class="blob blob-blue-bottom" viewBox="0 0 200 180" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M 200,30 C 150,28 100,50 65,95 C 30,140 25,160 0,180 L 200,180 Z" />
+    </svg>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <svg class="blob blob-blue-logo" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 0,0 L 80,0 C 80,25 70,55 50,75 C 30,95 15,100 0,100 Z" />
+      </svg>
+      <svg class="blob blob-yellow-logo" viewBox="0 0 80 80" aria-hidden="true">
+        <circle cx="40" cy="40" r="38" />
+      </svg>
+      <svg class="blob blob-orange" viewBox="0 0 220 200" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 0,55 C 35,18 75,18 105,50 C 135,82 140,118 175,142 C 205,162 218,180 220,200 L 0,200 Z" />
+      </svg>
+
+      <div class="brand">
+        <div class="logo-morph-container" aria-label="Quill-Q morphing logo">
+          <!-- The Characters that animate from text line into face positions -->
+          <span class="char-unit char-q1" aria-hidden="true">Q</span>
+          <span class="char-unit char-u" aria-hidden="true">u</span>
+          <span class="char-unit char-i" aria-hidden="true">i</span>
+          <span class="char-unit char-l1" aria-hidden="true">l</span>
+          <span class="char-unit char-l2" aria-hidden="true">l</span>
+          <span class="char-unit char-dash" aria-hidden="true">-</span>
+          <span class="char-unit char-q2" aria-hidden="true">Q</span>
+        </div>
+        <p class="tagline">We Believe That Education<br />Is For Everyone</p>
+      </div>
+
+      <div class="doodles" aria-hidden="true">
+        <!-- sketched eraser -->
+        <svg class="doodle doodle-eraser" viewBox="0 0 60 50" fill="none" stroke="#2b2b2b" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M6 26 26 8l28 14-20 20z" />
+          <path d="M6 26v6l28 16v-6" />
+          <path d="M34 48l20-20v-6" />
+          <path d="M16 17l28 14" />
+          <path d="M12 30l6-5M18 33l7-6M24 37l6-5" stroke-width="1.2" />
+        </svg>
+        <!-- sketched plus -->
+        <svg class="doodle doodle-plus" viewBox="0 0 60 60" fill="none" stroke="#2b2b2b" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M22 6h16v16h16v16H38v16H22V38H6V22h16z" transform="rotate(12 30 30)" />
+          <path d="M26 14l8 8M24 20l10 10M18 28l8 8M30 34l10 10M36 28l8 8" stroke-width="1.1" transform="rotate(12 30 30)" />
+        </svg>
+      </div>
+
+      <nav class="nav" aria-label="Main navigation">
+        <a href="#" class="nav-item active" id="nav-home" data-page="home">
+          <svg viewBox="0 0 24 24" class="nav-icon home-icon"><path d="M3 11 12 3l9 8" fill="none" stroke="#e07a5f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v10h5v-6h4v6h5V10" fill="#f6c7a8" stroke="#e07a5f" stroke-width="2" stroke-linejoin="round"/></svg>
+          <span>Home</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-subjects" data-page="subjects">
+          <svg viewBox="0 0 24 24" class="nav-icon" fill="none" stroke="#333" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2 0-1.5-1.5-1.8-1.5-3s1-2 2.5-2H18a3 3 0 0 0 3-3c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/></svg>
+          <span>Subjects</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-homeworks" data-page="homeworks">
+          <svg viewBox="0 0 24 24" class="nav-icon" fill="none" stroke="#333" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l5 5-11 11H5v-5z"/><path d="M13 6l5 5"/><path d="M3 21h18"/></svg>
+          <span>Homeworks</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-schedule" data-page="schedule">
+          <svg viewBox="0 0 24 24" class="nav-icon" fill="none" stroke="#333" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M7 14h2M11 14h2M15 14h2M7 17h2M11 17h2"/></svg>
+          <span>Schedule</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <section class="col-left">
+        <!-- HOME VIEW -->
+        <div class="view-panel" id="view-home">
+          <header class="greeting">
+            <img src="assets/avatar.jpg" alt="Roberta's profile picture" class="avatar" />
+            <h2>Hello,<br /><strong>Roberta</strong></h2>
+          </header>
+
+          <section class="quick-glance" aria-label="Today's Status">
+            <article class="card status-card" id="status-card">
+              <span class="status-card-tag" id="status-card-tag">STATUS</span>
+              <div class="status-now">
+                <h4 class="status-label" id="status-now-label">Happening Now</h4>
+                <div class="status-body">
+                  <span class="live-dot" id="live-dot" aria-label="Live"><span></span></span>
+                  <div>
+                    <p class="now-subject" id="now-subject">Writing</p>
+                    <p class="now-meta" id="now-time">10:00 – 11:30</p>
+                    <p class="now-meta now-room" id="now-room-wrap">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#555" stroke-width="2"><path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                      <span id="now-room">Salle-15</span>
+                    </p>
+                  </div>
+                </div>
+                <div class="progress" aria-label="Class progress"><span id="progress-bar"></span></div>
+              </div>
+              <div class="status-divider" aria-hidden="true"><span></span></div>
+              <div class="status-next">
+                <h4 class="status-label" id="status-next-label">Up Next</h4>
+                <div class="status-body">
+                  <div class="next-icon-wrap" aria-label="Next class">
+                    <span class="next-color-circle"></span>
+                    <svg viewBox="0 0 24 24" class="next-quill-svg" fill="none" stroke="#685bb8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 3 C11 4 6 11 5 18 L3 21" />
+                      <path d="M20 3 C19 11 13 17 5 18" />
+                      <path d="M12 11 L8 14" stroke-width="1.8" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="next-subject" id="next-subject">British History</p>
+                    <p class="next-meta" id="next-time">11:30 – 13:00 • Amphi 1</p>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <section class="schedule home-schedule-section" aria-label="Today's Schedule">
+            <div class="card schedule-card">
+              <h3 id="schedule-title" class="schedule-inner-title">Today's Schedule</h3>
+              <ul class="timeline" id="timeline"></ul>
+            </div>
+          </section>
+        </div>
+
+        <!-- DEDICATED SCHEDULE VIEW (Matches Reference Photo Exactly) -->
+        <div class="view-panel view-hidden" id="view-schedule">
+          <div class="schedule-view-header">
+            <h2 class="schedule-view-title">Schedule</h2>
+          </div>
+
+          <!-- Weekly Schedule Section -->
+          <section class="weekly-schedule-sec">
+            <div class="week-cards-row">
+              <!-- Monday (Active by default) -->
+              <div class="week-paper-card active-day" data-day="Mon">
+                <div class="paper-fold-corner"></div>
+                <div class="week-card-inner">
+                  <span class="week-day-title">Mon</span>
+                  <span class="week-class-badge badge-cream">5 Class</span>
+                </div>
+              </div>
+              <!-- Tuesday -->
+              <div class="week-paper-card" data-day="Tue">
+                <div class="paper-fold-corner"></div>
+                <div class="week-card-inner">
+                  <span class="week-day-title">Tue</span>
+                  <span class="week-class-badge badge-green">4 Class</span>
+                </div>
+              </div>
+              <!-- Wednesday -->
+              <div class="week-paper-card" data-day="Wed">
+                <div class="paper-fold-corner"></div>
+                <div class="week-card-inner">
+                  <span class="week-day-title">Wed</span>
+                  <span class="week-class-badge badge-yellow">4 Class</span>
+                </div>
+              </div>
+              <!-- Thursday -->
+              <div class="week-paper-card" data-day="Thu">
+                <div class="paper-fold-corner"></div>
+                <div class="week-card-inner">
+                  <span class="week-day-title">Thu</span>
+                  <span class="week-class-badge badge-blue">4 Class</span>
+                </div>
+              </div>
+              <!-- Friday -->
+              <div class="week-paper-card" data-day="Fri">
+                <div class="paper-fold-corner"></div>
+                <div class="week-card-inner">
+                  <span class="week-day-title">Fri</span>
+                  <span class="week-class-badge badge-yellow">5 Class</span>
+                </div>
+              </div>
+              <!-- Saturday -->
+              <div class="week-paper-card" data-day="Sat">
+                <div class="paper-fold-corner"></div>
+                <div class="week-card-inner">
+                  <span class="week-day-title">Sat</span>
+                  <span class="week-class-badge badge-peach">0 Class</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Today's Schedule Section (Exact Match) -->
+          <section class="today-schedule-detailed">
+            <h3 class="schedule-subheading" id="detailed-sched-subheading">Today's Schedule (Monday, Oct 19) — <span style="font-weight: 500; font-size: 14.5px; color: #786e63;">Groupe: 2ANG-AFF 1</span></h3>
+
+            <div class="detailed-timeline" id="detailed-timeline">
+              <!-- Item 1: Entrepreneurial Skills (Droit) -->
+              <div class="dtl-row">
+                <div class="dtl-side-connector">
+                  <div class="dtl-node-box">
+                    <svg viewBox="0 0 34 34" class="sched-subject-icon icon-scroll" fill="none">
+                      <rect x="7" y="6" width="20" height="22" rx="2.5" fill="#faf6ed" stroke="#25211e" stroke-width="1.8" />
+                      <line x1="11" y1="11" x2="23" y2="11" stroke="#25211e" stroke-width="1.4" stroke-linecap="round" />
+                      <line x1="11" y1="16" x2="23" y2="16" stroke="#25211e" stroke-width="1.4" stroke-linecap="round" />
+                      <line x1="11" y1="21" x2="18" y2="21" stroke="#25211e" stroke-width="1.4" stroke-linecap="round" />
+                      <circle cx="21" cy="21" r="2.5" fill="#e88971" stroke="#25211e" stroke-width="1.2" />
+                    </svg>
+                  </div>
+                  <svg class="svg-branch-line" viewBox="0 0 20 6" fill="none">
+                    <path d="M 1 2.9 L 5.5 3.1 M 8.5 2.9 L 13.5 3.0 M 16.5 3.1 L 20 2.9" stroke="#4a423a" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                  <svg class="svg-stem-down" viewBox="0 0 8 46" fill="none">
+                    <path d="M 4 2.5 L 3.9 8.1 M 4.1 13.1 L 3.8 19.3 M 4.2 24.3 L 4.0 30.9 M 3.9 35.9 L 4.1 42.5" stroke="#4a423a" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                </div>
+                <div class="dtl-card standard-card">
+                  <div class="dtl-main-info">
+                    <span class="dtl-time">08:30 – 10:00</span>
+                    <span class="dtl-dash">—</span>
+                    <span class="dtl-subject">Entrepreneurial Skills (Droit)</span>
+                    <span class="dtl-bullet">•</span>
+                    <span class="dtl-room">Salle-14</span>
+                  </div>
+                  <div class="dtl-prof-info">
+                    <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="#2b2623" stroke-width="1.6" stroke-linecap="round">
+                      <circle cx="10" cy="6" r="3.2" fill="#ffd8c2" stroke="#2b2623"/>
+                      <path d="M4 17c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+                    </svg>
+                    <span class="dtl-prof-name" dir="rtl">شنيس علي صلاح</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Item 2: Writing (ACTIVE NOW) -->
+              <div class="dtl-row dtl-row-active">
+                <div class="dtl-side-connector">
+                  <div class="dtl-node-box pulse-node-box">
+                    <span class="pulse-aura"></span>
+                    <span class="pulse-center"></span>
+                  </div>
+                  <svg class="svg-branch-line" viewBox="0 0 20 6" fill="none">
+                    <path d="M 1 2.9 L 5.2 3.1 M 8.2 2.8 L 13.2 3.0 M 16.2 3.1 L 20 2.9" stroke="#4a423a" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                  <svg class="svg-stem-down" viewBox="0 0 8 46" fill="none">
+                    <path d="M 4 2.5 L 4.1 8.2 M 3.9 13.2 L 4.2 19.2 M 4.0 24.2 L 3.8 30.8 M 4.1 35.8 L 3.9 42.5" stroke="#4a423a" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                </div>
+                <div class="dtl-card active-card">
+                  <svg class="doodle-sound-left" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 21 C 2 13, 8 5, 20 2" stroke="#df8e66" stroke-width="2.2" stroke-linecap="round" />
+                    <path d="M12 23 C 9 17, 13 10, 22 7" stroke="#df8e66" stroke-width="2.2" stroke-linecap="round" />
+                  </svg>
+                  <svg class="doodle-sound-right" viewBox="0 0 24 24" fill="none">
+                    <path d="M19 21 C 22 13, 16 5, 4 2" stroke="#df8e66" stroke-width="2.2" stroke-linecap="round" />
+                    <path d="M12 23 C 15 17, 11 10, 2 7" stroke="#df8e66" stroke-width="2.2" stroke-linecap="round" />
+                  </svg>
+
+                  <div class="dtl-active-inner">
+                    <div class="dtl-active-top">
+                      <div class="dtl-main-info">
+                        <span class="dtl-subject">Writing</span>
+                      </div>
+                    </div>
+                    <div class="dtl-active-meta-row">
+                      <span class="active-now-tag">Active Now</span>
+                      <span class="active-meta-room">Salle-15</span>
+                      <span class="meta-pipe">|</span>
+                      <span class="active-timespan">10:00 – 11:30</span>
+                    </div>
+                  </div>
+                  <div class="dtl-active-right-art">
+                    <svg viewBox="0 0 54 40" class="sched-open-book-svg" fill="none">
+                      <path d="M27 34 C19 32 9 32 2 34 L2 10 C9 8 19 8 27 10 C35 8 45 8 52 10 L52 34 C45 32 35 32 27 34 Z" fill="#9cb7cb" stroke="#25211e" stroke-width="1.8" stroke-linejoin="round"/>
+                      <path d="M27 31 C19 29 10 29 4 31 L4 8 C10 6 19 6 27 8 Z" fill="#ffffff" stroke="#25211e" stroke-width="1.6" stroke-linejoin="round"/>
+                      <path d="M27 31 C35 29 44 29 50 31 L50 8 C44 6 35 6 27 8 Z" fill="#ffffff" stroke="#25211e" stroke-width="1.6" stroke-linejoin="round"/>
+                      <line x1="27" y1="8" x2="27" y2="31" stroke="#25211e" stroke-width="1.8" stroke-linecap="round"/>
+                      <rect x="8" y="11" width="7" height="6" rx="1" fill="#e8cfbf" stroke="#25211e" stroke-width="1" />
+                      <line x1="18" y1="13" x2="23" y2="13" stroke="#25211e" stroke-width="1.2" stroke-linecap="round"/>
+                      <line x1="8" y1="21" x2="23" y2="21" stroke="#25211e" stroke-width="1.2" stroke-linecap="round"/>
+                      <line x1="8" y1="25" x2="20" y2="25" stroke="#25211e" stroke-width="1.2" stroke-linecap="round"/>
+                      <line x1="31" y1="13" x2="46" y2="13" stroke="#25211e" stroke-width="1.2" stroke-linecap="round"/>
+                      <line x1="31" y1="17" x2="46" y2="17" stroke="#25211e" stroke-width="1.2" stroke-linecap="round"/>
+                      <line x1="31" y1="21" x2="46" y2="21" stroke="#25211e" stroke-width="1.2" stroke-linecap="round"/>
+                      <line x1="31" y1="25" x2="43" y2="25" stroke="#25211e" stroke-width="1.2" stroke-linecap="round"/>
+                    </svg>
+                    <span class="active-prof-name" dir="rtl">نسرين بن الصادق</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Item 3: British History -->
+              <div class="dtl-row">
+                <div class="dtl-side-connector">
+                  <div class="dtl-node-box">
+                    <svg viewBox="0 0 32 36" class="sched-subject-icon icon-reading" fill="none">
+                      <rect x="5" y="3" width="22" height="30" rx="3.5" fill="#e5987d" stroke="#25211e" stroke-width="1.8" />
+                      <line x1="11" y1="3" x2="11" y2="33" stroke="#25211e" stroke-width="1.5" />
+                      <circle cx="8" cy="10" r="1.2" fill="#25211e" />
+                      <circle cx="8" cy="18" r="1.2" fill="#25211e" />
+                      <circle cx="8" cy="26" r="1.2" fill="#25211e" />
+                      <rect x="15" y="12" width="8" height="12" rx="1.5" fill="#faf6ed" stroke="#25211e" stroke-width="1.3" />
+                      <line x1="17" y1="16" x2="21" y2="16" stroke="#25211e" stroke-width="1" />
+                      <line x1="17" y1="19" x2="21" y2="19" stroke="#25211e" stroke-width="1" />
+                    </svg>
+                  </div>
+                  <svg class="svg-branch-line" viewBox="0 0 20 6" fill="none">
+                    <path d="M 1 3.1 L 5.4 2.9 M 8.4 3.0 L 13.4 3.2 M 16.4 2.9 L 20 3.0" stroke="#4a423a" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                  <svg class="svg-stem-down" viewBox="0 0 8 46" fill="none">
+                    <path d="M 4 2.5 L 3.9 8.1 M 4.1 13.1 L 3.8 19.3 M 4.2 24.3 L 4.0 30.9 M 3.9 35.9 L 4.1 42.5" stroke="#4a423a" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                </div>
+                <div class="dtl-card standard-card">
+                  <div class="dtl-main-info">
+                    <span class="dtl-time">11:30 – 13:00</span>
+                    <span class="dtl-dash">—</span>
+                    <span class="dtl-subject">British History</span>
+                    <span class="dtl-bullet">•</span>
+                    <span class="dtl-room">Amphi 1</span>
+                  </div>
+                  <div class="dtl-prof-info">
+                    <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="#2b2623" stroke-width="1.6" stroke-linecap="round">
+                      <circle cx="10" cy="6" r="3.2" fill="#ffd8c2" stroke="#2b2623"/>
+                      <path d="M4 17c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+                    </svg>
+                    <span class="dtl-prof-name" dir="rtl">عيادي روضة</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Break Cutout: 30 min break -->
+              <div class="dtl-row dtl-row-break">
+                <div class="dtl-side-connector dtl-break-connector">
+                  <div class="dtl-node-box dtl-break-node">
+                    <svg viewBox="0 0 34 34" class="sched-subject-icon icon-break" fill="none">
+                      <rect x="7" y="10" width="16" height="15" rx="3.5" fill="#ece6db" stroke="#25211e" stroke-width="1.7" />
+                      <path d="M23 13h2.5a3 3 0 0 1 0 6H23" stroke="#25211e" stroke-width="1.7" stroke-linecap="round" />
+                      <path d="M10 5.5c0 1.2 1 1.8 1 2.8M15 5.5c0 1.2 1 1.8 1 2.8M20 5.5c0 1.2 1 1.8 1 2.8" stroke="#8a7c6d" stroke-width="1.3" stroke-linecap="round" />
+                      <line x1="5" y1="27" x2="25" y2="27" stroke="#25211e" stroke-width="1.7" stroke-linecap="round" />
+                    </svg>
+                  </div>
+                  <svg class="svg-branch-line" viewBox="0 0 20 6" fill="none">
+                    <path d="M 1 2.9 L 5.5 3.1 M 8.5 2.9 L 13.5 3.0 M 16.5 3.1 L 20 2.9" stroke="#786f63" stroke-width="1.8" stroke-linecap="round" />
+                  </svg>
+                  <svg class="svg-stem-down" viewBox="0 0 8 46" fill="none">
+                    <path d="M 4 2.5 L 3.9 8.1 M 4.1 13.1 L 3.8 19.3 M 4.2 24.3 L 4.0 30.9 M 3.9 35.9 L 4.1 42.5" stroke="#786f63" stroke-width="1.8" stroke-linecap="round" />
+                  </svg>
+                </div>
+                <div class="dtl-card dtl-break-card">
+                  <div class="dtl-break-info">
+                    <span class="break-pill-tag">☕ 30 min break</span>
+                    <span class="dtl-dash">—</span>
+                    <span class="dtl-time break-time">01:00 PM – 01:30 PM</span>
+                    <span class="dtl-bullet">•</span>
+                    <span class="break-status-note">Recess / Free Time</span>
+                  </div>
+                  <div class="dtl-break-badge-wrap">
+                    <span class="break-cutout-tag">Empty Slot</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Item 4: Financial English 1 -->
+              <div class="dtl-row">
+                <div class="dtl-side-connector">
+                  <div class="dtl-node-box">
+                    <svg viewBox="0 0 34 34" class="sched-subject-icon icon-math" fill="none">
+                      <path d="M4 22 A 13 13 0 0 1 30 22 Z" fill="#faf6ed" stroke="#25211e" stroke-width="1.8" stroke-linejoin="round" />
+                      <path d="M11 22 A 6 6 0 0 1 23 22 Z" fill="#ffffff" stroke="#25211e" stroke-width="1.4" />
+                      <line x1="17" y1="9" x2="17" y2="12.5" stroke="#25211e" stroke-width="1.3" />
+                      <line x1="9.5" y1="14" x2="11.8" y2="16" stroke="#25211e" stroke-width="1.2" />
+                      <line x1="24.5" y1="14" x2="22.2" y2="16" stroke="#25211e" stroke-width="1.2" />
+                      <line x1="6.5" y1="19" x2="9" y2="19.5" stroke="#25211e" stroke-width="1.1" />
+                      <line x1="27.5" y1="19" x2="25" y2="19.5" stroke="#25211e" stroke-width="1.1" />
+                    </svg>
+                  </div>
+                  <svg class="svg-branch-line" viewBox="0 0 20 6" fill="none">
+                    <path d="M 1 2.9 L 5.5 3.1 M 8.5 2.9 L 13.5 3.0 M 16.5 3.1 L 20 2.9" stroke="#4a423a" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                  <svg class="svg-stem-down" viewBox="0 0 8 46" fill="none">
+                    <path d="M 4 2.5 L 3.9 8.1 M 4.1 13.1 L 3.8 19.3 M 4.2 24.3 L 4.0 30.9 M 3.9 35.9 L 4.1 42.5" stroke="#4a423a" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                </div>
+                <div class="dtl-card standard-card">
+                  <div class="dtl-main-info">
+                    <span class="dtl-time">01:30 PM – 02:30 PM</span>
+                    <span class="dtl-dash">—</span>
+                    <span class="dtl-subject">Financial English 1</span>
+                    <span class="dtl-bullet">•</span>
+                    <span class="dtl-room">Amphi 6</span>
+                  </div>
+                  <div class="dtl-prof-info">
+                    <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="#2b2623" stroke-width="1.6" stroke-linecap="round">
+                      <circle cx="10" cy="6" r="3.2" fill="#ffd8c2" stroke="#2b2623"/>
+                      <path d="M4 17c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+                    </svg>
+                    <span class="dtl-prof-name" dir="rtl">غربي إيمان</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Item 5: Drama / Poetry / Novel -->
+              <div class="dtl-row">
+                <div class="dtl-side-connector">
+                  <div class="dtl-node-box">
+                    <svg viewBox="0 0 32 36" class="sched-subject-icon icon-reading" fill="none">
+                      <rect x="5" y="3" width="22" height="30" rx="3.5" fill="#e5987d" stroke="#25211e" stroke-width="1.8" />
+                      <line x1="11" y1="3" x2="11" y2="33" stroke="#25211e" stroke-width="1.5" />
+                      <circle cx="8" cy="10" r="1.2" fill="#25211e" />
+                      <circle cx="8" cy="18" r="1.2" fill="#25211e" />
+                      <circle cx="8" cy="26" r="1.2" fill="#25211e" />
+                      <rect x="15" y="12" width="8" height="12" rx="1.5" fill="#faf6ed" stroke="#25211e" stroke-width="1.3" />
+                      <line x1="17" y1="16" x2="21" y2="16" stroke="#25211e" stroke-width="1" />
+                      <line x1="17" y1="19" x2="21" y2="19" stroke="#25211e" stroke-width="1" />
+                    </svg>
+                  </div>
+                  <svg class="svg-branch-line" viewBox="0 0 20 6" fill="none">
+                    <path d="M 1 2.9 L 5.5 3.1 M 8.5 2.9 L 13.5 3.0 M 16.5 3.1 L 20 2.9" stroke="#4a423a" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                </div>
+                <div class="dtl-card standard-card">
+                  <div class="dtl-main-info">
+                    <span class="dtl-time">02:30 PM – 04:00 PM</span>
+                    <span class="dtl-dash">—</span>
+                    <span class="dtl-subject">Drama / Poetry / Novel</span>
+                    <span class="dtl-bullet">•</span>
+                    <span class="dtl-room">lab-3</span>
+                  </div>
+                  <div class="dtl-prof-info">
+                    <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="#2b2623" stroke-width="1.6" stroke-linecap="round">
+                      <circle cx="10" cy="6" r="3.2" fill="#ffd8c2" stroke="#2b2623"/>
+                      <path d="M4 17c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+                    </svg>
+                    <span class="dtl-prof-name" dir="rtl">بن شهيدة مريم</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- DEDICATED SUBJECTS VIEW (Matches Reference Photo Exactly) -->
+        <div class="view-panel view-hidden" id="view-subjects">
+          <div class="subjects-view-header">
+            <div class="subjects-view-title-wrap">
+              <h2 class="subjects-view-title">Subjects</h2>
+            </div>
+          </div>
+
+          <!-- 2x2 Bento Grid of Subjects with Hand-Drawn Imperfect Style & Exact Schedule Data -->
+          <div class="subjects-bento-grid" id="subjects-bento-grid">
+            <!-- 1. Drama / Poetry / Novel -->
+            <article class="bento-subject-card card-peach">
+              <div class="bento-card-top">
+                <div class="bento-card-text">
+                  <h3 class="bento-card-title">Drama / Poetry / Novel</h3>
+                </div>
+                <div class="bento-card-art">
+                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-theater" fill="none">
+                    <path d="M7 8 C7 5 11 5 17 5 C23 5 27 5 27 8 C27 15 24 23 17 26 C10 23 7 15 7 8 Z" fill="#faeee9" stroke="#25211e" stroke-width="1.8" stroke-linejoin="round"/>
+                    <ellipse cx="13" cy="12" rx="2" ry="3" fill="#25211e"/>
+                    <ellipse cx="21" cy="12" rx="2" ry="3" fill="#25211e"/>
+                    <path d="M12 18 C14 22 20 22 22 18" stroke="#25211e" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="bento-prof-row">
+                <span class="bento-prof-name" dir="rtl">بن شهيدة مريم</span>
+              </div>
+            </article>
+
+            <!-- 2. Writing -->
+            <article class="bento-subject-card card-blue">
+              <div class="bento-card-top">
+                <div class="bento-card-text">
+                  <h3 class="bento-card-title">Writing</h3>
+                </div>
+                <div class="bento-card-art">
+                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-writing" fill="none">
+                    <g transform="rotate(-45 17 15)">
+                      <path d="M12 24 H22 V28 C22 29.5 20.5 30 17 30 C13.5 30 12 29.5 12 28 Z" fill="#e88971" stroke="#25211e" stroke-width="1.6" stroke-linejoin="round" />
+                      <rect x="12" y="21" width="10" height="3" fill="#cfcbc0" stroke="#25211e" stroke-width="1.4" />
+                      <rect x="12" y="7" width="10" height="14" fill="#f8cd62" stroke="#25211e" stroke-width="1.6" />
+                      <line x1="15.5" y1="7" x2="15.5" y2="21" stroke="#e0a936" stroke-width="1.2" />
+                      <line x1="18.5" y1="7" x2="18.5" y2="21" stroke="#e0a936" stroke-width="1.2" />
+                      <polygon points="12,7 22,7 17,-1" fill="#fdf2d8" stroke="#25211e" stroke-width="1.6" stroke-linejoin="round" />
+                      <polygon points="15.2,1.8 18.8,1.8 17,-1" fill="#25211e" />
+                    </g>
+                    <line x1="8" y1="28" x2="28" y2="28" stroke="#25211e" stroke-width="1.6" stroke-linecap="round" />
+                  </svg>
+                </div>
+              </div>
+              <div class="bento-prof-row">
+                <span class="bento-prof-name" dir="rtl">نسرين بن الصادق</span>
+              </div>
+            </article>
+
+            <!-- 3. British History -->
+            <article class="bento-subject-card card-green">
+              <div class="bento-card-top">
+                <div class="bento-card-text">
+                  <h3 class="bento-card-title">British History</h3>
+                </div>
+                <div class="bento-card-art">
+                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-history" fill="none">
+                    <path d="M6 7 H28 V10 H6 Z" fill="#faf6ed" stroke="#25211e" stroke-width="1.7" stroke-linejoin="round"/>
+                    <path d="M9 10 V24 M14.3 10 V24 M19.7 10 V24 M25 10 V24" stroke="#25211e" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M5 24 H29 V28 H5 Z" fill="#faf6ed" stroke="#25211e" stroke-width="1.7" stroke-linejoin="round"/>
+                    <circle cx="17" cy="8.5" r="1.2" fill="#5b8fc9"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="bento-prof-row">
+                <span class="bento-prof-name" dir="rtl">عيادي روضة</span>
+              </div>
+            </article>
+
+            <!-- 4. Financial English 1 -->
+            <article class="bento-subject-card card-purple">
+              <div class="bento-card-top">
+                <div class="bento-card-text">
+                  <h3 class="bento-card-title">Financial English 1</h3>
+                </div>
+                <div class="bento-card-art">
+                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-finance" fill="none">
+                    <circle cx="17" cy="17" r="11" fill="#fcfaf2" stroke="#25211e" stroke-width="1.8"/>
+                    <circle cx="17" cy="17" r="8" stroke="#5bae86" stroke-width="1.4" stroke-dasharray="2 2"/>
+                    <path d="M17 11 V23 M14 14 H19.5 C20.5 14 21 14.8 21 15.5 C21 16.5 20 17 17 17 C14 17 13 17.5 13 18.5 C13 19.5 14 20 15 20 H20" stroke="#25211e" stroke-width="1.7" stroke-linecap="round"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="bento-prof-row">
+                <span class="bento-prof-name" dir="rtl">غربي إيمان</span>
+              </div>
+            </article>
+
+            <!-- 5. Entrepreneurial Skills (Droit) -->
+            <article class="bento-subject-card card-peach">
+              <div class="bento-card-top">
+                <div class="bento-card-text">
+                  <h3 class="bento-card-title">Entrepreneurial Skills (Droit)</h3>
+                </div>
+                <div class="bento-card-art">
+                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-law" fill="none">
+                    <path d="M8 8 C8 6 10 5 13 5 H23 C26 5 28 6.5 28 9 C28 11.5 26 12 24 12 H10 C8 12 7 13 7 15 V25 C7 27 8.5 28 11 28 H21 C24 28 26 27 26 25" stroke="#25211e" stroke-width="1.7" stroke-linecap="round" fill="#fcf8f0"/>
+                    <line x1="11" y1="17" x2="21" y2="17" stroke="#25211e" stroke-width="1.3" stroke-linecap="round"/>
+                    <line x1="11" y1="21" x2="18" y2="21" stroke="#25211e" stroke-width="1.3" stroke-linecap="round"/>
+                    <circle cx="21" cy="24" r="3" fill="#e0835f" stroke="#25211e" stroke-width="1.3"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="bento-prof-row">
+                <span class="bento-prof-name" dir="rtl">شنيس علي صلاح</span>
+              </div>
+            </article>
+
+            <!-- 6. Commercial English 1 -->
+            <article class="bento-subject-card card-blue">
+              <div class="bento-card-top">
+                <div class="bento-card-text">
+                  <h3 class="bento-card-title">Commercial English 1</h3>
+                </div>
+                <div class="bento-card-art">
+                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-business" fill="none">
+                    <rect x="5" y="11" width="24" height="17" rx="3" fill="#faf6ed" stroke="#25211e" stroke-width="1.8"/>
+                    <path d="M12 11 V8 C12 7 13 6 14 6 H20 C21 6 22 7 22 8 V11" stroke="#25211e" stroke-width="1.7"/>
+                    <line x1="5" y1="17" x2="29" y2="17" stroke="#25211e" stroke-width="1.3"/>
+                    <rect x="15" y="15" width="4" height="4" rx="1" fill="#f8cd62" stroke="#25211e" stroke-width="1.2"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="bento-prof-row">
+                <span class="bento-prof-name" dir="rtl">الشرقي سهلة</span>
+              </div>
+            </article>
+
+            <!-- 7. Introduction to Linguistics -->
+            <article class="bento-subject-card card-green">
+              <div class="bento-card-top">
+                <div class="bento-card-text">
+                  <h3 class="bento-card-title">Introduction to Linguistics</h3>
+                </div>
+                <div class="bento-card-art">
+                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-linguistics" fill="none">
+                    <circle cx="17" cy="17" r="12" fill="#faf6ed" stroke="#25211e" stroke-width="1.7"/>
+                    <line x1="8" y1="17" x2="10" y2="17" stroke="#25211e" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="12" y1="13" x2="12" y2="21" stroke="#e0835f" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="16" y1="9" x2="16" y2="25" stroke="#25211e" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="20" y1="12" x2="20" y2="22" stroke="#e0835f" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="24" y1="15" x2="24" y2="19" stroke="#25211e" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="bento-prof-row">
+                <span class="bento-prof-name" dir="rtl">رانية الإدريس</span>
+              </div>
+            </article>
+
+            <!-- 8. Literary Trends -->
+            <article class="bento-subject-card card-purple">
+              <div class="bento-card-top">
+                <div class="bento-card-text">
+                  <h3 class="bento-card-title">Literary Trends</h3>
+                </div>
+                <div class="bento-card-art">
+                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-literature" fill="none">
+                    <path d="M17 10 C19 8 23 8 28 9 V23 C23 22 19 23 17 25 C15 23 11 22 6 23 V9 C11 8 15 8 17 10 Z" fill="#faf5ec" stroke="#25211e" stroke-width="1.8" stroke-linejoin="round"/>
+                    <line x1="17" y1="10" x2="17" y2="25" stroke="#25211e" stroke-width="1.6"/>
+                    <path d="M20 13 H25 M20 17 H24" stroke="#7a6fc4" stroke-width="1.2" stroke-linecap="round"/>
+                    <path d="M9 13 H14 M10 17 H14" stroke="#7a6fc4" stroke-width="1.2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="bento-prof-row">
+                <span class="bento-prof-name" dir="rtl">عنيف حافظ</span>
+              </div>
+            </article>
+
+            <!-- 9. US History -->
+            <article class="bento-subject-card card-peach">
+              <div class="bento-card-top">
+                <div class="bento-card-text">
+                  <h3 class="bento-card-title">US History</h3>
+                </div>
+                <div class="bento-card-art">
+                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-history" fill="none">
+                    <path d="M6 7 H28 V10 H6 Z" fill="#faf6ed" stroke="#25211e" stroke-width="1.7" stroke-linejoin="round"/>
+                    <path d="M9 10 V24 M14.3 10 V24 M19.7 10 V24 M25 10 V24" stroke="#25211e" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M5 24 H29 V28 H5 Z" fill="#faf6ed" stroke="#25211e" stroke-width="1.7" stroke-linejoin="round"/>
+                    <circle cx="17" cy="8.5" r="1.2" fill="#5b8fc9"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="bento-prof-row">
+                <span class="bento-prof-name" dir="rtl">كعمون وسيم</span>
+              </div>
+            </article>
+
+            <!-- 10. Grammar in Context -->
+            <article class="bento-subject-card card-blue">
+              <div class="bento-card-top">
+                <div class="bento-card-text">
+                  <h3 class="bento-card-title">Grammar in Context</h3>
+                </div>
+                <div class="bento-card-art">
+                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-grammar" fill="none">
+                    <rect x="5" y="6" width="24" height="22" rx="3.5" fill="#f4f9f7" stroke="#25211e" stroke-width="1.7"/>
+                    <path d="M10 13 C10 11 11.5 10 13.5 10 C14.5 10 15 11 15 12 C15 14.5 12 16.5 10.5 17" stroke="#5bae86" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M17 13 C17 11 18.5 10 20.5 10 C21.5 10 22 11 22 12 C22 14.5 19 16.5 17.5 17" stroke="#5bae86" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="10" y1="21" x2="24" y2="21" stroke="#25211e" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="bento-prof-row">
+                <span class="bento-prof-name" dir="rtl">العفاس نجلاء</span>
+              </div>
+            </article>
+
+            <!-- 11. Other Languages (French & Arabic) -->
+            <article class="bento-subject-card card-green">
+              <div class="bento-card-top">
+                <div class="bento-card-text">
+                  <h3 class="bento-card-title">Other Languages (French &amp; Arabic)</h3>
+                </div>
+                <div class="bento-card-art">
+                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-language" fill="none">
+                    <path d="M5 8 C5 6 7 4 10 4 H21 C24 4 26 6 26 8 V16 C26 18 24 20 21 20 H12 L6 24 V20 C5 20 5 19 5 18 Z" fill="#fdfaf2" stroke="#25211e" stroke-width="1.7" stroke-linejoin="round"/>
+                    <path d="M10 11 H21 M10 15 H17" stroke="#5b8fc9" stroke-width="1.6" stroke-linecap="round"/>
+                    <circle cx="25" cy="23" r="4.5" fill="#e8987a" stroke="#25211e" stroke-width="1.4"/>
+                    <text x="23" y="25" font-size="6" font-weight="bold" fill="#fff" font-family="sans-serif">A</text>
+                  </svg>
+                </div>
+              </div>
+              <div class="bento-prof-row">
+                <span class="bento-prof-name" dir="rtl">بن علي حافظ / مريم الهماصي</span>
+              </div>
+            </article>
+
+            <!-- 12. Activités pratiques (TEFL) -->
+            <article class="bento-subject-card card-purple">
+              <div class="bento-card-top">
+                <div class="bento-card-text">
+                  <h3 class="bento-card-title">Activités pratiques (TEFL)</h3>
+                </div>
+                <div class="bento-card-art">
+                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-tefl" fill="none">
+                    <polygon points="17,6 29,12 17,18 5,12" fill="#faf6ed" stroke="#25211e" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M9 14.5 V21 C9 23 12 25 17 25 C22 25 25 23 25 21 V14.5" stroke="#25211e" stroke-width="1.6"/>
+                    <path d="M29 12 V20" stroke="#e0835f" stroke-width="1.6" stroke-linecap="round"/>
+                    <circle cx="29" cy="21" r="1.3" fill="#e0835f"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="bento-prof-row">
+                <span class="bento-prof-name" dir="rtl">رانية الإدريس</span>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- DEDICATED HOMEWORK & REMINDERS VIEW -->
+        <div class="view-panel view-hidden" id="view-homeworks">
+          <div class="homeworks-view-header">
+            <div class="homeworks-view-title-wrap">
+              <h2 class="homeworks-view-title">Homework &amp; Reminders</h2>
+            </div>
+          </div>
+
+          <div class="hw-tasks-container" id="hw-tasks-list">
+            <!-- Dynamically populated from JavaScript -->
+          </div>
+        </div>
+      </section>
+
+      <section class="col-right">
+        <!-- Date & Search Header Bar: Pinned cleanly above homework note -->
+        <div class="date-search-bar">
+          <div class="date-calendar-wrap">
+            <span class="date-text" id="today-date">Saturday, Oct 24, 2026</span>
+          </div>
+          <div class="search-row">
+            <label class="search-pill" for="search-input">
+              <svg viewBox="0 0 24 24" class="search-icon" fill="none" stroke="#5d534b" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+              <input type="search" id="search-input" placeholder="Search courses..." autocomplete="off" />
+            </label>
+          </div>
+        </div>
+
+        <!-- 1. Home & Schedule view: Paper Note Pin Tall for Homework & Reminders -->
+        <section class="homework sticky sticky-home-view" id="sticky-homework-note" aria-labelledby="hw-title">
+          <img src="assets/paper note pin tall.png" alt="Paper note background" class="paper-bg-img" aria-hidden="true" />
+          
+          <div class="sticky-inner">
+            <div class="sticky-header">
+              <h3 id="hw-title" class="sticky-title">Homework &amp; Reminders</h3>
+              <svg class="hand-underline" viewBox="0 0 220 10" fill="none" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M 2 5 Q 40 7.5, 80 4 T 150 6 T 218 5" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <ul class="hw-card" id="hw-list">
+              <li>
+                <label>
+                  <input type="checkbox" id="hw-1" checked />
+                  <span class="custom-chk">
+                    <svg viewBox="0 0 20 20" class="chk-svg">
+                      <rect x="2" y="2" width="16" height="16" rx="2.5" class="box-stroke" />
+                      <path d="M4 9.5 L8 14.5 L16.5 2.5" class="tick-stroke" />
+                    </svg>
+                  </span>
+                  <span class="hw-text">Read Act 1 &amp; 2 (Due Mon)</span>
+                </label>
+              </li>
+              <li>
+                <label>
+                  <input type="checkbox" id="hw-2" />
+                  <span class="custom-chk">
+                    <svg viewBox="0 0 20 20" class="chk-svg">
+                      <rect x="2" y="2" width="16" height="16" rx="2.5" class="box-stroke" />
+                      <path d="M4 9.5 L8 14.5 L16.5 2.5" class="tick-stroke" />
+                    </svg>
+                  </span>
+                  <span class="hw-text">Essay: Entrepreneurial Skills<br />(Due Tue)</span>
+                </label>
+              </li>
+              <li>
+                <label>
+                  <input type="checkbox" id="hw-3" />
+                  <span class="custom-chk">
+                    <svg viewBox="0 0 20 20" class="chk-svg">
+                      <rect x="2" y="2" width="16" height="16" rx="2.5" class="box-stroke" />
+                      <path d="M4 9.5 L8 14.5 L16.5 2.5" class="tick-stroke" />
+                    </svg>
+                  </span>
+                  <span class="hw-text">Writing Assignment (Due Wed)</span>
+                </label>
+              </li>
+              <li>
+                <label>
+                  <input type="checkbox" id="hw-4" />
+                  <span class="custom-chk">
+                    <svg viewBox="0 0 20 20" class="chk-svg">
+                      <rect x="2" y="2" width="16" height="16" rx="2.5" class="box-stroke" />
+                      <path d="M4 9.5 L8 14.5 L16.5 2.5" class="tick-stroke" />
+                    </svg>
+                  </span>
+                  <span class="hw-text">Math HW 4 (Due Fri)</span>
+                </label>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 2. Subjects view only: notes.png Paperclip Note (Quick Materials & Class Representatives) -->
+        <section class="subjects-side-wrap view-hidden" id="subjects-side-wrap">
+          <div class="sticky-paperclip-card">
+            <!-- Authentic user-provided notes.png paper background -->
+            <img src="assets/notes.png" alt="Clipped note paper" class="paperclip-bg-img" aria-hidden="true" />
+            <div class="paperclip-inner">
+              <h3 class="paperclip-title">Quick Materials</h3>
+              <div class="paperclip-links">
+                <a href="#" class="paperclip-item" onclick="event.preventDefault()">
+                  <span class="paperclip-folder-icon">📁</span>
+                  <span class="paperclip-item-label">Shared Drive Link</span>
+                </a>
+                <a href="#" class="paperclip-item" onclick="event.preventDefault()">
+                  <span class="paperclip-folder-icon">📁</span>
+                  <span class="paperclip-item-label">Past Exams Vault</span>
+                </a>
+                <a href="#" class="paperclip-item" onclick="event.preventDefault()">
+                  <span class="paperclip-folder-icon">📁</span>
+                  <span class="paperclip-item-label">Vocabulary &amp; Term Glossary</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- 3. Homeworks view only: notes.png Paperclip Note with Quick Actions -->
+        <section class="homeworks-side-wrap view-hidden" id="homeworks-side-wrap">
+          <div class="sticky-paperclip-card">
+            <!-- Authentic clean unlined paper background for Quick Actions -->
+            <img src="assets/notes_clean.png" alt="Clipped note paper" class="paperclip-bg-img" aria-hidden="true" />
+            <div class="paperclip-inner homeworks-note-inner">
+              <h3 class="homeworks-note-title">Quick Actions</h3>
+              <div class="quick-actions-buttons">
+                <button type="button" class="quick-action-btn" id="btn-quick-add-hw">
+                  <span class="qa-btn-icon">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1a1816" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </span>
+                  <span>Add Homework</span>
+                </button>
+                <button type="button" class="quick-action-btn" id="btn-quick-add-rem">
+                  <span class="qa-btn-icon">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1a1816" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </span>
+                  <span>Add Reminder</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right column clean: Date, Search, Homework & Reminders -->
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal: Add Homework / Reminder -->
+  <div class="task-modal-backdrop view-hidden" id="task-modal">
+    <div class="task-modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-task-title">
+      <div class="task-modal-header">
+        <h3 class="task-modal-title" id="modal-task-title">Add Homework</h3>
+        <button type="button" class="task-modal-close" id="modal-task-close" aria-label="Close dialog">&times;</button>
+      </div>
+      <form class="task-modal-form" id="task-modal-form">
+        <input type="hidden" id="modal-task-type" value="homework" />
+        
+        <div class="modal-form-group" id="modal-group-subject">
+          <label class="modal-form-label" for="modal-task-subject">Subject</label>
+          <select class="modal-form-select" id="modal-task-subject" required>
+            <option value="Writing">Writing</option>
+            <option value="British History">British History</option>
+            <option value="Financial English 1">Financial English 1</option>
+            <option value="Drama / Poetry / Novel">Drama / Poetry / Novel</option>
+            <option value="Commercial English 1">Commercial English 1</option>
+            <option value="Entrepreneurial Skills (Droit)">Entrepreneurial Skills (Droit)</option>
+            <option value="Introduction to Linguistics">Introduction to Linguistics</option>
+            <option value="Literary Trends">Literary Trends</option>
+            <option value="US History">US History</option>
+            <option value="Grammar in Context">Grammar in Context</option>
+            <option value="Other Languages">Other Languages</option>
+            <option value="Activités pratiques (TEFL)">Activités pratiques (TEFL)</option>
+            <option value="General">General / Study</option>
+          </select>
+        </div>
+
+        <div class="modal-form-group">
+          <label class="modal-form-label" for="modal-task-desc">Task / Description</label>
+          <input type="text" class="modal-form-input" id="modal-task-desc" placeholder="e.g. Read chapters 1 &amp; 2" required autocomplete="off" />
+        </div>
+
+        <div class="modal-form-group">
+          <label class="modal-form-label" for="modal-task-due">Due Date (Auto-deletes when reached)</label>
+          <input type="date" class="modal-form-input" id="modal-task-due" required />
+        </div>
+
+        <div class="task-modal-actions">
+          <button type="button" class="task-btn-cancel" id="modal-task-cancel">Cancel</button>
+          <button type="submit" class="task-btn-save" id="modal-task-submit">
+            <span id="modal-submit-text">Add Task</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js?v=17"></script>
+</body>
+</html>

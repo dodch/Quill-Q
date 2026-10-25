@@ -1,36 +1,16 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Quill-Q - University Student Schedule & Academic Hub
 
-## Getting Started
+A study dashboard and course schedule web application designed with tactile hand-drawn aesthetics, organic paper notes, and animated timelines.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Dynamic University Timetable**: Interactive daily schedules with live class status, breaks, and professor attributions.
+- **Subjects Bento Grid**: Course cards with hand-drawn imperfect borders and custom course doodles.
+- **Homework & Reminders**: Curled-corner paper cards (Martin Wolf pure CSS paper-lift effect) with pastel sky blue and baby pink color-coding, checkbox persistence, and automatic due-date expiration.
+- **Paperclip Quick Notes**: Side notes pinned with clips for Quick Materials and Quick Actions.
+- **Local Persistence**: Stores task completions and entries via `localStorage`.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Technologies
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Vanilla HTML5, CSS3, and JavaScript
+- Google Fonts (`Outfit`, `Patrick Hand`)
