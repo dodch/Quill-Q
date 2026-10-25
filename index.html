@@ -8,7 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=53" />
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css" />
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
+  <link rel="stylesheet" href="styles.css?v=54" />
 </head>
 <body>
   <!-- Landing Page Screen -->
@@ -154,7 +156,7 @@
               />
               <span class="onboarding-avatar-initial" id="onboarding-avatar-initial" style="display: none;">Q</span>
             </div>
-            <span class="onboarding-avatar-badge" id="onboarding-avatar-badge">🎓</span>
+            <span class="onboarding-avatar-badge" id="onboarding-avatar-badge"><i class="fi fi-ss-student"></i></span>
           </div>
           <h2 class="auth-card-title" id="onboarding-title">Create Your Profile</h2>
           <p class="auth-card-subtitle">Tell us a bit about yourself to personalize your Quill-Q workspace.</p>
@@ -166,7 +168,7 @@
             <label class="onboarding-label">Are you a Student or Teacher? <span class="required-star">*</span></label>
             <div class="role-selector-row">
               <button type="button" class="role-chip selected" id="role-label-student" data-role="student">
-                <span class="role-chip-icon">🎓</span>
+                <span class="role-chip-icon"><i class="fi fi-ss-student"></i></span>
                 <div class="role-chip-info">
                   <span class="role-chip-title">Student</span>
                   <span class="role-chip-desc">Assignments & Timetable</span>
@@ -175,7 +177,7 @@
               </button>
 
               <button type="button" class="role-chip" id="role-label-teacher" data-role="teacher">
-                <span class="role-chip-icon">👨‍🏫</span>
+                <span class="role-chip-icon"><i class="fi fi-sr-chalkboard-user"></i></span>
                 <div class="role-chip-info">
                   <span class="role-chip-title">Teacher</span>
                   <span class="role-chip-desc">Lectures & Courses</span>
@@ -233,6 +235,7 @@
               </select>
             </div>
 
+            <!-- Student: Group 1 / 2 Dropdown -->
             <div class="onboarding-group flex-1" id="onboarding-group-academic">
               <label class="onboarding-label" id="onboarding-academic-label" for="onboarding-academic-select">
                 Department / Group <span class="required-star">*</span>
@@ -242,6 +245,14 @@
                 <option value="English Business Grp 1">English Business Grp 1</option>
                 <option value="English Business Grp 2">English Business Grp 2</option>
               </select>
+            </div>
+
+            <!-- Teacher: Subject is automatically known from name, displayed cleanly without needing manual re-selection -->
+            <div class="onboarding-group flex-1 view-hidden" id="onboarding-group-teacher-subject">
+              <label class="onboarding-label" for="onboarding-teacher-subject-val">
+                Course / Subject <span class="badge-auto">Auto-assigned</span>
+              </label>
+              <input type="text" class="modal-form-input readonly-input" id="onboarding-teacher-subject-val" readonly placeholder="Auto-filled from teacher name" />
             </div>
           </div>
 
@@ -354,7 +365,7 @@
             <div class="greeting-user-meta">
               <h2>Hello,<br /><strong id="home-greeting-name">Roberta</strong></h2>
               <div class="user-role-chip" id="home-user-role-chip">
-                <span class="user-role-icon" id="home-user-role-icon">🎓</span>
+                <span class="user-role-icon" id="home-user-role-icon"><i class="fi fi-ss-student"></i></span>
                 <span class="user-role-text" id="home-user-role-text">Student</span>
                 <span class="user-role-dot" id="home-user-role-dot">•</span>
                 <span class="user-role-academic" id="home-user-academic">Year 2</span>

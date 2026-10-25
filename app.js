@@ -1581,7 +1581,7 @@ function applyProfileToUI(profile) {
 
   if (homeAvatar) homeAvatar.src = avatarUrl;
   if (homeName) homeName.textContent = greetingName;
-  if (homeRoleIcon) homeRoleIcon.textContent = isTeacher ? "👨‍🏫" : "🎓";
+  if (homeRoleIcon) homeRoleIcon.innerHTML = isTeacher ? '<i class="fi fi-sr-chalkboard-user"></i>' : '<i class="fi fi-ss-student"></i>';
   if (homeRoleText) homeRoleText.textContent = roleDisplay;
   if (homeRoleAcademic) homeRoleAcademic.textContent = academicDisplay;
 
@@ -1641,30 +1641,16 @@ function initFirebaseAuthAndProfile() {
   const onboardingName = document.getElementById("onboarding-name");
   const onboardingSurname = document.getElementById("onboarding-surname");
   const onboardingGender = document.getElementById("onboarding-gender");
-  const onboardingAcademicLabel = document.getElementById("onboarding-academic-label");
+  const onboardingGroupAcademic = document.getElementById("onboarding-group-academic");
   const onboardingAcademicSelect = document.getElementById("onboarding-academic-select");
+  const onboardingGroupTeacherSubject = document.getElementById("onboarding-group-teacher-subject");
+  const onboardingTeacherSubjectVal = document.getElementById("onboarding-teacher-subject-val");
   const roleLabelStudent = document.getElementById("role-label-student");
   const roleLabelTeacher = document.getElementById("role-label-teacher");
   const roleSelectedVal = document.getElementById("role-selected-val");
   const btnSubmitOnboarding = document.getElementById("btn-submit-onboarding");
   const btnSubmitOnboardingText = document.getElementById("btn-submit-onboarding-text");
   const btnSidebarLogout = document.getElementById("btn-sidebar-logout");
-
-  const SCHEDULE_SUBJECTS = [
-    "Writing",
-    "British History",
-    "Financial English 1",
-    "Drama / Poetry / Novel",
-    "Commercial English 1",
-    "Entrepreneurial Skills (Droit)",
-    "Introduction to Linguistics",
-    "Literary Trends",
-    "US History",
-    "Grammar in Context",
-    "Other Languages (French)",
-    "Other Languages (Arabic)",
-    "Activités pratiques (TEFL)"
-  ];
 
   const SCHEDULE_TEACHERS = [
     { name: "نسرين بن الصادق", subject: "Writing", gender: "Female" },
@@ -1682,7 +1668,7 @@ function initFirebaseAuthAndProfile() {
     { name: "غمامي سناء", subject: "Drama / Poetry / Novel", gender: "Female" },
     { name: "كلثوم بالوافي", subject: "Drama / Poetry / Novel", gender: "Female" },
     { name: "غربي أحمد عبد العزيز", subject: "Financial English 1", gender: "Male" },
-    { name: "الغندري أحلام", subject: "Entrepreneurial Skills (Droit)", gender: "Female" }
+    { name: "الغندري أحلام", subject: "Entrepreneurial Skills", gender: "Female" }
   ];
 
   function showOnboardingStep(user) {
@@ -1715,6 +1701,20 @@ function initFirebaseAuthAndProfile() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function syncTeacherDetails() {
+    if (!onboardingTeacherSelect) return;
+    const selectedName = onboardingTeacherSelect.value;
+    const matchedTeacher = SCHEDULE_TEACHERS.find((t) => t.name === selectedName);
+    if (matchedTeacher) {
+      if (onboardingTeacherSubjectVal) {
+        onboardingTeacherSubjectVal.value = matchedTeacher.subject;
+      }
+      if (onboardingGender) {
+        onboardingGender.value = matchedTeacher.gender;
+      }
+    }
+  }
+
   function selectRole(role) {
     const isTeacher = role === "teacher";
     if (roleSelectedVal) roleSelectedVal.value = role;
@@ -1722,60 +1722,35 @@ function initFirebaseAuthAndProfile() {
     if (isTeacher) {
       if (roleLabelTeacher) roleLabelTeacher.classList.add("selected");
       if (roleLabelStudent) roleLabelStudent.classList.remove("selected");
-      if (onboardingAvatarBadge) onboardingAvatarBadge.textContent = "👨‍🏫";
+      if (onboardingAvatarBadge) onboardingAvatarBadge.innerHTML = '<i class="fi fi-sr-chalkboard-user"></i>';
 
       // Show Teacher Name dropdown, hide manual student name inputs
       if (rowStudentName) rowStudentName.classList.add("view-hidden");
       if (groupTeacherName) groupTeacherName.classList.remove("view-hidden");
 
-      if (onboardingTeacherSelect) {
-        onboardingTeacherSelect.innerHTML = `
-          <option value="" disabled selected>Select your name from the schedule</option>
-          ${SCHEDULE_TEACHERS.map((t) => `<option value="${t.name}">${t.name} (${t.subject})</option>`).join("")}
-        `;
-      }
+      // For teacher: hide student group select, show auto-assigned subject
+      if (onboardingGroupAcademic) onboardingGroupAcademic.classList.add("view-hidden");
+      if (onboardingGroupTeacherSubject) onboardingGroupTeacherSubject.classList.remove("view-hidden");
 
-      if (onboardingAcademicLabel) onboardingAcademicLabel.innerHTML = 'Subject Taught <span class="required-star">*</span>';
-      if (onboardingAcademicSelect) {
-        onboardingAcademicSelect.innerHTML = `
-          <option value="" disabled selected>Select your subject</option>
-          ${SCHEDULE_SUBJECTS.map((s) => `<option value="${s}">${s}</option>`).join("")}
-        `;
-      }
+      syncTeacherDetails();
     } else {
       if (roleLabelStudent) roleLabelStudent.classList.add("selected");
       if (roleLabelTeacher) roleLabelTeacher.classList.remove("selected");
-      if (onboardingAvatarBadge) onboardingAvatarBadge.textContent = "🎓";
+      if (onboardingAvatarBadge) onboardingAvatarBadge.innerHTML = '<i class="fi fi-ss-student"></i>';
 
       // Show Student Name & Surname inputs, hide Teacher Name dropdown
       if (rowStudentName) rowStudentName.classList.remove("view-hidden");
       if (groupTeacherName) groupTeacherName.classList.add("view-hidden");
 
-      if (onboardingAcademicLabel) onboardingAcademicLabel.innerHTML = 'Department / Group <span class="required-star">*</span>';
-      if (onboardingAcademicSelect) {
-        onboardingAcademicSelect.innerHTML = `
-          <option value="" disabled>Select group</option>
-          <option value="English Business Grp 1" selected>English Business Grp 1</option>
-          <option value="English Business Grp 2">English Business Grp 2</option>
-        `;
-      }
+      // For student: show group select (English Business Grp 1/2), hide teacher subject field
+      if (onboardingGroupAcademic) onboardingGroupAcademic.classList.remove("view-hidden");
+      if (onboardingGroupTeacherSubject) onboardingGroupTeacherSubject.classList.add("view-hidden");
     }
   }
 
-  // Teacher name selection change -> auto-select subject and gender
+  // Teacher name selection change -> auto-fills subject & gender automatically
   if (onboardingTeacherSelect) {
-    onboardingTeacherSelect.addEventListener("change", () => {
-      const selectedName = onboardingTeacherSelect.value;
-      const matchedTeacher = SCHEDULE_TEACHERS.find((t) => t.name === selectedName);
-      if (matchedTeacher) {
-        if (onboardingAcademicSelect) {
-          onboardingAcademicSelect.value = matchedTeacher.subject;
-        }
-        if (onboardingGender) {
-          onboardingGender.value = matchedTeacher.gender;
-        }
-      }
-    });
+    onboardingTeacherSelect.addEventListener("change", syncTeacherDetails);
   }
 
   // Role card clicking
@@ -1899,7 +1874,13 @@ function initFirebaseAuthAndProfile() {
       }
 
       const gender = onboardingGender ? onboardingGender.value : "Male";
-      const academicDetail = onboardingAcademicSelect ? onboardingAcademicSelect.value : (selectedRole === "teacher" ? "Writing" : "English Business Grp 1");
+      let academicDetail = "";
+      if (selectedRole === "teacher") {
+        const matchedTeacher = SCHEDULE_TEACHERS.find((t) => t.name === fullName);
+        academicDetail = matchedTeacher ? matchedTeacher.subject : (onboardingTeacherSubjectVal ? onboardingTeacherSubjectVal.value : "Teaching Faculty");
+      } else {
+        academicDetail = onboardingAcademicSelect ? onboardingAcademicSelect.value : "English Business Grp 1";
+      }
 
       const profilePayload = {
         uid: currentUser.uid,
