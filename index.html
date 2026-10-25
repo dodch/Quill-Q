@@ -8,10 +8,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css" />
-  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
-  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
-  <link rel="stylesheet" href="styles.css?v=75" />
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css" />
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
+  </noscript>
+  <link rel="stylesheet" href="styles.min.css?v=1" />
   <script>
     try {
       var p = JSON.parse(localStorage.getItem("quill_q_profile") || "null");
@@ -87,7 +92,10 @@
       </div>
 
       <div class="landing-hero-right">
-        <img src="assets/landingpageuni.png" alt="Quill-Q illustration featuring notebooks, stationery, reminders, and doodles" class="landing-hero-illustration" />
+        <picture>
+          <source srcset="assets/landingpageuni.webp" type="image/webp" />
+          <img src="assets/landingpageuni.png" alt="Quill-Q illustration featuring notebooks, stationery, reminders, and doodles" class="landing-hero-illustration" decoding="async" fetchpriority="high" width="540" height="360" />
+        </picture>
       </div>
     </div>
   </section>
@@ -1176,7 +1184,10 @@
 
         <!-- 1. Home & Schedule view: Paper Note Pin Tall for Homework & Reminders -->
         <section class="homework sticky sticky-home-view" id="sticky-homework-note" aria-labelledby="hw-title">
-          <img src="assets/paper note pin tall.png" alt="Paper note background" class="paper-bg-img" aria-hidden="true" />
+          <picture>
+            <source srcset="assets/paper_note_pin_tall.webp" type="image/webp" />
+            <img src="assets/paper_note_pin_tall.webp" alt="Paper note background" class="paper-bg-img" aria-hidden="true" loading="lazy" decoding="async" />
+          </picture>
           
           <div class="sticky-inner">
             <div class="sticky-header">
@@ -1194,8 +1205,11 @@
         <!-- 2. Subjects view only: notes.png Paperclip Note (Quick Materials & Class Representatives) -->
         <section class="subjects-side-wrap view-hidden" id="subjects-side-wrap">
           <div class="sticky-paperclip-card">
-            <!-- Authentic user-provided notes.png paper background -->
-            <img src="assets/notes.png" alt="Clipped note paper" class="paperclip-bg-img" aria-hidden="true" />
+            <!-- Authentic user-provided notes.webp paper background -->
+            <picture>
+              <source srcset="assets/notes.webp" type="image/webp" />
+              <img src="assets/notes.webp" alt="Clipped note paper" class="paperclip-bg-img" aria-hidden="true" loading="lazy" decoding="async" />
+            </picture>
             <div class="paperclip-inner">
               <h3 class="paperclip-title">Quick Materials</h3>
               <div class="paperclip-links">
@@ -1221,7 +1235,10 @@
         <section class="homeworks-side-wrap view-hidden" id="homeworks-side-wrap">
           <div class="sticky-paperclip-card">
             <!-- Authentic clean unlined paper background for Quick Actions -->
-            <img src="assets/notes_clean.png" alt="Clipped note paper" class="paperclip-bg-img" aria-hidden="true" />
+            <picture>
+              <source srcset="assets/notes_clean.webp" type="image/webp" />
+              <img src="assets/notes_clean.webp" alt="Clipped note paper" class="paperclip-bg-img" aria-hidden="true" loading="lazy" decoding="async" />
+            </picture>
             <div class="paperclip-inner homeworks-note-inner">
               <h3 class="homeworks-note-title">Quick Actions</h3>
               <div class="quick-actions-buttons">
@@ -1320,6 +1337,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-  <script src="app.js?v=35"></script>
+  <script src="app.min.js?v=1"></script>
 </body>
 </html>
