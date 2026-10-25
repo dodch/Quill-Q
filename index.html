@@ -79,6 +79,148 @@
     </div>
   </section>
 
+  <!-- Login & Account Setup Screen (Shown after clicking Get Started) -->
+  <section class="auth-page landing-hidden" id="auth-page">
+    <!-- Liquid background blobs -->
+    <svg class="landing-blob lb-blue-top-left" viewBox="0 0 200 200" aria-hidden="true">
+      <path fill="#8cb9ee" d="M0 0 H160 C160 70, 110 140, 45 170 C15 180, 0 170, 0 170 Z"></path>
+    </svg>
+
+    <!-- Top header with back button and brand -->
+    <header class="auth-page-header">
+      <button type="button" class="btn-auth-back" id="btn-auth-back">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Back</span>
+      </button>
+
+      <div class="auth-page-brand">
+        <span class="auth-brand-logo">Quill-Q</span>
+      </div>
+      <div style="width: 80px;"></div>
+    </header>
+
+    <!-- Main Auth Card Container -->
+    <div class="auth-page-container">
+      <!-- Step 1: Sign In with Google -->
+      <div class="auth-screen-card" id="auth-step-signin">
+        <div class="auth-card-badge">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#e07a5f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <h2 class="auth-card-title">Welcome to Quill-Q</h2>
+        <p class="auth-card-subtitle">Log in or create your academic account with Google to access your personalized timetable, homework, and study reminders.</p>
+
+        <button type="button" class="btn-google-auth" id="btn-google-signin">
+          <svg class="google-icon-svg" viewBox="0 0 24 24" width="22" height="22">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+          </svg>
+          <span id="google-btn-text">Continue with Google</span>
+        </button>
+
+        <div class="auth-perks-list">
+          <div class="auth-perk-item">
+            <span class="perk-check">✓</span>
+            <span>Fast & secure Google authentication</span>
+          </div>
+          <div class="auth-perk-item">
+            <span class="perk-check">✓</span>
+            <span>Choose Student or Teacher profile next</span>
+          </div>
+          <div class="auth-perk-item">
+            <span class="perk-check">✓</span>
+            <span>Live course schedule & homework synced</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Role Selection & Onboarding (Shown for new users) -->
+      <div class="auth-screen-card view-hidden" id="auth-step-onboarding">
+        <div class="onboarding-header">
+          <div class="onboarding-avatar-wrap">
+            <img src="assets/avatar.jpg" alt="Profile avatar" class="onboarding-avatar" id="onboarding-preview-avatar" />
+            <span class="onboarding-avatar-badge" id="onboarding-avatar-badge">🎓</span>
+          </div>
+          <h2 class="auth-card-title" id="onboarding-title">Create Your Profile</h2>
+          <p class="auth-card-subtitle">Select whether you are a Student or Teacher and fill in your details.</p>
+        </div>
+
+        <form class="onboarding-form" id="onboarding-form">
+          <!-- Role Selection: Student vs Teacher -->
+          <div class="onboarding-group">
+            <label class="onboarding-label">Are you a Student or Teacher? <span class="required-star">*</span></label>
+            <div class="role-selector-grid">
+              <label class="role-card selected" id="role-label-student">
+                <input type="radio" name="accountRole" value="student" checked class="role-radio" id="role-radio-student" />
+                <div class="role-card-badge">✓</div>
+                <div class="role-card-icon">🎓</div>
+                <div class="role-card-body">
+                  <span class="role-card-title">Student</span>
+                  <span class="role-card-desc">Track assignments, classes, timetable & reminders</span>
+                </div>
+              </label>
+
+              <label class="role-card" id="role-label-teacher">
+                <input type="radio" name="accountRole" value="teacher" class="role-radio" id="role-radio-teacher" />
+                <div class="role-card-badge">✓</div>
+                <div class="role-card-icon">👨‍🏫</div>
+                <div class="role-card-body">
+                  <span class="role-card-title">Teacher</span>
+                  <span class="role-card-desc">Manage lectures, departments & course resources</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Name & Age Row -->
+          <div class="onboarding-row">
+            <div class="onboarding-group flex-2">
+              <label class="onboarding-label" for="onboarding-name">Full Name <span class="required-star">*</span></label>
+              <input type="text" class="modal-form-input" id="onboarding-name" placeholder="e.g. Roberta Higgins" required autocomplete="name" />
+            </div>
+            <div class="onboarding-group flex-1">
+              <label class="onboarding-label" for="onboarding-age">Age <span class="required-star">*</span></label>
+              <input type="number" min="5" max="110" class="modal-form-input" id="onboarding-age" placeholder="e.g. 21" required />
+            </div>
+          </div>
+
+          <!-- Gender Selection -->
+          <div class="onboarding-group">
+            <label class="onboarding-label" for="onboarding-gender">Gender <span class="required-star">*</span></label>
+            <select class="modal-form-select" id="onboarding-gender" required>
+              <option value="" disabled selected>Select gender</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="non-binary">Non-binary / Other</option>
+              <option value="prefer-not-to-say">Prefer not to say</option>
+            </select>
+          </div>
+
+          <!-- Conditional Class / Department Field -->
+          <div class="onboarding-group" id="onboarding-group-academic">
+            <label class="onboarding-label" id="onboarding-academic-label" for="onboarding-academic-input">
+              Class / Year / Grade <span class="required-star">*</span>
+            </label>
+            <input type="text" class="modal-form-input" id="onboarding-academic-input" placeholder="e.g. Year 2 - British Studies" required autocomplete="off" />
+            <p class="onboarding-hint" id="onboarding-academic-hint">Enter your class, cohort, or academic year.</p>
+          </div>
+
+          <div class="onboarding-actions">
+            <button type="submit" class="btn-create-account" id="btn-submit-onboarding">
+              <span id="btn-submit-onboarding-text">Create Account & Enter Dashboard</span>
+              <span class="btn-arrow-icon">→</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
   <!-- Dashboard App Screen -->
   <div class="app dashboard-hidden" id="dashboard-app">
     <!-- Decorative blobs (Matches Reference Layout Exactly) -->
@@ -149,6 +291,22 @@
           <span>Schedule</span>
         </a>
       </nav>
+
+      <!-- Sidebar User Profile Widget -->
+      <div class="sidebar-user-card" id="sidebar-user-card">
+        <img src="assets/avatar.jpg" alt="User avatar" class="sidebar-user-avatar" id="sidebar-user-avatar" />
+        <div class="sidebar-user-info">
+          <span class="sidebar-user-name" id="sidebar-user-name">Roberta</span>
+          <span class="sidebar-user-role" id="sidebar-user-role">Student</span>
+        </div>
+        <button type="button" class="sidebar-logout-btn" id="btn-sidebar-logout" title="Sign out" aria-label="Sign out">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+      </div>
     </aside>
 
     <!-- Main -->
@@ -157,8 +315,16 @@
         <!-- HOME VIEW -->
         <div class="view-panel" id="view-home">
           <header class="greeting">
-            <img src="assets/avatar.jpg" alt="Roberta's profile picture" class="avatar" />
-            <h2>Hello,<br /><strong>Roberta</strong></h2>
+            <img src="assets/avatar.jpg" alt="Profile picture" class="avatar" id="home-greeting-avatar" />
+            <div class="greeting-user-meta">
+              <h2>Hello,<br /><strong id="home-greeting-name">Roberta</strong></h2>
+              <div class="user-role-chip" id="home-user-role-chip">
+                <span class="user-role-icon" id="home-user-role-icon">🎓</span>
+                <span class="user-role-text" id="home-user-role-text">Student</span>
+                <span class="user-role-dot" id="home-user-role-dot">•</span>
+                <span class="user-role-academic" id="home-user-academic">Year 2</span>
+              </div>
+            </div>
           </header>
 
           <section class="quick-glance" aria-label="Today's Status">
@@ -974,6 +1140,11 @@
     </div>
   </div>
 
-  <script src="app.js?v=17"></script>
+  <!-- Firebase SDKs (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+  <script src="app.js?v=19"></script>
 </body>
 </html>

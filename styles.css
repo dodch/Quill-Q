@@ -2895,3 +2895,487 @@ a { color: inherit; text-decoration: none; }
   .landing-divider { display: none; }
   .landing-title { font-size: 44px; }
 }
+
+/* ========== Fullscreen Auth / Login Screen ========== */
+.auth-page {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  background: #f7f4ea;
+  padding: 32px 48px 48px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+.auth-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto 24px;
+}
+.btn-auth-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  background: #ffffff;
+  color: #1a1816;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  border: 1.8px solid #1a1816;
+  border-radius: 999px;
+  box-shadow: 2.5px 2.5px 0px #1a1816;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-auth-back:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3.5px 3.5px 0px #1a1816;
+  background: #fffdf8;
+}
+.btn-auth-back:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #1a1816;
+}
+.auth-page-brand {
+  display: flex;
+  align-items: center;
+}
+.auth-brand-logo {
+  font-size: 30px;
+  font-weight: 700;
+  color: #1a1816;
+  letter-spacing: -0.3px;
+}
+.auth-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+}
+.auth-screen-card {
+  width: 100%;
+  background: #fdfaf3;
+  border: 2.5px solid #1a1816;
+  border-radius: 26px 24px 26px 22px / 22px 26px 22px 24px;
+  box-shadow: 8px 10px 0px #1a1816;
+  padding: 38px 34px;
+  box-sizing: border-box;
+  text-align: center;
+  animation: modal-scale-up 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.auth-card-badge {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #fdf1dc;
+  border: 2px solid #1a1816;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 3px 3px 0px #1a1816;
+}
+.auth-card-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1816;
+  margin-bottom: 8px;
+}
+.auth-card-subtitle {
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: #555;
+  margin-bottom: 26px;
+}
+.auth-perks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1.5px dashed #dfdacd;
+  text-align: left;
+}
+.auth-perk-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: #444;
+  font-weight: 500;
+}
+.perk-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #d5ecd0;
+  border: 1.2px solid #1a1816;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a1816;
+  flex-shrink: 0;
+}
+
+/* ========== Greeting User Meta & Role Chip ========== */
+.greeting-user-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.user-role-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1.6px solid #1a1816;
+  border-radius: 999px;
+  padding: 4px 14px 4px 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1a1816;
+  box-shadow: 2px 2px 0px rgba(26, 24, 22, 0.2);
+  width: fit-content;
+}
+.user-role-icon {
+  font-size: 14px;
+}
+.user-role-dot {
+  color: #888;
+  font-size: 11px;
+}
+.user-role-academic {
+  color: #555;
+  font-weight: 500;
+}
+
+/* ========== Sidebar User Widget (Bottom of Sidebar) ========== */
+.sidebar-user-card {
+  margin-top: auto;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1.8px solid #1a1816;
+  border-radius: 16px;
+  padding: 10px 14px;
+  box-shadow: 3px 3px 0px #1a1816;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.sidebar-user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 5px 0px #1a1816;
+}
+.sidebar-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #1a1816;
+  flex-shrink: 0;
+  background: #eee;
+}
+.sidebar-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.sidebar-user-name {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #1a1816;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-user-role {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+.sidebar-logout-btn {
+  background: none;
+  border: none;
+  color: #777;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.sidebar-logout-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  transform: scale(1.1);
+}
+
+.btn-google-auth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 20px;
+  background: #ffffff;
+  color: #1a1816;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  border: 2px solid #1a1816;
+  border-radius: 14px;
+  box-shadow: 4px 4px 0px #1a1816;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-google-auth:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 6px 0px #1a1816;
+  background: #fffdf8;
+}
+.btn-google-auth:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #1a1816;
+}
+.google-icon-svg {
+  flex-shrink: 0;
+}
+.auth-privacy-note {
+  font-size: 12.5px;
+  color: #777;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+/* ========== Onboarding / Profile Setup Modal ========== */
+.onboarding-modal-card {
+  background: #fdfaf3;
+  border: 2.5px solid #1a1816;
+  border-radius: 26px 24px 26px 22px / 22px 26px 22px 24px;
+  box-shadow: 8px 10px 0px #1a1816;
+  padding: 34px 32px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: modal-scale-up 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-sizing: border-box;
+}
+.onboarding-modal-card::-webkit-scrollbar {
+  width: 6px;
+}
+.onboarding-modal-card::-webkit-scrollbar-thumb {
+  background: #dfdacd;
+  border-radius: 4px;
+}
+.onboarding-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.onboarding-avatar-wrap {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 12px;
+}
+.onboarding-avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 2px solid #1a1816;
+  object-fit: cover;
+  box-shadow: 3px 3px 0px #1a1816;
+  background: #eee;
+}
+.onboarding-avatar-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: #ffffff;
+  border: 1.6px solid #1a1816;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-shadow: 1px 2px 0px #1a1816;
+}
+.onboarding-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1816;
+  margin-bottom: 6px;
+}
+.onboarding-subtitle {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.45;
+}
+.onboarding-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.onboarding-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.onboarding-row {
+  display: flex;
+  gap: 14px;
+}
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+.onboarding-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1a1816;
+}
+.required-star {
+  color: #e07a5f;
+}
+.onboarding-hint {
+  font-size: 12px;
+  color: #777;
+  margin-top: 2px;
+}
+
+/* Role Selector Grid */
+.role-selector-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 2px;
+}
+.role-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 14px;
+  background: #ffffff;
+  border: 2px solid #ded9cb;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+.role-radio {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.role-card:hover {
+  border-color: #1a1816;
+  transform: translateY(-2px);
+  box-shadow: 3px 4px 0px rgba(26, 24, 22, 0.15);
+}
+.role-card.selected {
+  border: 2.2px solid #1a1816;
+  background: #fef8eb;
+  box-shadow: 4px 5px 0px #1a1816;
+}
+.role-card-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid #ded9cb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: transparent;
+  transition: all 0.2s ease;
+}
+.role-card.selected .role-card-badge {
+  border-color: #1a1816;
+  background: #1a1816;
+  color: #ffffff;
+}
+.role-card-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+.role-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.role-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1816;
+}
+.role-card-desc {
+  font-size: 11.5px;
+  color: #666;
+  line-height: 1.35;
+}
+
+/* Action button */
+.onboarding-actions {
+  margin-top: 8px;
+}
+.btn-create-account {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 15px 24px;
+  background: #1a1816;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  border-radius: 14px;
+  box-shadow: 4px 5px 0px #ef8e60;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-create-account:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 7px 0px #ef8e60;
+  background: #2b2825;
+}
+.btn-create-account:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 2px 0px #ef8e60;
+}
+.btn-arrow-icon {
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+.btn-create-account:hover .btn-arrow-icon {
+  transform: translateX(4px);
+}

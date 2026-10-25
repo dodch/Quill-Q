@@ -8,5 +8,8 @@
       "**/node_modules/**",
       "README.md"
     ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
   }
 }

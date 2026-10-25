@@ -1475,31 +1475,432 @@ function initSearch() {
   });
 }
 
-// --- Page Navigation (Landing Page <-> Dashboard) ---
-function initPageNavigation() {
-  const btnGetStarted = document.getElementById("btn-get-started");
-  const landingPage = document.getElementById("landing-page");
-  const dashboardApp = document.getElementById("dashboard-app");
-  const brandLogo = document.querySelector(".sidebar .brand");
+// --- Firebase & User Profile Management ---
+const firebaseConfig = {
+  projectId: "quill-q-dodch",
+  appId: "1:648049411331:web:880ce305ebe145df9e9536",
+  storageBucket: "quill-q-dodch.firebasestorage.app",
+  apiKey: "AIzaSyBhOd39WoozsZBCrCRjQt1D23uoTJqqZgk",
+  authDomain: "quill-q-dodch.firebaseapp.com",
+  messagingSenderId: "648049411331",
+  projectNumber: "648049411331"
+};
 
+let auth = null;
+let db = null;
+let currentUser = null;
+let currentProfile = null;
+
+function navigateToDashboard() {
+  const landingPage = document.getElementById("landing-page");
+  const authPage = document.getElementById("auth-page");
+  const dashboardApp = document.getElementById("dashboard-app");
+
+  if (landingPage) landingPage.classList.add("landing-hidden");
+  if (authPage) authPage.classList.add("landing-hidden");
+  if (dashboardApp) {
+    dashboardApp.classList.remove("dashboard-hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(() => {
+      checkTimelineMarquees();
+      updateTodayStatus();
+    }, 50);
+  }
+}
+
+function navigateToLanding() {
+  const landingPage = document.getElementById("landing-page");
+  const authPage = document.getElementById("auth-page");
+  const dashboardApp = document.getElementById("dashboard-app");
+
+  if (authPage) authPage.classList.add("landing-hidden");
+  if (dashboardApp) dashboardApp.classList.add("dashboard-hidden");
+  if (landingPage) {
+    landingPage.classList.remove("landing-hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+}
+
+function navigateToAuth() {
+  const landingPage = document.getElementById("landing-page");
+  const authPage = document.getElementById("auth-page");
+  const dashboardApp = document.getElementById("dashboard-app");
+
+  if (landingPage) landingPage.classList.add("landing-hidden");
+  if (dashboardApp) dashboardApp.classList.add("dashboard-hidden");
+  if (authPage) {
+    authPage.classList.remove("landing-hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // Show Step 1 (Sign in) by default unless user is already in onboarding
+  const stepSignin = document.getElementById("auth-step-signin");
+  const stepOnboarding = document.getElementById("auth-step-onboarding");
+  if (stepSignin) stepSignin.classList.remove("view-hidden");
+  if (stepOnboarding) stepOnboarding.classList.add("view-hidden");
+}
+
+function applyProfileToUI(profile) {
+  if (!profile) {
+    // Default guest profile
+    const homeAvatar = document.getElementById("home-greeting-avatar");
+    const homeName = document.getElementById("home-greeting-name");
+    const homeRoleChip = document.getElementById("home-user-role-chip");
+    const homeRoleText = document.getElementById("home-user-role-text");
+    const homeRoleAcademic = document.getElementById("home-user-academic");
+    const sideAvatar = document.getElementById("sidebar-user-avatar");
+    const sideName = document.getElementById("sidebar-user-name");
+    const sideRole = document.getElementById("sidebar-user-role");
+
+    if (homeAvatar) homeAvatar.src = "assets/avatar.jpg";
+    if (homeName) homeName.textContent = "Roberta";
+    if (homeRoleText) homeRoleText.textContent = "Student";
+    if (homeRoleAcademic) homeRoleAcademic.textContent = "Year 2";
+    if (sideAvatar) sideAvatar.src = "assets/avatar.jpg";
+    if (sideName) sideName.textContent = "Roberta";
+    if (sideRole) sideRole.textContent = "Student";
+
+    const btnGetStarted = document.getElementById("btn-get-started");
+    if (btnGetStarted) btnGetStarted.textContent = "Get Started";
+    return;
+  }
+
+  const isTeacher = profile.role === "teacher";
+  const roleDisplay = isTeacher ? "Teacher" : "Student";
+  const academicDisplay = profile.academicDetail || (isTeacher ? "Faculty" : "Undergrad");
+  const avatarUrl = profile.photoURL || "assets/avatar.jpg";
+  const firstName = (profile.displayName || "Roberta").split(" ")[0];
+
+  // Update Home Greeting
+  const homeAvatar = document.getElementById("home-greeting-avatar");
+  const homeName = document.getElementById("home-greeting-name");
+  const homeRoleIcon = document.getElementById("home-user-role-icon");
+  const homeRoleText = document.getElementById("home-user-role-text");
+  const homeRoleAcademic = document.getElementById("home-user-academic");
+
+  if (homeAvatar) homeAvatar.src = avatarUrl;
+  if (homeName) homeName.textContent = firstName;
+  if (homeRoleIcon) homeRoleIcon.textContent = isTeacher ? "👨‍🏫" : "🎓";
+  if (homeRoleText) homeRoleText.textContent = roleDisplay;
+  if (homeRoleAcademic) homeRoleAcademic.textContent = academicDisplay;
+
+  // Update Sidebar User Card
+  const sideAvatar = document.getElementById("sidebar-user-avatar");
+  const sideName = document.getElementById("sidebar-user-name");
+  const sideRole = document.getElementById("sidebar-user-role");
+
+  if (sideAvatar) sideAvatar.src = avatarUrl;
+  if (sideName) sideName.textContent = profile.displayName || firstName;
+  if (sideRole) sideRole.textContent = `${roleDisplay} • ${academicDisplay}`;
+
+  // Update Landing button text
+  const btnGetStarted = document.getElementById("btn-get-started");
+  if (btnGetStarted) btnGetStarted.textContent = "Enter Dashboard →";
+}
+
+function initFirebaseAuthAndProfile() {
+  // 1. Initialize Firebase if available
+  if (typeof firebase !== "undefined") {
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      auth = firebase.auth();
+      db = firebase.firestore();
+    } catch (e) {
+      console.warn("Firebase initialization warning:", e);
+    }
+  }
+
+  // 2. Load cached profile immediately
+  const cachedProfileStr = localStorage.getItem("quill_q_profile");
+  if (cachedProfileStr) {
+    try {
+      currentProfile = JSON.parse(cachedProfileStr);
+      applyProfileToUI(currentProfile);
+    } catch (e) {
+      console.warn("Failed parsing cached profile", e);
+    }
+  }
+
+  // DOM Elements
+  const btnGetStarted = document.getElementById("btn-get-started");
+  const btnAuthBack = document.getElementById("btn-auth-back");
+  const btnGoogleSignin = document.getElementById("btn-google-signin");
+  const stepSignin = document.getElementById("auth-step-signin");
+  const stepOnboarding = document.getElementById("auth-step-onboarding");
+
+  const onboardingForm = document.getElementById("onboarding-form");
+  const onboardingPreviewAvatar = document.getElementById("onboarding-preview-avatar");
+  const onboardingAvatarBadge = document.getElementById("onboarding-avatar-badge");
+  const onboardingName = document.getElementById("onboarding-name");
+  const onboardingAge = document.getElementById("onboarding-age");
+  const onboardingGender = document.getElementById("onboarding-gender");
+  const onboardingAcademicLabel = document.getElementById("onboarding-academic-label");
+  const onboardingAcademicInput = document.getElementById("onboarding-academic-input");
+  const onboardingAcademicHint = document.getElementById("onboarding-academic-hint");
+  const roleLabelStudent = document.getElementById("role-label-student");
+  const roleLabelTeacher = document.getElementById("role-label-teacher");
+  const roleRadioStudent = document.getElementById("role-radio-student");
+  const roleRadioTeacher = document.getElementById("role-radio-teacher");
+  const btnSubmitOnboarding = document.getElementById("btn-submit-onboarding");
+  const btnSubmitOnboardingText = document.getElementById("btn-submit-onboarding-text");
+  const btnSidebarLogout = document.getElementById("btn-sidebar-logout");
+
+  function showOnboardingStep(user) {
+    if (stepSignin) stepSignin.classList.add("view-hidden");
+    if (stepOnboarding) stepOnboarding.classList.remove("view-hidden");
+
+    if (user) {
+      if (onboardingPreviewAvatar) {
+        onboardingPreviewAvatar.src = user.photoURL || "assets/avatar.jpg";
+      }
+      if (onboardingName && !onboardingName.value) {
+        onboardingName.value = user.displayName || "";
+      }
+    }
+
+    selectRole("student");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function selectRole(role) {
+    if (role === "teacher") {
+      if (roleRadioTeacher) roleRadioTeacher.checked = true;
+      if (roleLabelTeacher) roleLabelTeacher.classList.add("selected");
+      if (roleLabelStudent) roleLabelStudent.classList.remove("selected");
+      if (onboardingAvatarBadge) onboardingAvatarBadge.textContent = "👨‍🏫";
+      if (onboardingAcademicLabel) onboardingAcademicLabel.innerHTML = 'Department / Subject Taught <span class="required-star">*</span>';
+      if (onboardingAcademicInput) {
+        onboardingAcademicInput.placeholder = "e.g. Department of English Literature";
+      }
+      if (onboardingAcademicHint) {
+        onboardingAcademicHint.textContent = "Enter your department, faculty, or course specialty.";
+      }
+    } else {
+      if (roleRadioStudent) roleRadioStudent.checked = true;
+      if (roleLabelStudent) roleLabelStudent.classList.add("selected");
+      if (roleLabelTeacher) roleLabelTeacher.classList.remove("selected");
+      if (onboardingAvatarBadge) onboardingAvatarBadge.textContent = "🎓";
+      if (onboardingAcademicLabel) onboardingAcademicLabel.innerHTML = 'Class / Year / Grade <span class="required-star">*</span>';
+      if (onboardingAcademicInput) {
+        onboardingAcademicInput.placeholder = "e.g. Year 2 - British Studies, Class 3B";
+      }
+      if (onboardingAcademicHint) {
+        onboardingAcademicHint.textContent = "Enter your class, cohort, or academic year.";
+      }
+    }
+  }
+
+  // Role card clicking
+  if (roleLabelStudent) {
+    roleLabelStudent.addEventListener("click", () => selectRole("student"));
+  }
+  if (roleLabelTeacher) {
+    roleLabelTeacher.addEventListener("click", () => selectRole("teacher"));
+  }
+
+  // Back button on Auth Page
+  if (btnAuthBack) {
+    btnAuthBack.addEventListener("click", navigateToLanding);
+  }
+
+  // "Get Started" Click Handler
   if (btnGetStarted) {
     btnGetStarted.addEventListener("click", () => {
-      landingPage.classList.add("landing-hidden");
-      dashboardApp.classList.remove("dashboard-hidden");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      setTimeout(() => {
-        checkTimelineMarquees();
-        updateTodayStatus();
-      }, 50);
+      if (currentUser && currentProfile && currentProfile.profileCompleted) {
+        navigateToDashboard();
+        return;
+      }
+
+      if (currentUser && (!currentProfile || !currentProfile.profileCompleted)) {
+        navigateToAuth();
+        showOnboardingStep(currentUser);
+        return;
+      }
+
+      // Not authenticated -> show the Auth page with Google Sign In
+      navigateToAuth();
     });
   }
 
+  // Google Sign-In button
+  if (btnGoogleSignin) {
+    btnGoogleSignin.addEventListener("click", async () => {
+      if (!auth) {
+        alert("Firebase is initializing. Please try again in a few moments.");
+        return;
+      }
+
+      const googleBtnText = document.getElementById("google-btn-text");
+      const originalText = googleBtnText ? googleBtnText.textContent : "Continue with Google";
+
+      try {
+        if (googleBtnText) googleBtnText.textContent = "Connecting to Google...";
+        btnGoogleSignin.disabled = true;
+
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: "select_account" });
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+        currentUser = user;
+
+        // Check if user already exists with completed profile
+        let profileData = null;
+        if (db) {
+          try {
+            const userDoc = await db.collection("users").doc(user.uid).get();
+            if (userDoc.exists) {
+              profileData = userDoc.data();
+            }
+          } catch (docErr) {
+            console.warn("Firestore lookup error:", docErr);
+          }
+        }
+
+        if (profileData && profileData.profileCompleted) {
+          currentProfile = profileData;
+          localStorage.setItem("quill_q_profile", JSON.stringify(profileData));
+          applyProfileToUI(profileData);
+          navigateToDashboard();
+        } else {
+          // New user -> reveal Role selection and profile creation form right on page!
+          showOnboardingStep(user);
+        }
+      } catch (err) {
+        console.error("Google sign-in error:", err);
+        if (err.code !== "auth/popup-closed-by-user") {
+          alert("Could not complete Google sign-in: " + (err.message || "Unknown error"));
+        }
+      } finally {
+        if (googleBtnText) googleBtnText.textContent = originalText;
+        btnGoogleSignin.disabled = false;
+      }
+    });
+  }
+
+  // Handle Onboarding Profile Form Submission
+  if (onboardingForm) {
+    onboardingForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!currentUser && auth && auth.currentUser) {
+        currentUser = auth.currentUser;
+      }
+
+      if (!currentUser) {
+        alert("Session expired. Please sign in with Google again.");
+        navigateToAuth();
+        return;
+      }
+
+      const selectedRole = roleRadioTeacher && roleRadioTeacher.checked ? "teacher" : "student";
+      const name = (onboardingName ? onboardingName.value.trim() : "") || currentUser.displayName || "Student";
+      const age = onboardingAge ? parseInt(onboardingAge.value, 10) : 20;
+      const gender = onboardingGender ? onboardingGender.value : "prefer-not-to-say";
+      const academicDetail = onboardingAcademicInput ? onboardingAcademicInput.value.trim() : "";
+
+      const profilePayload = {
+        uid: currentUser.uid,
+        displayName: name,
+        email: currentUser.email || "",
+        photoURL: currentUser.photoURL || "assets/avatar.jpg",
+        role: selectedRole,
+        age: age || null,
+        gender: gender,
+        academicDetail: academicDetail,
+        profileCompleted: true,
+        updatedAt: firebase.firestore ? firebase.firestore.FieldValue.serverTimestamp() : new Date().toISOString()
+      };
+
+      try {
+        if (btnSubmitOnboardingText) btnSubmitOnboardingText.textContent = "Setting up account...";
+        if (btnSubmitOnboarding) btnSubmitOnboarding.disabled = true;
+
+        if (db) {
+          try {
+            await db.collection("users").doc(currentUser.uid).set(profilePayload, { merge: true });
+          } catch (dbErr) {
+            console.warn("Firestore save warning (cached locally):", dbErr);
+          }
+        }
+
+        currentProfile = profilePayload;
+        localStorage.setItem("quill_q_profile", JSON.stringify(profilePayload));
+        applyProfileToUI(profilePayload);
+
+        navigateToDashboard();
+      } catch (saveErr) {
+        console.error("Error saving profile:", saveErr);
+        currentProfile = profilePayload;
+        localStorage.setItem("quill_q_profile", JSON.stringify(profilePayload));
+        applyProfileToUI(profilePayload);
+        navigateToDashboard();
+      } finally {
+        if (btnSubmitOnboardingText) btnSubmitOnboardingText.textContent = "Create Account & Enter Dashboard";
+        if (btnSubmitOnboarding) btnSubmitOnboarding.disabled = false;
+      }
+    });
+  }
+
+  // Sidebar Logout
+  if (btnSidebarLogout) {
+    btnSidebarLogout.addEventListener("click", async () => {
+      if (confirm("Are you sure you want to sign out of Quill-Q?")) {
+        if (auth) {
+          try {
+            await auth.signOut();
+          } catch (e) {
+            console.warn("Sign out error", e);
+          }
+        }
+        currentUser = null;
+        currentProfile = null;
+        localStorage.removeItem("quill_q_profile");
+        applyProfileToUI(null);
+        navigateToLanding();
+      }
+    });
+  }
+
+  // Firebase Auth State Listener
+  if (auth) {
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        if (!currentProfile || currentProfile.uid !== user.uid) {
+          if (db) {
+            try {
+              const snap = await db.collection("users").doc(user.uid).get();
+              if (snap.exists && snap.data() && snap.data().profileCompleted) {
+                currentProfile = snap.data();
+                localStorage.setItem("quill_q_profile", JSON.stringify(currentProfile));
+                applyProfileToUI(currentProfile);
+              }
+            } catch (err) {
+              console.warn("Auth state profile fetch error:", err);
+            }
+          }
+        } else {
+          applyProfileToUI(currentProfile);
+        }
+      } else {
+        currentUser = null;
+        currentProfile = null;
+        localStorage.removeItem("quill_q_profile");
+        applyProfileToUI(null);
+      }
+    });
+  }
+}
+
+// --- Page Navigation (Brand Logo -> Landing) ---
+function initPageNavigation() {
+  const brandLogo = document.querySelector(".sidebar .brand");
   if (brandLogo) {
     brandLogo.style.cursor = "pointer";
     brandLogo.addEventListener("click", () => {
-      dashboardApp.classList.add("dashboard-hidden");
-      landingPage.classList.remove("landing-hidden");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      navigateToLanding();
     });
   }
 }
@@ -1522,6 +1923,7 @@ function syncDefaultDay() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initPageNavigation();
+  initFirebaseAuthAndProfile();
   syncDefaultDay();
   updateTodayStatus();
   renderDetailedSchedule(currentSelectedDay);
