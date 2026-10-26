@@ -39,7 +39,7 @@
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
   </noscript>
-  <link rel="stylesheet" href="styles.min.css?v=16" />
+  <link rel="stylesheet" href="styles.min.css?v=21" />
   <script>
     try {
       var p = JSON.parse(localStorage.getItem("quill_q_profile") || "null");
@@ -1511,6 +1511,22 @@
     </div>
   </div>
 
+  <!-- Modal: Seen By List for Messages -->
+  <div class="task-modal-backdrop view-hidden" id="chat-seen-modal" style="z-index: 99999;">
+    <div class="chat-seen-modal-card" role="dialog" aria-modal="true" aria-labelledby="chat-seen-modal-title">
+      <div class="chat-seen-modal-header">
+        <h3 class="chat-seen-modal-title" id="chat-seen-modal-title">
+          <i class="fi fi-sr-check-double"></i>
+          <span>Seen by</span>
+        </h3>
+        <button type="button" class="task-modal-close" id="chat-seen-modal-close" aria-label="Close dialog">&times;</button>
+      </div>
+      <ul class="chat-seen-list" id="chat-seen-list">
+        <!-- Dynamically rendered list of viewers -->
+      </ul>
+    </div>
+  </div>
+
   <!-- In-App Floating Toast Container -->
   <div class="inapp-toast-container" id="inapp-toast-container" aria-live="polite" aria-atomic="true"></div>
 
@@ -1519,6 +1535,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-  <script src="app.min.js?v=16"></script>
+  <script src="app.min.js?v=21"></script>
 </body>
 </html>

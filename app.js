@@ -3296,6 +3296,7 @@ let chatSoundMuted = false;
 let chatUnreadCount = 0;
 let lastSeenMessageTimestamp = 0;
 let isChatViewActive = false;
+const locallyMarkedSeenIds = new Set();
 
 // Format Chat Message Time (e.g., 10:45 AM)
 function formatChatTime(date) {
@@ -3385,19 +3386,54 @@ function renderChatMessages() {
     const isMine = myUid && msg.userId === myUid;
     const timeFormatted = formatChatTime(msgDate);
 
-    // Seen / Read checkmark indicator calculation
-    let seenIndicatorHtml = "";
-    if (isMine) {
-      const seenBy = msg.seenBy || {};
-      // Readers excluding myself
-      const readers = Object.keys(seenBy).filter((id) => id !== myUid);
-      if (readers.length > 0) {
-        // Seen by at least one other member -> double blue check
-        seenIndicatorHtml = `<span class="chat-seen-icon seen-read" title="Seen by classmates">✓✓</span>`;
-      } else {
-        // Delivered / Sent -> single check
-        seenIndicatorHtml = `<span class="chat-seen-icon seen-delivered" title="Sent">✓</span>`;
+    // Extract Seen By list (readers excluding author)
+    const seenByRaw = msg.seenBy || {};
+    const readersList = [];
+    Object.keys(seenByRaw).forEach((uid) => {
+      if (uid === msg.userId) return; // don't list author viewing their own message
+      const val = seenByRaw[uid];
+      if (typeof val === "object" && val !== null) {
+        readersList.push({
+          uid: uid,
+          name: val.name || "Classmate",
+          avatar: val.avatar || "assets/avatar.jpg",
+          role: val.role || "student",
+          time: val.at ? new Date(val.at) : null
+        });
+      } else if (typeof val === "number") {
+        readersList.push({
+          uid: uid,
+          name: (myUid && uid === myUid) ? (currentProfile ? (currentProfile.displayName || "You") : "You") : "Classmate",
+          avatar: (myUid && uid === myUid) ? (currentProfile ? (currentProfile.photoURL || "assets/avatar.jpg") : "assets/avatar.jpg") : "assets/avatar.jpg",
+          role: (myUid && uid === myUid) ? (currentProfile ? (currentProfile.role || "student") : "student") : "student",
+          time: new Date(val)
+        });
       }
+    });
+
+    // Sort viewers by most recently seen
+    readersList.sort((a, b) => (b.time ? b.time.getTime() : 0) - (a.time ? a.time.getTime() : 0));
+
+    // Mini Avatars Cluster for Seen By
+    let seenAvatarsHtml = "";
+    if (readersList.length > 0) {
+      const maxVisible = 2;
+      const topReaders = readersList.slice(0, maxVisible);
+      const remainingCount = readersList.length - topReaders.length;
+      const avatarImgs = topReaders.map((r) => {
+        const safeAvatar = (r.avatar && typeof r.avatar === "string" && r.avatar.trim().length > 5) ? r.avatar : "assets/avatar.jpg";
+        return `<img src="${safeAvatar}" alt="${escapeChatHTML(r.name)}" class="chat-seen-mini-img" title="Seen by ${escapeChatHTML(r.name)}" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/avatar.jpg';" />`;
+      }).join("");
+
+      const countBadge = remainingCount > 0 ? `<span class="chat-seen-count-tag">+${remainingCount}</span>` : "";
+      const countLabel = readersList.length === 1 ? "1 person" : `${readersList.length} people`;
+
+      seenAvatarsHtml = `
+        <div class="chat-seen-avatars-wrap" data-msg-id="${msg.id}" title="Seen by ${countLabel} (click to view)">
+          ${avatarImgs}
+          ${countBadge}
+        </div>
+      `;
     }
 
     const senderName = escapeChatHTML(msg.userName || "Student");
@@ -3411,7 +3447,7 @@ function renderChatMessages() {
       roleBadgeHtml = `<span class="chat-sender-badge badge-student">Student</span>`;
     }
 
-    const avatarSrc = msg.userAvatar || "assets/avatar.jpg";
+    const avatarSrc = (msg.userAvatar && typeof msg.userAvatar === "string" && msg.userAvatar.trim().length > 5) ? msg.userAvatar : "assets/avatar.jpg";
     const textEscaped = escapeChatHTML(msg.text || "");
 
     if (isMine) {
@@ -3421,7 +3457,7 @@ function renderChatMessages() {
             <div class="chat-msg-bubble">${textEscaped}</div>
             <div class="chat-msg-meta">
               <span class="chat-msg-time">${timeFormatted}</span>
-              ${seenIndicatorHtml}
+              ${seenAvatarsHtml}
             </div>
           </div>
         </div>
@@ -3429,7 +3465,7 @@ function renderChatMessages() {
     } else {
       html += `
         <div class="chat-msg-row msg-other" data-id="${msg.id}">
-          <img src="${avatarSrc}" alt="${senderName}" class="chat-msg-avatar" onerror="this.src='assets/avatar.jpg'" />
+          <img src="${avatarSrc}" alt="${senderName}" class="chat-msg-avatar" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/avatar.jpg';" />
           <div class="chat-msg-content">
             <div class="chat-msg-sender">
               <span>${senderName}</span>
@@ -3438,6 +3474,7 @@ function renderChatMessages() {
             <div class="chat-msg-bubble">${textEscaped}</div>
             <div class="chat-msg-meta">
               <span class="chat-msg-time">${timeFormatted}</span>
+              ${seenAvatarsHtml}
             </div>
           </div>
         </div>
@@ -3446,8 +3483,90 @@ function renderChatMessages() {
   });
 
   container.innerHTML = html;
+
+  // Bind click event to all seen-avatars clusters
+  container.querySelectorAll(".chat-seen-avatars-wrap").forEach((cluster) => {
+    cluster.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const msgId = cluster.getAttribute("data-msg-id");
+      openSeenByModal(msgId);
+    });
+  });
+
   // Auto scroll to latest message smoothly
   container.scrollTop = container.scrollHeight;
+}
+
+// Open Seen By Modal dialog listing all viewers
+function openSeenByModal(msgId) {
+  const modal = document.getElementById("chat-seen-modal");
+  const listEl = document.getElementById("chat-seen-list");
+  if (!modal || !listEl) return;
+
+  const msg = chatMessagesCache.find((m) => m.id === msgId);
+  if (!msg) return;
+
+  const myUid = (currentProfile && currentProfile.uid) || (currentUser && currentUser.uid) || "";
+  const seenByRaw = msg.seenBy || {};
+  const readersList = [];
+
+  Object.keys(seenByRaw).forEach((uid) => {
+    if (uid === msg.userId) return;
+    const val = seenByRaw[uid];
+    if (typeof val === "object" && val !== null) {
+      readersList.push({
+        uid: uid,
+        name: val.name || "Classmate",
+        avatar: val.avatar || "assets/avatar.jpg",
+        role: val.role || "student",
+        time: val.at ? new Date(val.at) : null
+      });
+    } else if (typeof val === "number") {
+      readersList.push({
+        uid: uid,
+        name: (myUid && uid === myUid) ? (currentProfile ? (currentProfile.displayName || "You") : "You") : "Classmate",
+        avatar: (myUid && uid === myUid) ? (currentProfile ? (currentProfile.photoURL || "assets/avatar.jpg") : "assets/avatar.jpg") : "assets/avatar.jpg",
+        role: (myUid && uid === myUid) ? (currentProfile ? (currentProfile.role || "student") : "student") : "student",
+        time: new Date(val)
+      });
+    }
+  });
+
+  readersList.sort((a, b) => (b.time ? b.time.getTime() : 0) - (a.time ? a.time.getTime() : 0));
+
+  if (readersList.length === 0) {
+    listEl.innerHTML = `<li style="text-align:center; padding: 20px; color:#8c8276; font-size:14px;">Delivered • Not seen yet</li>`;
+  } else {
+    listEl.innerHTML = readersList.map((r) => {
+      const timeStr = r.time ? formatChatTime(r.time) : "Just now";
+      const dateStr = r.time ? formatChatDateLabel(r.time) : "Today";
+      const displayTime = dateStr === "Today" ? timeStr : `${dateStr}, ${timeStr}`;
+      const roleCapitalized = (r.role || "Student").charAt(0).toUpperCase() + (r.role || "Student").slice(1);
+      const safeAvatar = (r.avatar && typeof r.avatar === "string" && r.avatar.trim().length > 5) ? r.avatar : "assets/avatar.jpg";
+
+      return `
+        <li class="chat-seen-item">
+          <div class="chat-seen-user-left">
+            <img src="${safeAvatar}" alt="${escapeChatHTML(r.name)}" class="chat-seen-user-avatar" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/avatar.jpg';" />
+            <div>
+              <div class="chat-seen-user-name">${escapeChatHTML(r.name)}</div>
+              <div style="font-size:11px; color:#8c8276; font-weight:600;">${roleCapitalized}</div>
+            </div>
+          </div>
+          <div class="chat-seen-time-tag">${displayTime}</div>
+        </li>
+      `;
+    }).join("");
+  }
+
+  modal.classList.remove("view-hidden");
+}
+
+function closeSeenByModal() {
+  const modal = document.getElementById("chat-seen-modal");
+  if (modal) {
+    modal.classList.add("view-hidden");
+  }
 }
 
 // Mark recent messages from other users as seen by current user
@@ -3456,8 +3575,13 @@ function markMessagesAsSeen() {
   const myUid = (currentProfile && currentProfile.uid) || (currentUser && currentUser.uid) || "";
   if (!myUid) return;
 
+  const myName = (currentProfile && (currentProfile.displayName || currentProfile.fullName)) || (currentUser && currentUser.displayName) || "Student";
+  const myAvatar = (currentProfile && currentProfile.photoURL) || (currentUser && currentUser.photoURL) || "assets/avatar.jpg";
+  const myRole = (currentProfile && currentProfile.role) || "student";
+
   const unreadMessages = chatMessagesCache.filter((msg) => {
     if (msg.userId === myUid) return false;
+    if (locallyMarkedSeenIds.has(msg.id)) return false;
     const seenBy = msg.seenBy || {};
     return !seenBy[myUid];
   });
@@ -3469,15 +3593,30 @@ function markMessagesAsSeen() {
 
   const batch = db.batch();
   const nowMs = Date.now();
+  const seenPayload = {
+    at: nowMs,
+    name: myName,
+    avatar: myAvatar,
+    role: myRole
+  };
   let count = 0;
 
   unreadMessages.slice(-25).forEach((msg) => {
+    locallyMarkedSeenIds.add(msg.id);
+    // Also update locally in cache immediately
+    if (!msg.seenBy) msg.seenBy = {};
+    msg.seenBy[myUid] = seenPayload;
+
     const ref = db.collection("chats").doc("general").collection("messages").doc(msg.id);
     batch.update(ref, {
-      [`seenBy.${myUid}`]: nowMs
+      [`seenBy.${myUid}`]: seenPayload
     });
     count++;
   });
+
+  try {
+    localStorage.setItem("quill_q_chat_cache", JSON.stringify(chatMessagesCache));
+  } catch (e) {}
 
   if (count > 0) {
     batch.commit().catch((err) => {
@@ -3653,48 +3792,60 @@ function bindServerChat(user) {
       const currentPage = mainEl ? mainEl.getAttribute("data-current-page") : "home";
       isChatViewActive = currentPage === "chat";
 
+      // Calculate unread count
+      const unread = chatMessagesCache.filter((m) => {
+        if (m.userId === myUid) return false;
+        const seenBy = m.seenBy || {};
+        return !seenBy[myUid];
+      });
+
       if (isChatViewActive) {
         markMessagesAsSeen();
       } else {
-        // Calculate unread count
-        const unread = chatMessagesCache.filter((m) => {
-          if (m.userId === myUid) return false;
-          const seenBy = m.seenBy || {};
-          return !seenBy[myUid];
-        });
         updateChatBadge(unread.length);
+      }
 
-        // Notify on brand new messages (not initial batch)
-        if (!initialLoad && snapshot.docChanges) {
-          snapshot.docChanges().forEach((change) => {
-            if (change.type === "added") {
-              const newMsg = change.doc.data();
-              if (newMsg.userId !== myUid) {
-                // Play notification chime
-                if (!chatSoundMuted) {
-                  playNotificationChime();
-                }
+      // Notify on brand new incoming messages (not initial batch)
+      if (!initialLoad && snapshot.docChanges) {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === "added") {
+            const newMsg = change.doc.data();
+            if (newMsg && newMsg.userId !== myUid) {
+              // Play incoming message notification chime if sound is enabled
+              if (!chatSoundMuted) {
+                playNotificationChime();
+              }
 
-                // In-App Toast Alert
+              // In-App Toast Alert if user is on any other view (Home, Schedule, Subjects, Homeworks)
+              if (!isChatViewActive) {
                 showInAppToast({
                   title: `${newMsg.userName || "Classmate"} (Class Chat)`,
                   message: newMsg.text || "Sent a message",
                   type: "chat"
                 });
+              }
 
-                // Desktop / Push notification
-                if (typeof Notification !== "undefined" && Notification.permission === "granted" && document.hidden) {
+              // System / Browser Notification (plays when backgrounded or active)
+              if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+                if (document.hidden || !isChatViewActive) {
                   try {
-                    new Notification(`${newMsg.userName || "Quill-Q Chat"}`, {
-                      body: newMsg.text || "New message in class chat",
-                      icon: "assets/favicon-32x32-light.png"
+                    const notif = new Notification(`${newMsg.userName || "Classmate"} (Class Chat)`, {
+                      body: newMsg.text || "Sent a message",
+                      icon: "assets/favicon-32x32-light.png",
+                      tag: "chat-msg-" + (change.doc.id || Date.now())
                     });
+                    notif.onclick = () => {
+                      window.focus();
+                      const navChat = document.getElementById("nav-chat");
+                      if (navChat) navChat.click();
+                      notif.close();
+                    };
                   } catch (e) {}
                 }
               }
             }
-          });
-        }
+          }
+        });
       }
 
       initialLoad = false;
@@ -3770,6 +3921,18 @@ function initChatManager() {
   if (btnThumbs) btnThumbs.addEventListener("click", () => sendChatMessage("👍"));
   if (btnHeart) btnHeart.addEventListener("click", () => sendChatMessage("❤️"));
   if (btnHands) btnHands.addEventListener("click", () => sendChatMessage("🙋‍♂️"));
+
+  // Seen By Modal Close Handlers
+  const seenModal = document.getElementById("chat-seen-modal");
+  const seenCloseBtn = document.getElementById("chat-seen-modal-close");
+  if (seenCloseBtn) {
+    seenCloseBtn.addEventListener("click", closeSeenByModal);
+  }
+  if (seenModal) {
+    seenModal.addEventListener("click", (e) => {
+      if (e.target === seenModal) closeSeenByModal();
+    });
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
