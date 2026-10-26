@@ -1284,45 +1284,92 @@ function isStandalonePWA() {
     window.matchMedia('(display-mode: standalone)').matches;
 }
 
-function showInAppToast(task) {
+function showInAppToast(data) {
   const container = document.getElementById("inapp-toast-container");
-  if (!container) return;
+  if (!container || !data) return;
 
-  const isReminder = task.type === "reminder";
-  const typeClass = isReminder ? "toast-rem" : "toast-hw";
-  const badgeText = isReminder ? "Reminder" : (task.subject || "Homework");
-  const author = task.userName || "Classmate";
-  const isMine = isMyTask(task);
-  const title = isReminder 
-    ? (isMine ? "📌 Reminder Added" : "📌 New Reminder")
-    : (isMine ? `📚 Homework Added: ${escapeHtml(task.subject || "General")}` : `📚 New Homework: ${escapeHtml(task.subject || "General")}`);
+  // Check if caller passed a homework/reminder task or a general notification object
+  const isTask = !!(data.desc || data.due || data.subject);
+  let typeClass = "toast-info";
+  let badgeText = "Notification";
+  let iconHtml = '<i class="fi fi-rr-bell"></i>';
+  let title = data.title || "Notification";
+  let desc = data.message || data.desc || "";
+  let metaHtml = "";
+  let isNavigatableToHw = false;
+
+  if (isTask) {
+    const isReminder = data.type === "reminder";
+    typeClass = isReminder ? "toast-rem" : "toast-hw";
+    badgeText = isReminder ? "Reminder" : (data.subject || "Homework");
+    iconHtml = `<i class="fi ${isReminder ? "fi-rr-bookmark" : "fi-rr-book-alt"}"></i>`;
+    const author = data.userName || "Classmate";
+    const isMine = isMyTask(data);
+    title = isReminder 
+      ? (isMine ? "📌 Reminder Added" : "📌 New Reminder")
+      : (isMine ? `📚 Homework Added: ${escapeHtml(data.subject || "General")}` : `📚 New Homework: ${escapeHtml(data.subject || "General")}`);
+    desc = data.desc || "";
+    metaHtml = `<div class="inapp-toast-meta">By ${escapeHtml(author)}${isMine ? ' (You)' : ''} • Due ${escapeHtml(formatDueDisplay(data.due))}</div>`;
+    isNavigatableToHw = true;
+  } else {
+    // Custom alert/toast (e.g. Chat, Connection, Error, Warning)
+    const toastType = data.type || "info";
+    if (toastType === "error") {
+      typeClass = "toast-error";
+      badgeText = "Error";
+      iconHtml = '<i class="fi fi-rr-cross-circle"></i>';
+    } else if (toastType === "warning") {
+      typeClass = "toast-warning";
+      badgeText = "Notice";
+      iconHtml = '<i class="fi fi-rr-info"></i>';
+    } else if (toastType === "chat") {
+      typeClass = "toast-chat";
+      badgeText = "Class Chat";
+      iconHtml = '<i class="fi fi-rr-comment-alt-dots"></i>';
+    } else {
+      typeClass = "toast-info";
+      badgeText = data.badge || "Notice";
+      iconHtml = data.icon || '<i class="fi fi-rr-comment-alt-dots"></i>';
+    }
+    if (data.meta) {
+      metaHtml = `<div class="inapp-toast-meta">${escapeHtml(data.meta)}</div>`;
+    }
+  }
 
   const toast = document.createElement("div");
   toast.className = `inapp-toast ${typeClass}`;
   toast.setAttribute("role", "alert");
   toast.innerHTML = `
     <div class="inapp-toast-icon-wrap">
-      <i class="fi ${isReminder ? "fi-rr-bookmark" : "fi-rr-book-alt"}"></i>
+      ${iconHtml}
     </div>
     <div class="inapp-toast-body">
       <div class="inapp-toast-header">
         <span class="inapp-toast-badge">${escapeHtml(badgeText)}</span>
       </div>
       <div class="inapp-toast-title">${title}</div>
-      <div class="inapp-toast-desc">${escapeHtml(task.desc)}</div>
-      <div class="inapp-toast-meta">By ${escapeHtml(author)}${isMine ? ' (You)' : ''} • Due ${escapeHtml(formatDueDisplay(task.due))}</div>
+      ${desc ? `<div class="inapp-toast-desc">${escapeHtml(desc)}</div>` : ''}
+      ${metaHtml}
     </div>
     <button type="button" class="inapp-toast-close" aria-label="Dismiss">&times;</button>
   `;
 
-  // Clicking toast opens homeworks view
+  // Clicking toast opens appropriate section
   toast.addEventListener("click", (e) => {
     if (e.target.closest(".inapp-toast-close")) return;
-    const items = document.querySelectorAll(".nav-item");
-    items.forEach((i) => i.classList.remove("active"));
-    const navHw = document.getElementById("nav-homeworks");
-    if (navHw) navHw.classList.add("active");
-    switchView("homeworks");
+    if (isNavigatableToHw) {
+      const items = document.querySelectorAll(".nav-item");
+      items.forEach((i) => i.classList.remove("active"));
+      const navHw = document.getElementById("nav-homeworks");
+      if (navHw) navHw.classList.add("active");
+      switchView("homeworks");
+    } else if (data.type === "chat") {
+      const items = document.querySelectorAll(".nav-item");
+      items.forEach((i) => i.classList.remove("active"));
+      const navChat = document.getElementById("nav-chat");
+      if (navChat) navChat.classList.add("active");
+      switchView("chat");
+    }
     closeToast();
   });
 
@@ -2449,9 +2496,17 @@ function initFirebaseAuthAndProfile() {
       }
       applyProfileToUI(currentProfile);
       if (currentProfile && currentProfile.uid) {
-        bindUserTasks({ uid: currentProfile.uid });
-        bindServerSchedule({ uid: currentProfile.uid });
-        bindServerChat({ uid: currentProfile.uid });
+        if (!currentUser) {
+          currentUser = {
+            uid: currentProfile.uid,
+            displayName: currentProfile.displayName || currentProfile.fullName || "Student",
+            email: currentProfile.email || "",
+            photoURL: currentProfile.photoURL || "assets/avatar.jpg"
+          };
+        }
+        bindUserTasks(currentUser);
+        bindServerSchedule(currentUser);
+        bindServerChat(currentUser);
       }
       if (currentProfile && currentProfile.profileCompleted) {
         if (isSuperAdminUser(currentProfile) || currentProfile.status === "approved") {
@@ -3466,19 +3521,23 @@ function onChatViewOpened() {
 async function sendChatMessage(text) {
   if (!text || !text.trim()) return;
   const cleanText = text.trim();
-  const myUid = (currentProfile && currentProfile.uid) || (currentUser && currentUser.uid) || "";
-  if (!myUid || !db) {
+  const myUid = (currentProfile && currentProfile.uid) || (currentUser && currentUser.uid) || (auth && auth.currentUser && auth.currentUser.uid) || "";
+  
+  if (!myUid) {
     showInAppToast({
       title: "Cannot send message",
-      message: "Please ensure you are signed in and approved.",
+      message: "Please sign in to join the class chat.",
       type: "warning"
     });
     return;
   }
 
-  const senderName = (currentProfile && currentProfile.fullName) || (currentUser && currentUser.displayName) || "Student";
+  const senderName = (currentProfile && (currentProfile.displayName || currentProfile.fullName)) || (currentUser && currentUser.displayName) || "Student";
   const userRole = (currentProfile && currentProfile.role) || "student";
   const userAvatar = (currentProfile && currentProfile.photoURL) || (currentUser && currentUser.photoURL) || "assets/avatar.jpg";
+
+  const localMsgId = "local-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
+  const nowMs = Date.now();
 
   const messageDoc = {
     text: cleanText,
@@ -3486,26 +3545,47 @@ async function sendChatMessage(text) {
     userName: senderName,
     userRole: userRole,
     userAvatar: userAvatar,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    createdAt: new Date(nowMs),
     seenBy: {
-      [myUid]: Date.now()
+      [myUid]: nowMs
     }
   };
 
+  // 1. Optimistic Local Append: Show message immediately in the UI
+  const optimisticMsg = {
+    id: localMsgId,
+    ...messageDoc
+  };
+  chatMessagesCache.push(optimisticMsg);
   try {
-    await db.collection("chats").doc("general").collection("messages").add(messageDoc);
-    const input = document.getElementById("chat-text-input");
-    if (input) {
-      input.value = "";
-      input.style.height = "auto";
+    localStorage.setItem("quill_q_chat_cache", JSON.stringify(chatMessagesCache.slice(-60)));
+  } catch (e) {}
+  renderChatMessages();
+
+  // Clear text input immediately
+  const input = document.getElementById("chat-text-input");
+  if (input) {
+    input.value = "";
+    input.style.height = "auto";
+  }
+
+  // 2. Server Persistence: write to Firestore
+  if (db) {
+    try {
+      const serverPayload = {
+        ...messageDoc,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      const docRef = await db.collection("chats").doc("general").collection("messages").add(serverPayload);
+      // Replace temporary local ID with server doc ID
+      const idx = chatMessagesCache.findIndex((m) => m.id === localMsgId);
+      if (idx !== -1) {
+        chatMessagesCache[idx].id = docRef.id;
+      }
+    } catch (err) {
+      console.warn("Failed syncing chat message to server:", err);
+      // Message is kept locally in cache so user does not lose their chat
     }
-  } catch (err) {
-    console.error("Failed to send chat message:", err);
-    showInAppToast({
-      title: "Message failed",
-      message: "Could not send message. Please check your connection.",
-      type: "error"
-    });
   }
 }
 
@@ -3516,13 +3596,24 @@ function bindServerChat(user) {
     chatMessagesUnsubscribe = null;
   }
 
+  // Restore cached messages from local storage first
+  try {
+    const localCached = JSON.parse(localStorage.getItem("quill_q_chat_cache") || "[]");
+    if (localCached && localCached.length > 0) {
+      chatMessagesCache = localCached;
+      renderChatMessages();
+    }
+  } catch (e) {}
+
   const profile = currentProfile;
   const isSuperAdmin = isSuperAdminUser(profile);
   const isApproved = profile && (profile.status === "approved" || isSuperAdmin);
 
   if (!user || !isApproved || !db) {
-    chatMessagesCache = [];
-    renderChatMessages();
+    if (!chatMessagesCache || chatMessagesCache.length === 0) {
+      chatMessagesCache = [];
+      renderChatMessages();
+    }
     updateChatBadge(0);
     return;
   }
@@ -3549,8 +3640,13 @@ function bindServerChat(user) {
         });
       });
 
-      chatMessagesCache = messages;
-      renderChatMessages();
+      if (messages.length > 0) {
+        chatMessagesCache = messages;
+        try {
+          localStorage.setItem("quill_q_chat_cache", JSON.stringify(chatMessagesCache));
+        } catch (e) {}
+        renderChatMessages();
+      }
 
       // Check current page
       const mainEl = document.querySelector(".main");
@@ -3583,8 +3679,7 @@ function bindServerChat(user) {
                 showInAppToast({
                   title: `${newMsg.userName || "Classmate"} (Class Chat)`,
                   message: newMsg.text || "Sent a message",
-                  type: "info",
-                  icon: '<i class="fi fi-sr-comment-alt-dots"></i>'
+                  type: "chat"
                 });
 
                 // Desktop / Push notification
