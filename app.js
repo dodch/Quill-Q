@@ -1207,11 +1207,277 @@ function getStoredTasks() {
   return currentTasks.filter((t) => !isTaskDueReached(t));
 }
 
+let isFirstHomeworkSnapshot = true;
+const locallyCreatedTaskIds = new Set();
+
+function playNotificationChime() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
+    }
+    const now = ctx.currentTime;
+    
+    // Harmonic note 1 (D5 -> A5)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(587.33, now);
+    osc1.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+    gain1.gain.setValueAtTime(0.12, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.55);
+
+    // Harmonic note 2 (A5 -> D6)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(880, now + 0.08);
+    osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.22);
+    gain2.gain.setValueAtTime(0.08, now + 0.08);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.08);
+    osc2.stop(now + 0.7);
+  } catch (e) {
+    // Autoplay restrictions or audio unsupported
+  }
+}
+
+function isIOSDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function isStandalonePWA() {
+  return window.navigator.standalone === true || 
+    window.matchMedia('(display-mode: standalone)').matches;
+}
+
+function showInAppToast(task) {
+  const container = document.getElementById("inapp-toast-container");
+  if (!container) return;
+
+  const isReminder = task.type === "reminder";
+  const typeClass = isReminder ? "toast-rem" : "toast-hw";
+  const badgeText = isReminder ? "Reminder" : (task.subject || "Homework");
+  const author = task.userName || "Classmate";
+  const isMine = isMyTask(task);
+  const title = isReminder 
+    ? (isMine ? "📌 Reminder Added" : "📌 New Reminder")
+    : (isMine ? `📚 Homework Added: ${escapeHtml(task.subject || "General")}` : `📚 New Homework: ${escapeHtml(task.subject || "General")}`);
+
+  const toast = document.createElement("div");
+  toast.className = `inapp-toast ${typeClass}`;
+  toast.setAttribute("role", "alert");
+  toast.innerHTML = `
+    <div class="inapp-toast-icon-wrap">
+      <i class="fi ${isReminder ? "fi-rr-bookmark" : "fi-rr-book-alt"}"></i>
+    </div>
+    <div class="inapp-toast-body">
+      <div class="inapp-toast-header">
+        <span class="inapp-toast-badge">${escapeHtml(badgeText)}</span>
+      </div>
+      <div class="inapp-toast-title">${title}</div>
+      <div class="inapp-toast-desc">${escapeHtml(task.desc)}</div>
+      <div class="inapp-toast-meta">By ${escapeHtml(author)}${isMine ? ' (You)' : ''} • Due ${escapeHtml(formatDueDisplay(task.due))}</div>
+    </div>
+    <button type="button" class="inapp-toast-close" aria-label="Dismiss">&times;</button>
+  `;
+
+  // Clicking toast opens homeworks view
+  toast.addEventListener("click", (e) => {
+    if (e.target.closest(".inapp-toast-close")) return;
+    const items = document.querySelectorAll(".nav-item");
+    items.forEach((i) => i.classList.remove("active"));
+    const navHw = document.getElementById("nav-homeworks");
+    if (navHw) navHw.classList.add("active");
+    switchView("homeworks");
+    closeToast();
+  });
+
+  const closeBtn = toast.querySelector(".inapp-toast-close");
+  const closeToast = () => {
+    toast.classList.add("is-leaving");
+    setTimeout(() => {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 240);
+  };
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeToast();
+    });
+  }
+
+  // Auto-dismiss after 6.5s
+  setTimeout(closeToast, 6500);
+
+  container.appendChild(toast);
+}
+
+function showBrowserNotification(task) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+
+  try {
+    const isReminder = task.type === "reminder";
+    const isMine = isMyTask(task);
+    const title = isReminder 
+      ? (isMine ? "📌 Reminder Added" : "📌 New Study Reminder")
+      : (isMine ? `📚 Homework Added: ${task.subject || "General"}` : `📚 New Homework: ${task.subject || "General"}`);
+    const author = task.userName || "Classmate";
+    const body = `"${task.desc}"\nBy ${author}${isMine ? ' (You)' : ''} • Due ${formatDueDisplay(task.due)}`;
+
+    const notif = new Notification(title, {
+      body: body,
+      icon: "assets/brand-logo.webp",
+      badge: "assets/brand-logo.webp",
+      tag: "quill-task-" + (task.id || Date.now())
+    });
+
+    notif.onclick = () => {
+      window.focus();
+      const items = document.querySelectorAll(".nav-item");
+      items.forEach((i) => i.classList.remove("active"));
+      const navHw = document.getElementById("nav-homeworks");
+      if (navHw) navHw.classList.add("active");
+      switchView("homeworks");
+      notif.close();
+    };
+  } catch (e) {
+    console.warn("Browser notification dispatch failed:", e);
+  }
+}
+
+function triggerNewTaskNotification(task) {
+  playNotificationChime();
+  showInAppToast(task);
+  showBrowserNotification(task);
+}
+
+function updateNotificationUIState() {
+  const section = document.getElementById("home-notif-section");
+  const btn = document.getElementById("btn-enable-notifs");
+  const text = document.getElementById("btn-enable-notifs-text");
+
+  if (!section) return;
+
+  // If notifications are not supported by the browser: hide grid
+  if (!("Notification" in window)) {
+    if (isIOSDevice() && !isStandalonePWA()) {
+      // Keep visible so iOS user can see setup guide
+      section.style.display = "";
+    } else {
+      section.style.display = "none";
+    }
+    return;
+  }
+
+  // If permission is already granted (ACTIVE): cleanly remove/hide notification grid!
+  if (Notification.permission === "granted") {
+    section.style.display = "none";
+    return;
+  }
+
+  // If NOT active (default) or BLOCKED (denied): show the grid again so user can activate or unblock
+  section.style.display = "";
+  if (text) {
+    if (Notification.permission === "denied") {
+      text.textContent = "Unblock in Settings";
+    } else {
+      text.textContent = "Enable Notifications";
+    }
+  }
+}
+
+function openIosPwaModal() {
+  const modal = document.getElementById("ios-pwa-modal");
+  if (modal) modal.classList.remove("view-hidden");
+}
+
+function closeIosPwaModal() {
+  const modal = document.getElementById("ios-pwa-modal");
+  if (modal) modal.classList.add("view-hidden");
+}
+
+async function requestNotificationAccess() {
+  // If user is on an iOS device (iPhone/iPad) and NOT running in standalone PWA mode
+  if (isIOSDevice() && !isStandalonePWA()) {
+    openIosPwaModal();
+    return;
+  }
+
+  if (!("Notification" in window)) {
+    if (isIOSDevice()) {
+      openIosPwaModal();
+    } else {
+      await showCustomAlert("This browser does not support web notifications.", "Notice", '<i class="fi fi-rr-info"></i>');
+    }
+    return;
+  }
+
+  if (Notification.permission === "denied") {
+    await showCustomAlert(
+      "Notifications are blocked in your browser settings. Please click the tune/padlock icon in your address bar to allow notifications for Quill-Q.",
+      "Permission Needed",
+      '<i class="fi fi-rr-settings"></i>'
+    );
+    return;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+    updateNotificationUIState();
+  } catch (err) {
+    console.warn("Notification request permission failed:", err);
+  }
+}
+
+function initNotificationCenter() {
+  const btnEnable = document.getElementById("btn-enable-notifs");
+  const btnIosGuide = document.getElementById("btn-open-ios-guide");
+  const modalClose = document.getElementById("ios-modal-close");
+  const modalGotIt = document.getElementById("ios-modal-got-it");
+  const modalBackdrop = document.getElementById("ios-pwa-modal");
+
+  if (btnEnable) {
+    btnEnable.addEventListener("click", () => {
+      requestNotificationAccess();
+    });
+  }
+
+  if (btnIosGuide) {
+    btnIosGuide.addEventListener("click", () => {
+      openIosPwaModal();
+    });
+  }
+
+  if (modalClose) modalClose.addEventListener("click", closeIosPwaModal);
+  if (modalGotIt) modalGotIt.addEventListener("click", closeIosPwaModal);
+  if (modalBackdrop) {
+    modalBackdrop.addEventListener("click", (e) => {
+      if (e.target === modalBackdrop) closeIosPwaModal();
+    });
+  }
+
+  updateNotificationUIState();
+}
+
 function bindUserTasks(user) {
   if (tasksUnsubscribe) {
     tasksUnsubscribe();
     tasksUnsubscribe = null;
   }
+
+  isFirstHomeworkSnapshot = true;
 
   if (user) {
     // 1. Instant local read for snappy UI
@@ -1233,6 +1499,20 @@ function bindUserTasks(user) {
       try {
         tasksUnsubscribe = db.collection("homeworks")
           .onSnapshot((snapshot) => {
+            // Check for new additions added by other users or across tabs
+            if (!isFirstHomeworkSnapshot) {
+              snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                  const docData = change.doc.data();
+                  // Trigger alert if task wasn't initiated in this exact tab session
+                  if (!locallyCreatedTaskIds.has(change.doc.id) && !isTaskDueReached(docData)) {
+                    triggerNewTaskNotification({ id: change.doc.id, ...docData });
+                  }
+                }
+              });
+            }
+            isFirstHomeworkSnapshot = false;
+
             const list = [];
             snapshot.forEach((doc) => {
               list.push({ id: doc.id, ...doc.data() });
@@ -1801,6 +2081,10 @@ function initHomeworksManager() {
       renderHomeworksView();
       syncHomeHomeworkNote();
       closeModal();
+
+      // Trigger instant notification and chime for the creator
+      locallyCreatedTaskIds.add(taskId);
+      triggerNewTaskNotification(newTask);
 
       if (db) {
         try {
@@ -2928,6 +3212,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderDate();
   initNav();
   initHomeworksManager();
+  initNotificationCenter();
   initSearch();
   initSubjectFilters();
 

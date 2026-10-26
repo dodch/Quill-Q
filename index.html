@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
   </noscript>
-  <link rel="stylesheet" href="styles.min.css?v=2" />
+  <link rel="stylesheet" href="styles.min.css?v=9" />
   <script>
     try {
       var p = JSON.parse(localStorage.getItem("quill_q_profile") || "null");
@@ -470,6 +470,50 @@
               </div>
             </div>
           </header>
+
+          <!-- Real-Time Alerts & Notification Banner Grid -->
+          <section class="home-notif-section" id="home-notif-section" aria-label="Notification Center">
+            <div class="home-notif-grid">
+              <!-- Card 1: Enable / Manage Notifications -->
+              <div class="card home-notif-card notif-main-card">
+                <div class="notif-tape-strip" aria-hidden="true"></div>
+                <div class="notif-card-header">
+                  <div class="notif-badge-icon">
+                    <i class="fi fi-rr-bell-ring"></i>
+                  </div>
+                  <div class="notif-card-text">
+                    <h3 class="notif-card-title">Live Homework & Reminder Alerts</h3>
+                    <p class="notif-card-subtitle">Get instant alerts the moment a classmate or teacher posts new homework or study notes.</p>
+                  </div>
+                </div>
+                <div class="notif-card-action-row">
+                  <button type="button" class="btn-enable-notifs" id="btn-enable-notifs">
+                    <i class="fi fi-rr-bell"></i>
+                    <span id="btn-enable-notifs-text">Enable Notifications</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Card 2: Quick Status / iOS PWA Guide Tip -->
+              <div class="card home-notif-card notif-ios-card" id="card-ios-helper">
+                <div class="notif-card-header">
+                  <div class="notif-badge-icon notif-icon-alt">
+                    <i class="fi fi-rr-mobile"></i>
+                  </div>
+                  <div class="notif-card-text">
+                    <h3 class="notif-card-title">iPhone & iPad Setup</h3>
+                    <p class="notif-card-subtitle">Apple requires adding Quill-Q to your Home Screen to unlock push notifications.</p>
+                  </div>
+                </div>
+                <div class="notif-card-action-row">
+                  <button type="button" class="btn-ios-guide" id="btn-open-ios-guide">
+                    <span>How to set up on iOS</span>
+                    <i class="fi fi-rr-arrow-small-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
 
           <section class="quick-glance" aria-label="Today's Status">
             <article class="card status-card" id="status-card">
@@ -1182,7 +1226,7 @@
           </div>
         </div>
 
-        <!-- 1. Home & Schedule view: Paper Note Pin Tall for Homework & Reminders -->
+        <!-- 1. Home & Schedule view: Paper Note Pin for Homework & Reminders -->
         <section class="homework sticky sticky-home-view" id="sticky-homework-note" aria-labelledby="hw-title">
           <picture>
             <source srcset="assets/paper_note_pin_tall.webp" type="image/webp" />
@@ -1332,11 +1376,61 @@
     </div>
   </div>
 
+  <!-- iOS Add to Home Screen Instructions Modal -->
+  <div class="task-modal-backdrop view-hidden" id="ios-pwa-modal" style="z-index: 10000;">
+    <div class="task-modal-card ios-pwa-card" role="dialog" aria-modal="true" aria-labelledby="ios-modal-title">
+      <div class="task-modal-header">
+        <div class="ios-modal-title-wrap">
+          <i class="fi fi-rr-apps ios-apple-icon"></i>
+          <h3 class="task-modal-title" id="ios-modal-title">Enable Alerts on iPhone &amp; iPad</h3>
+        </div>
+        <button type="button" class="task-modal-close" id="ios-modal-close" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="ios-modal-body">
+        <p class="ios-modal-desc">
+          Apple requires web apps to be added to your <strong>Home Screen</strong> before allowing push notifications. Follow these 3 quick steps:
+        </p>
+
+        <div class="ios-steps-list">
+          <div class="ios-step-item">
+            <div class="ios-step-num">1</div>
+            <div class="ios-step-info">
+              <h4>Tap the Share Button</h4>
+              <p>In Safari, tap the <i class="fi fi-rr-share"></i> <strong>Share</strong> icon in the bottom menu bar.</p>
+            </div>
+          </div>
+
+          <div class="ios-step-item">
+            <div class="ios-step-num">2</div>
+            <div class="ios-step-info">
+              <h4>Add to Home Screen</h4>
+              <p>Scroll down the share sheet and tap <i class="fi fi-rr-plus-small"></i> <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>.</p>
+            </div>
+          </div>
+
+          <div class="ios-step-item">
+            <div class="ios-step-num">3</div>
+            <div class="ios-step-info">
+              <h4>Open from Home Screen &amp; Enable</h4>
+              <p>Open <strong>Quill-Q</strong> from your iPhone screen and tap <strong>"Enable Notifications"</strong>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="task-modal-actions">
+        <button type="button" class="task-btn-save" id="ios-modal-got-it">Got it!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- In-App Floating Toast Container -->
+  <div class="inapp-toast-container" id="inapp-toast-container" aria-live="polite" aria-atomic="true"></div>
+
   <!-- Firebase SDKs (Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-  <script src="app.min.js?v=1"></script>
+  <script src="app.min.js?v=9"></script>
 </body>
 </html>
