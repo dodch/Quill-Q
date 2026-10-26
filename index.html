@@ -39,7 +39,7 @@
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
   </noscript>
-  <link rel="stylesheet" href="styles.min.css?v=9" />
+  <link rel="stylesheet" href="styles.min.css?v=14" />
   <script>
     try {
       var p = JSON.parse(localStorage.getItem("quill_q_profile") || "null");
@@ -425,6 +425,13 @@
         <a href="#" class="nav-item" id="nav-schedule" data-page="schedule">
           <svg viewBox="0 0 24 24" class="nav-icon" fill="none" stroke="#333" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M7 14h2M11 14h2M15 14h2M7 17h2M11 17h2"/></svg>
           <span>Schedule</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-chat" data-page="chat">
+          <span class="nav-icon-wrap" style="position: relative; display: inline-flex;">
+            <i class="fi fi-rr-comment-alt-dots nav-icon" id="nav-chat-icon"></i>
+            <span class="nav-chat-badge view-hidden" id="nav-chat-badge">0</span>
+          </span>
+          <span>Chat</span>
         </a>
       </nav>
 
@@ -1233,6 +1240,64 @@
             </div>
           </div>
         </div>
+
+        <!-- DEDICATED CHAT VIEW -->
+        <div class="view-panel view-hidden" id="view-chat">
+          <div class="chat-view-container">
+            <!-- Chat Card Header -->
+            <header class="chat-header">
+              <div class="chat-header-info">
+                <div class="chat-header-icon-wrap">
+                  <i class="fi fi-sr-comments"></i>
+                </div>
+                <div>
+                  <div class="chat-header-title-row">
+                    <h2 class="chat-header-title">Class Discussion</h2>
+                  </div>
+                  <p class="chat-header-subtitle">Chat with classmates &amp; teachers in real-time</p>
+                </div>
+              </div>
+              <div class="chat-header-actions">
+                <button type="button" class="chat-action-btn" id="btn-chat-toggle-sound" title="Toggle Chat Sound" aria-label="Toggle chat sound">
+                  <i class="fi fi-rr-bell" id="chat-sound-icon"></i>
+                  <span class="chat-action-text" id="chat-sound-text">Mute</span>
+                </button>
+              </div>
+            </header>
+
+            <!-- Chat Messages Stream -->
+            <div class="chat-messages-wrap" id="chat-messages-container" tabindex="0" aria-live="polite">
+              <!-- Dynamically populated messages and date badges -->
+              <div class="chat-empty-state" id="chat-empty-state">
+                <div class="chat-empty-illustration">💬</div>
+                <h3>Welcome to the Class Chat!</h3>
+                <p>Say hello to your classmates or ask a question about today's subjects.</p>
+              </div>
+            </div>
+
+            <!-- Chat Footer Input Form -->
+            <form class="chat-input-form" id="chat-message-form" autocomplete="off">
+              <div class="chat-input-wrapper">
+                <textarea 
+                  class="chat-text-input" 
+                  id="chat-text-input" 
+                  rows="1" 
+                  placeholder="Type a message... (Press Enter to send)"
+                  maxlength="1000"
+                ></textarea>
+                <div class="chat-input-tools">
+                  <button type="button" class="chat-quick-emoji-btn" id="chat-btn-thumbs" title="Send thumbs up">👍</button>
+                  <button type="button" class="chat-quick-emoji-btn" id="chat-btn-heart" title="Send heart">❤️</button>
+                  <button type="button" class="chat-quick-emoji-btn" id="chat-btn-hands" title="Send raise hand">🙋‍♂️</button>
+                  <button type="submit" class="btn-chat-send" id="btn-chat-send" aria-label="Send message">
+                    <span>Send</span>
+                    <i class="fi fi-sr-paper-plane-top"></i>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
       </section>
 
       <section class="col-right">
@@ -1454,6 +1519,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-  <script src="app.min.js?v=9"></script>
+  <script src="app.min.js?v=14"></script>
 </body>
 </html>

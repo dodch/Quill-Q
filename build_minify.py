@@ -4,12 +4,24 @@ import os
 def minify_css(css_text):
     # Remove comments
     css_text = re.sub(r'/\*[\s\S]*?\*/', '', css_text)
+    # Temporarily protect calc expressions so mandatory spaces around + and - are not destroyed
+    calcs = []
+    def save_calc(m):
+        calcs.append(m.group(0))
+        return f"__CALC_PLACEHOLDER_{len(calcs)-1}__"
+    css_text = re.sub(r'calc\([^)]+\)', save_calc, css_text)
     # Remove whitespace around symbols
-    css_text = re.sub(r'\s*([\{\}:;,>~+])\s*', r'\1', css_text)
+    css_text = re.sub(r'\s*([\{\}:;,>~])\s*', r'\1', css_text)
     # Collapse multiple whitespaces
     css_text = re.sub(r'\s+', ' ', css_text)
     # Remove trailing semicolons in blocks
     css_text = re.sub(r';\}', '}', css_text)
+    # Restore protected calc expressions with normalized spaces around + and -
+    for i, c in enumerate(calcs):
+        # Ensure CSS spec compliant spaces around + and -
+        norm_calc = re.sub(r'\s*([+-])\s*', r' \1 ', c)
+        norm_calc = re.sub(r'\s+', ' ', norm_calc)
+        css_text = css_text.replace(f"__CALC_PLACEHOLDER_{i}__", norm_calc)
     return css_text.strip()
 
 def minify_js(js_text):

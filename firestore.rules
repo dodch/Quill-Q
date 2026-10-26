@@ -73,7 +73,18 @@ service cloud.firestore {
     // - ONLY Super Admin can create, modify, or delete schedules
     match /schedules/{dayId} {
       allow read: if isApprovedUser();
-      allow write:0 if isSuperAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    // Server-wide Class Chat
+    // - Approved users can read and write chat messages
+    // - Approved users can update seen status on messages
+    // - Creator or super admin can delete messages
+    match /chats/{channelId}/messages/{messageId} {
+      allow read: if isApprovedUser();
+      allow create: if isApprovedUser() && request.resource.data.userId == request.auth.uid;
+      allow update: if isApprovedUser();
+      allow delete: if isApprovedUser() && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
   }
 }

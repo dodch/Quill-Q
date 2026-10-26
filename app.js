@@ -937,6 +937,7 @@ function switchView(page) {
   const viewSubjects = document.getElementById("view-subjects");
   const viewHomeworks = document.getElementById("view-homeworks");
   const viewProfile = document.getElementById("view-profile");
+  const viewChat = document.getElementById("view-chat");
   const hwNote = document.getElementById("sticky-homework-note");
   const subjectsSide = document.getElementById("subjects-side-wrap");
   const homeworksSide = document.getElementById("homeworks-side-wrap");
@@ -948,6 +949,7 @@ function switchView(page) {
   if (viewSubjects) viewSubjects.classList.add("view-hidden");
   if (viewHomeworks) viewHomeworks.classList.add("view-hidden");
   if (viewProfile) viewProfile.classList.add("view-hidden");
+  if (viewChat) viewChat.classList.add("view-hidden");
 
   if (mainEl) {
     mainEl.setAttribute("data-current-page", page || "home");
@@ -962,6 +964,18 @@ function switchView(page) {
     } else {
       subjIcon.classList.remove("fi-sr-books");
       subjIcon.classList.add("fi-rr-books");
+    }
+  }
+
+  // Toggle Chat icon between regular outline and solid filled
+  const chatIcon = document.getElementById("nav-chat-icon");
+  if (chatIcon) {
+    if (page === "chat") {
+      chatIcon.classList.remove("fi-rr-comment-alt-dots");
+      chatIcon.classList.add("fi-sr-comment-alt-dots");
+    } else {
+      chatIcon.classList.remove("fi-sr-comment-alt-dots");
+      chatIcon.classList.add("fi-rr-comment-alt-dots");
     }
   }
 
@@ -993,6 +1007,16 @@ function switchView(page) {
     if (subjectsSide) subjectsSide.classList.add("view-hidden");
     if (homeworksSide) homeworksSide.classList.add("view-hidden");
     renderProfileView();
+  } else if (page === "chat") {
+    if (viewChat) viewChat.classList.remove("view-hidden");
+    if (mainEl) mainEl.classList.remove("on-schedule-view");
+    // Completely hide homework note, search bar, and side cards in Chat view
+    if (hwNote) hwNote.classList.add("view-hidden");
+    if (subjectsSide) subjectsSide.classList.add("view-hidden");
+    if (homeworksSide) homeworksSide.classList.add("view-hidden");
+    if (typeof onChatViewOpened === "function") {
+      onChatViewOpened();
+    }
   } else {
     // Default Home view: homework note stays as is
     if (viewHome) viewHome.classList.remove("view-hidden");
@@ -2427,6 +2451,7 @@ function initFirebaseAuthAndProfile() {
       if (currentProfile && currentProfile.uid) {
         bindUserTasks({ uid: currentProfile.uid });
         bindServerSchedule({ uid: currentProfile.uid });
+        bindServerChat({ uid: currentProfile.uid });
       }
       if (currentProfile && currentProfile.profileCompleted) {
         if (isSuperAdminUser(currentProfile) || currentProfile.status === "approved") {
@@ -2852,6 +2877,7 @@ function initFirebaseAuthAndProfile() {
         localStorage.removeItem("quill_q_profile");
         bindUserTasks(null);
         bindServerSchedule(null);
+        bindServerChat(null);
         applyProfileToUI(null);
         navigateToLanding();
       }
@@ -2887,10 +2913,12 @@ function initFirebaseAuthAndProfile() {
           if (isApproved) {
             bindUserTasks(user);
             bindServerSchedule(user);
+            bindServerChat(user);
             navigateToDashboard();
           } else {
             bindUserTasks(null);
             bindServerSchedule(null);
+            bindServerChat(null);
             navigateToPendingApproval(profile);
           }
         }
@@ -2900,6 +2928,7 @@ function initFirebaseAuthAndProfile() {
         localStorage.removeItem("quill_q_profile");
         bindUserTasks(null);
         bindServerSchedule(null);
+        bindServerChat(null);
         applyProfileToUI(null);
       }
     });
@@ -3202,6 +3231,452 @@ function syncDefaultDay() {
   });
 }
 
+// =========================================================
+// ===== QUILL-Q CHAT SYSTEM (REAL-TIME, SEEN, DATES) =====
+// =========================================================
+
+let chatMessagesUnsubscribe = null;
+let chatMessagesCache = [];
+let chatSoundMuted = false;
+let chatUnreadCount = 0;
+let lastSeenMessageTimestamp = 0;
+let isChatViewActive = false;
+
+// Format Chat Message Time (e.g., 10:45 AM)
+function formatChatTime(date) {
+  if (!date || isNaN(date.getTime())) return "";
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const minutesStr = minutes < 10 ? "0" + minutes : minutes;
+  return `${hours}:${minutesStr} ${ampm}`;
+}
+
+// Format Date Header Label (e.g. Today, Yesterday, or Friday, Oct 24)
+function formatChatDateLabel(date) {
+  if (!date || isNaN(date.getTime())) return "";
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffDays = Math.round((today - target) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
+// Get standard date key (YYYY-MM-DD) for grouping messages by day
+function getChatDateKey(date) {
+  if (!date || isNaN(date.getTime())) return "unknown";
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+// Escape HTML utility for safe chat rendering
+function escapeChatHTML(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// Render Chat Messages stream with date dividers and seen indicators
+function renderChatMessages() {
+  const container = document.getElementById("chat-messages-container");
+  if (!container) return;
+
+  if (!chatMessagesCache || chatMessagesCache.length === 0) {
+    container.innerHTML = `
+      <div class="chat-empty-state" id="chat-empty-state">
+        <div class="chat-empty-illustration">💬</div>
+        <h3>Welcome to the Class Chat!</h3>
+        <p>Say hello to your classmates or ask a question about today's subjects.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const myUid = (currentProfile && currentProfile.uid) || (currentUser && currentUser.uid) || "";
+  let html = "";
+  let lastDateKey = null;
+
+  chatMessagesCache.forEach((msg) => {
+    let msgDate = null;
+    if (msg.createdAt && typeof msg.createdAt.toDate === "function") {
+      msgDate = msg.createdAt.toDate();
+    } else if (msg.createdAt && msg.createdAt.seconds) {
+      msgDate = new Date(msg.createdAt.seconds * 1000);
+    } else if (typeof msg.createdAt === "number") {
+      msgDate = new Date(msg.createdAt);
+    } else {
+      msgDate = new Date();
+    }
+
+    const dateKey = getChatDateKey(msgDate);
+    if (dateKey !== lastDateKey) {
+      const dateLabel = formatChatDateLabel(msgDate);
+      html += `
+        <div class="chat-date-divider" role="separator" aria-label="${dateLabel}">
+          <span class="chat-date-pill">${dateLabel}</span>
+        </div>
+      `;
+      lastDateKey = dateKey;
+    }
+
+    const isMine = myUid && msg.userId === myUid;
+    const timeFormatted = formatChatTime(msgDate);
+
+    // Seen / Read checkmark indicator calculation
+    let seenIndicatorHtml = "";
+    if (isMine) {
+      const seenBy = msg.seenBy || {};
+      // Readers excluding myself
+      const readers = Object.keys(seenBy).filter((id) => id !== myUid);
+      if (readers.length > 0) {
+        // Seen by at least one other member -> double blue check
+        seenIndicatorHtml = `<span class="chat-seen-icon seen-read" title="Seen by classmates">✓✓</span>`;
+      } else {
+        // Delivered / Sent -> single check
+        seenIndicatorHtml = `<span class="chat-seen-icon seen-delivered" title="Sent">✓</span>`;
+      }
+    }
+
+    const senderName = escapeChatHTML(msg.userName || "Student");
+    const role = (msg.userRole || "student").toLowerCase();
+    let roleBadgeHtml = "";
+    if (role === "admin") {
+      roleBadgeHtml = `<span class="chat-sender-badge badge-admin">Admin</span>`;
+    } else if (role === "teacher") {
+      roleBadgeHtml = `<span class="chat-sender-badge badge-teacher">Teacher</span>`;
+    } else {
+      roleBadgeHtml = `<span class="chat-sender-badge badge-student">Student</span>`;
+    }
+
+    const avatarSrc = msg.userAvatar || "assets/avatar.jpg";
+    const textEscaped = escapeChatHTML(msg.text || "");
+
+    if (isMine) {
+      html += `
+        <div class="chat-msg-row msg-mine" data-id="${msg.id}">
+          <div class="chat-msg-content">
+            <div class="chat-msg-bubble">${textEscaped}</div>
+            <div class="chat-msg-meta">
+              <span class="chat-msg-time">${timeFormatted}</span>
+              ${seenIndicatorHtml}
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      html += `
+        <div class="chat-msg-row msg-other" data-id="${msg.id}">
+          <img src="${avatarSrc}" alt="${senderName}" class="chat-msg-avatar" onerror="this.src='assets/avatar.jpg'" />
+          <div class="chat-msg-content">
+            <div class="chat-msg-sender">
+              <span>${senderName}</span>
+              ${roleBadgeHtml}
+            </div>
+            <div class="chat-msg-bubble">${textEscaped}</div>
+            <div class="chat-msg-meta">
+              <span class="chat-msg-time">${timeFormatted}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  });
+
+  container.innerHTML = html;
+  // Auto scroll to latest message smoothly
+  container.scrollTop = container.scrollHeight;
+}
+
+// Mark recent messages from other users as seen by current user
+function markMessagesAsSeen() {
+  if (!db) return;
+  const myUid = (currentProfile && currentProfile.uid) || (currentUser && currentUser.uid) || "";
+  if (!myUid) return;
+
+  const unreadMessages = chatMessagesCache.filter((msg) => {
+    if (msg.userId === myUid) return false;
+    const seenBy = msg.seenBy || {};
+    return !seenBy[myUid];
+  });
+
+  if (unreadMessages.length === 0) {
+    updateChatBadge(0);
+    return;
+  }
+
+  const batch = db.batch();
+  const nowMs = Date.now();
+  let count = 0;
+
+  unreadMessages.slice(-25).forEach((msg) => {
+    const ref = db.collection("chats").doc("general").collection("messages").doc(msg.id);
+    batch.update(ref, {
+      [`seenBy.${myUid}`]: nowMs
+    });
+    count++;
+  });
+
+  if (count > 0) {
+    batch.commit().catch((err) => {
+      console.warn("Failed marking messages as seen:", err);
+    });
+  }
+
+  updateChatBadge(0);
+}
+
+// Update Chat Badge on Sidebar
+function updateChatBadge(count) {
+  chatUnreadCount = Math.max(0, count);
+  const badge = document.getElementById("nav-chat-badge");
+  if (!badge) return;
+
+  if (chatUnreadCount > 0) {
+    badge.textContent = chatUnreadCount > 99 ? "99+" : String(chatUnreadCount);
+    badge.classList.remove("view-hidden");
+  } else {
+    badge.classList.add("view-hidden");
+    badge.textContent = "0";
+  }
+}
+
+// Handler when user opens Chat view
+function onChatViewOpened() {
+  isChatViewActive = true;
+  markMessagesAsSeen();
+  const container = document.getElementById("chat-messages-container");
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+  }
+  const input = document.getElementById("chat-text-input");
+  if (input) {
+    setTimeout(() => input.focus(), 80);
+  }
+}
+
+// Send a new message to Firestore
+async function sendChatMessage(text) {
+  if (!text || !text.trim()) return;
+  const cleanText = text.trim();
+  const myUid = (currentProfile && currentProfile.uid) || (currentUser && currentUser.uid) || "";
+  if (!myUid || !db) {
+    showInAppToast({
+      title: "Cannot send message",
+      message: "Please ensure you are signed in and approved.",
+      type: "warning"
+    });
+    return;
+  }
+
+  const senderName = (currentProfile && currentProfile.fullName) || (currentUser && currentUser.displayName) || "Student";
+  const userRole = (currentProfile && currentProfile.role) || "student";
+  const userAvatar = (currentProfile && currentProfile.photoURL) || (currentUser && currentUser.photoURL) || "assets/avatar.jpg";
+
+  const messageDoc = {
+    text: cleanText,
+    userId: myUid,
+    userName: senderName,
+    userRole: userRole,
+    userAvatar: userAvatar,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    seenBy: {
+      [myUid]: Date.now()
+    }
+  };
+
+  try {
+    await db.collection("chats").doc("general").collection("messages").add(messageDoc);
+    const input = document.getElementById("chat-text-input");
+    if (input) {
+      input.value = "";
+      input.style.height = "auto";
+    }
+  } catch (err) {
+    console.error("Failed to send chat message:", err);
+    showInAppToast({
+      title: "Message failed",
+      message: "Could not send message. Please check your connection.",
+      type: "error"
+    });
+  }
+}
+
+// Real-Time Chat Listener
+function bindServerChat(user) {
+  if (chatMessagesUnsubscribe) {
+    try { chatMessagesUnsubscribe(); } catch (e) {}
+    chatMessagesUnsubscribe = null;
+  }
+
+  const profile = currentProfile;
+  const isSuperAdmin = isSuperAdminUser(profile);
+  const isApproved = profile && (profile.status === "approved" || isSuperAdmin);
+
+  if (!user || !isApproved || !db) {
+    chatMessagesCache = [];
+    renderChatMessages();
+    updateChatBadge(0);
+    return;
+  }
+
+  const myUid = (profile && profile.uid) || (user && user.uid) || "";
+
+  // Query latest 60 messages
+  const query = db
+    .collection("chats")
+    .doc("general")
+    .collection("messages")
+    .orderBy("createdAt", "asc")
+    .limitToLast(60);
+
+  let initialLoad = true;
+
+  chatMessagesUnsubscribe = query.onSnapshot(
+    (snapshot) => {
+      const messages = [];
+      snapshot.forEach((doc) => {
+        messages.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+
+      chatMessagesCache = messages;
+      renderChatMessages();
+
+      // Check current page
+      const mainEl = document.querySelector(".main");
+      const currentPage = mainEl ? mainEl.getAttribute("data-current-page") : "home";
+      isChatViewActive = currentPage === "chat";
+
+      if (isChatViewActive) {
+        markMessagesAsSeen();
+      } else {
+        // Calculate unread count
+        const unread = chatMessagesCache.filter((m) => {
+          if (m.userId === myUid) return false;
+          const seenBy = m.seenBy || {};
+          return !seenBy[myUid];
+        });
+        updateChatBadge(unread.length);
+
+        // Notify on brand new messages (not initial batch)
+        if (!initialLoad && snapshot.docChanges) {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+              const newMsg = change.doc.data();
+              if (newMsg.userId !== myUid) {
+                // Play notification chime
+                if (!chatSoundMuted) {
+                  playNotificationChime();
+                }
+
+                // In-App Toast Alert
+                showInAppToast({
+                  title: `${newMsg.userName || "Classmate"} (Class Chat)`,
+                  message: newMsg.text || "Sent a message",
+                  type: "info",
+                  icon: '<i class="fi fi-sr-comment-alt-dots"></i>'
+                });
+
+                // Desktop / Push notification
+                if (typeof Notification !== "undefined" && Notification.permission === "granted" && document.hidden) {
+                  try {
+                    new Notification(`${newMsg.userName || "Quill-Q Chat"}`, {
+                      body: newMsg.text || "New message in class chat",
+                      icon: "assets/favicon-32x32-light.png"
+                    });
+                  } catch (e) {}
+                }
+              }
+            }
+          });
+        }
+      }
+
+      initialLoad = false;
+    },
+    (err) => {
+      console.warn("Chat listener snapshot error:", err);
+    }
+  );
+}
+
+// Initialize Chat Form & Controls
+function initChatManager() {
+  const form = document.getElementById("chat-message-form");
+  const textarea = document.getElementById("chat-text-input");
+  const btnSound = document.getElementById("btn-chat-toggle-sound");
+  const soundIcon = document.getElementById("chat-sound-icon");
+  const soundText = document.getElementById("chat-sound-text");
+
+  // Load sound mute preference
+  try {
+    chatSoundMuted = localStorage.getItem("quill_q_chat_mute") === "true";
+    if (chatSoundMuted) {
+      if (soundIcon) soundIcon.className = "fi fi-rr-bell-slash";
+      if (soundText) soundText.textContent = "Unmute";
+    }
+  } catch (e) {}
+
+  if (btnSound) {
+    btnSound.addEventListener("click", () => {
+      chatSoundMuted = !chatSoundMuted;
+      try { localStorage.setItem("quill_q_chat_mute", String(chatSoundMuted)); } catch (e) {}
+      if (soundIcon) soundIcon.className = chatSoundMuted ? "fi fi-rr-bell-slash" : "fi fi-rr-bell";
+      if (soundText) soundText.textContent = chatSoundMuted ? "Unmute" : "Mute";
+    });
+  }
+
+  if (textarea) {
+    // Auto resize height as user types
+    textarea.addEventListener("input", () => {
+      textarea.style.height = "auto";
+      textarea.style.height = Math.min(textarea.scrollHeight, 100) + "px";
+    });
+
+    // Enter to submit (Shift+Enter for newline)
+    textarea.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        const text = textarea.value;
+        if (text && text.trim()) {
+          sendChatMessage(text);
+        }
+      }
+    });
+  }
+
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (textarea) {
+        const text = textarea.value;
+        if (text && text.trim()) {
+          sendChatMessage(text);
+        }
+      }
+    });
+  }
+
+  // Quick Emoji Buttons
+  const btnThumbs = document.getElementById("chat-btn-thumbs");
+  const btnHeart = document.getElementById("chat-btn-heart");
+  const btnHands = document.getElementById("chat-btn-hands");
+
+  if (btnThumbs) btnThumbs.addEventListener("click", () => sendChatMessage("👍"));
+  if (btnHeart) btnHeart.addEventListener("click", () => sendChatMessage("❤️"));
+  if (btnHands) btnHands.addEventListener("click", () => sendChatMessage("🙋‍♂️"));
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initPageNavigation();
   initFirebaseAuthAndProfile();
@@ -3212,6 +3687,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderDate();
   initNav();
   initHomeworksManager();
+  initChatManager();
   initNotificationCenter();
   initSearch();
   initSubjectFilters();
@@ -3223,4 +3699,5 @@ document.addEventListener("DOMContentLoaded", () => {
     renderDate();
   }, 30000);
 });
+
 
