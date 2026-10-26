@@ -73,7 +73,7 @@ service cloud.firestore {
     // - ONLY Super Admin can create, modify, or delete schedules
     match /schedules/{dayId} {
       allow read: if isApprovedUser();
-      allow write: if isSuperAdmin();
+      allow write:0 if isSuperAdmin();
     }
   }
 }

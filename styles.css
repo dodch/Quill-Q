@@ -2790,14 +2790,26 @@ a { color: inherit; text-decoration: none; }
   display: none !important;
 }
 
-.dashboard-hidden {
+.dashboard-hidden,
+#dashboard-app.dashboard-hidden {
   display: none !important;
 }
 
-html.authed-start #landing-page {
+/* When user is not authenticated and landing page is active: completely hide all dashboard elements */
+html:not(.authed-start) #dashboard-app,
+html:not(.authed-start) .mobile-top-bar,
+html:not(.authed-start) .sidebar,
+html:not(.authed-start) .sidebar-backdrop,
+html:not(.authed-start) .blob {
   display: none !important;
 }
-html.authed-start #dashboard-app {
+
+html.authed-start #landing-page,
+html.authed-start #auth-page,
+html.authed-start #pending-approval-page {
+  display: none !important;
+}
+html.authed-start #dashboard-app:not(.dashboard-hidden) {
   display: grid !important;
 }
 
@@ -3047,8 +3059,8 @@ html.authed-start #dashboard-app {
   }
 
   /* Mobile App Shell (override desktop 300px 1fr grid) */
-  html.authed-start #dashboard-app,
-  .app {
+  html.authed-start #dashboard-app:not(.dashboard-hidden),
+  .app:not(.dashboard-hidden) {
     display: flex !important;
     flex-direction: column !important;
     grid-template-columns: 1fr !important;
@@ -3061,9 +3073,16 @@ html.authed-start #dashboard-app {
     overflow-y: visible !important;
   }
 
-  /* Fixed Mobile Top Header Bar - Dynamically slides out on scroll down, appears on scroll up */
+  .dashboard-hidden {
+    display: none !important;
+  }
+
+  /* Fixed Mobile Top Header Bar - only visible inside active dashboard */
   .mobile-top-bar {
-    display: flex;
+    display: none;
+  }
+  .app:not(.dashboard-hidden) .mobile-top-bar {
+    display: flex !important;
     align-items: center;
     justify-content: space-between;
     padding: 10px 16px;
@@ -3724,6 +3743,11 @@ html.authed-start #dashboard-app {
   /* Landing page mobile adaptations */
   .landing-page {
     padding: 20px 16px 36px;
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
   .landing-header {
     flex-direction: column;
@@ -3733,9 +3757,36 @@ html.authed-start #dashboard-app {
   .landing-divider {
     display: none;
   }
+  .landing-hero {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 24px !important;
+    padding: 16px 0 24px !important;
+    width: 100% !important;
+  }
+  .landing-hero-left {
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    text-align: left;
+  }
   .landing-title {
-    font-size: 38px;
-    line-height: 1.15;
+    font-size: 38px !important;
+    line-height: 1.15 !important;
+    margin-bottom: 14px !important;
+  }
+  .landing-subtitle {
+    font-size: 16px !important;
+    line-height: 1.45 !important;
+    margin-bottom: 24px !important;
+  }
+  .landing-hero-right {
+    width: 100% !important;
+    margin-left: 0 !important;
+    justify-content: center !important;
+  }
+  .landing-hero-illustration {
+    max-width: 100% !important;
+    height: auto !important;
   }
   .landing-cta-row {
     flex-direction: column;
