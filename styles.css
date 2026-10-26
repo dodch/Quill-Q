@@ -5805,12 +5805,15 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   html:has(.main[data-current-page="chat"]) {
     overflow: hidden !important;
     height: 100vh !important;
+    height: 100dvh !important;
     position: fixed !important;
     width: 100% !important;
   }
   .app:has(.main[data-current-page="chat"]) {
     height: 100vh !important;
+    height: 100dvh !important;
     max-height: 100vh !important;
+    max-height: 100dvh !important;
     overflow: hidden !important;
     padding-top: 56px !important;
     box-sizing: border-box !important;
@@ -5822,7 +5825,9 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     padding: 0 !important;
     margin: 0 !important;
     height: calc(100vh - 56px) !important;
+    height: calc(100dvh - 56px) !important;
     max-height: calc(100vh - 56px) !important;
+    max-height: calc(100dvh - 56px) !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
     width: 100% !important;
@@ -5879,12 +5884,13 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     border-radius: 0 !important;
   }
   .chat-input-form {
-    padding: 10px 14px 12px 14px !important;
+    padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px)) 14px !important;
     border-radius: 0 !important;
     border-bottom: none !important;
     border-left: none !important;
     border-right: none !important;
     flex-shrink: 0 !important;
+    background: #fdfaf3;
   }
   .chat-msg-row {
     max-width: 90%;
