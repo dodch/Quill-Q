@@ -3259,13 +3259,57 @@ function renderAdminUsersList() {
   });
 }
 
-// --- Page Navigation (Brand Logo -> Landing) ---
+// Navigate to Home view inside Dashboard
+function navigateToHome() {
+  const items = document.querySelectorAll(".nav-item");
+  items.forEach((i) => i.classList.remove("active"));
+  const navHome = document.getElementById("nav-home") || document.querySelector('.nav-item[data-page="home"]');
+  if (navHome) {
+    navHome.classList.add("active");
+  }
+  switchView("home");
+
+  // Close mobile sidebar if open
+  const sidebar = document.querySelector(".sidebar");
+  const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+  if (sidebar) sidebar.classList.remove("mobile-open");
+  if (sidebarBackdrop) sidebarBackdrop.classList.remove("active");
+
+  const mainEl = document.querySelector(".main");
+  if (mainEl) mainEl.scrollTop = 0;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// Brand Logo Click Handler: Go Home if logged in, otherwise go to Welcome/Landing
+function handleBrandLogoClick() {
+  const dashboardApp = document.getElementById("dashboard-app");
+  const isDashboardVisible = dashboardApp && !dashboardApp.classList.contains("dashboard-hidden");
+  const isLoggedIn = (currentUser || currentProfile) && isDashboardVisible;
+
+  if (isLoggedIn) {
+    navigateToHome();
+  } else {
+    navigateToLanding();
+  }
+}
+
+// --- Page Navigation (Brand Logo -> Home if logged in, Landing if not) ---
 function initPageNavigation() {
-  const brandLogo = document.querySelector(".sidebar .brand");
-  if (brandLogo) {
-    brandLogo.style.cursor = "pointer";
-    brandLogo.addEventListener("click", () => {
-      navigateToLanding();
+  const sidebarBrand = document.querySelector(".sidebar .brand");
+  if (sidebarBrand) {
+    sidebarBrand.style.cursor = "pointer";
+    sidebarBrand.addEventListener("click", (e) => {
+      e.preventDefault();
+      handleBrandLogoClick();
+    });
+  }
+
+  const mobileBarBrand = document.getElementById("mobile-bar-brand") || document.querySelector(".mobile-bar-brand");
+  if (mobileBarBrand) {
+    mobileBarBrand.style.cursor = "pointer";
+    mobileBarBrand.addEventListener("click", (e) => {
+      e.preventDefault();
+      handleBrandLogoClick();
     });
   }
 }

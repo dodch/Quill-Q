@@ -3124,6 +3124,12 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   .mobile-bar-brand {
     flex: 1;
     text-align: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mobile-bar-brand:active {
+    opacity: 0.85;
   }
 
   .mobile-menu-btn,
