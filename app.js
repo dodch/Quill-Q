@@ -1234,11 +1234,42 @@ function getStoredTasks() {
 let isFirstHomeworkSnapshot = true;
 const locallyCreatedTaskIds = new Set();
 
+let sharedAudioCtx = null;
+
+function getSharedAudioContext() {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return null;
+  if (!sharedAudioCtx || sharedAudioCtx.state === "closed") {
+    sharedAudioCtx = new AudioCtx();
+  }
+  return sharedAudioCtx;
+}
+
+// Unlock audio on first user touch/click (essential for iOS Safari and mobile Chrome)
+function unlockAudioOnMobile() {
+  const unlock = () => {
+    const ctx = getSharedAudioContext();
+    if (ctx && ctx.state === "suspended") {
+      ctx.resume().then(() => {
+        document.removeEventListener("touchstart", unlock);
+        document.removeEventListener("touchend", unlock);
+        document.removeEventListener("click", unlock);
+      }).catch(() => {});
+    } else if (ctx && ctx.state === "running") {
+      document.removeEventListener("touchstart", unlock);
+      document.removeEventListener("touchend", unlock);
+      document.removeEventListener("click", unlock);
+    }
+  };
+  document.addEventListener("touchstart", unlock, { passive: true });
+  document.addEventListener("touchend", unlock, { passive: true });
+  document.addEventListener("click", unlock, { passive: true });
+}
+
 function playNotificationChime() {
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
+    const ctx = getSharedAudioContext();
+    if (!ctx) return;
     if (ctx.state === "suspended") {
       ctx.resume().catch(() => {});
     }
@@ -1394,6 +1425,71 @@ function showInAppToast(data) {
   container.appendChild(toast);
 }
 
+// Register Service Worker for mobile device notifications (Android & iOS PWA)
+async function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.register("./sw.js");
+    console.log("Quill-Q Service Worker registered:", reg.scope);
+
+    // Listen for navigation messages sent when user taps on mobile notification
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data && event.data.type === "NAVIGATE_VIEW") {
+        const view = event.data.view;
+        if (view) {
+          const navItem = document.getElementById(`nav-${view}`);
+          if (navItem) {
+            document.querySelectorAll(".nav-item").forEach((i) => i.classList.remove("active"));
+            navItem.classList.add("active");
+          }
+          switchView(view);
+        }
+      }
+    });
+  } catch (err) {
+    console.warn("Service Worker registration failed:", err);
+  }
+}
+
+// Universal notification dispatcher (supports mobile Service Worker + desktop Notification fallback)
+async function sendSystemNotification(title, options = {}, onClick = null) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+
+  const defaultOptions = {
+    icon: "assets/icon-192.png",
+    badge: "assets/favicon-32x32-light.png",
+    ...options
+  };
+
+  // 1. Try Service Worker showNotification first (Required for Android & iOS PWA)
+  if ("serviceWorker" in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      if (reg && typeof reg.showNotification === "function") {
+        await reg.showNotification(title, defaultOptions);
+        return;
+      }
+    } catch (swErr) {
+      console.warn("ServiceWorker showNotification failed, trying fallback:", swErr);
+    }
+  }
+
+  // 2. Desktop fallback: new Notification() constructor
+  try {
+    const notif = new Notification(title, defaultOptions);
+    if (onClick && typeof onClick === "function") {
+      notif.onclick = (e) => {
+        window.focus();
+        onClick(e);
+        try { notif.close(); } catch (err) {}
+      };
+    }
+  } catch (notifErr) {
+    console.warn("Direct Notification constructor failed:", notifErr);
+  }
+}
+
 function showBrowserNotification(task) {
   if (!("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
@@ -1407,22 +1503,22 @@ function showBrowserNotification(task) {
     const author = task.userName || "Classmate";
     const body = `"${task.desc}"\nBy ${author}${isMine ? ' (You)' : ''} • Due ${formatDueDisplay(task.due)}`;
 
-    const notif = new Notification(title, {
+    sendSystemNotification(title, {
       body: body,
-      icon: "assets/brand-logo.webp",
-      badge: "assets/brand-logo.webp",
-      tag: "quill-task-" + (task.id || Date.now())
-    });
-
-    notif.onclick = () => {
-      window.focus();
+      icon: "assets/icon-192.png",
+      badge: "assets/favicon-32x32-light.png",
+      tag: "quill-task-" + (task.id || Date.now()),
+      data: {
+        url: "./index.html",
+        targetView: "homeworks"
+      }
+    }, () => {
       const items = document.querySelectorAll(".nav-item");
       items.forEach((i) => i.classList.remove("active"));
       const navHw = document.getElementById("nav-homeworks");
       if (navHw) navHw.classList.add("active");
       switchView("homeworks");
-      notif.close();
-    };
+    });
   } catch (e) {
     console.warn("Browser notification dispatch failed:", e);
   }
@@ -1479,6 +1575,24 @@ function closeIosPwaModal() {
   if (modal) modal.classList.add("view-hidden");
 }
 
+// Helper to request notification permission supporting both Promises and older callback syntax
+async function askNotificationPermission() {
+  if (!("Notification" in window)) return "unsupported";
+  try {
+    const p = Notification.requestPermission();
+    if (p && typeof p.then === "function") {
+      return await p;
+    }
+  } catch (e) {}
+  return new Promise((resolve) => {
+    try {
+      Notification.requestPermission((res) => resolve(res));
+    } catch (e) {
+      resolve(Notification.permission || "default");
+    }
+  });
+}
+
 async function requestNotificationAccess() {
   // If user is on an iOS device (iPhone/iPad) and NOT running in standalone PWA mode
   if (isIOSDevice() && !isStandalonePWA()) {
@@ -1505,8 +1619,16 @@ async function requestNotificationAccess() {
   }
 
   try {
-    const permission = await Notification.requestPermission();
+    const permission = await askNotificationPermission();
     updateNotificationUIState();
+    if (permission === "granted") {
+      playNotificationChime();
+      await sendSystemNotification("🔔 Live Notifications Enabled!", {
+        body: "Quill-Q is ready. You will receive live homework and chat alerts on this device.",
+        tag: "quill-welcome"
+      });
+      await showCustomAlert("Notifications enabled successfully on this device!", "All Set", '<i class="fi fi-rr-bell-ring"></i>');
+    }
   } catch (err) {
     console.warn("Notification request permission failed:", err);
   }
@@ -3163,7 +3285,7 @@ function renderAdminUsersList() {
     return `
       <div class="admin-user-row" data-id="${user.id}">
         <div class="admin-user-meta">
-          <img src="${avatar}" class="admin-user-avatar" alt="${escapeHtml(name)}" onerror="this.src='assets/avatar.jpg'" />
+          <img src="${avatar}" class="admin-user-avatar" alt="${escapeHtml(name)}" onerror="this.onerror=null;this.src='assets/avatar.jpg';" />
           <div>
             <div class="admin-user-title">
               <span>${escapeHtml(name)}</span>
@@ -3872,19 +3994,20 @@ function bindServerChat(user) {
               // System / Browser Notification (plays when backgrounded or active)
               if (typeof Notification !== "undefined" && Notification.permission === "granted") {
                 if (document.hidden || !isChatViewActive) {
-                  try {
-                    const notif = new Notification(`${newMsg.userName || "Classmate"} (Class Chat)`, {
-                      body: newMsg.text || "Sent a message",
-                      icon: "assets/favicon-32x32-light.png",
-                      tag: "chat-msg-" + (change.doc.id || Date.now())
-                    });
-                    notif.onclick = () => {
-                      window.focus();
-                      const navChat = document.getElementById("nav-chat");
-                      if (navChat) navChat.click();
-                      notif.close();
-                    };
-                  } catch (e) {}
+                  sendSystemNotification(`${newMsg.userName || "Classmate"} (Class Chat)`, {
+                    body: newMsg.text || "Sent a message",
+                    icon: "assets/icon-192.png",
+                    badge: "assets/favicon-32x32-light.png",
+                    tag: "chat-msg-" + (change.doc.id || Date.now()),
+                    data: {
+                      url: "./index.html",
+                      targetView: "chat"
+                    }
+                  }, () => {
+                    window.focus();
+                    const navChat = document.getElementById("nav-chat");
+                    if (navChat) navChat.click();
+                  });
                 }
               }
             }
@@ -3993,6 +4116,10 @@ document.addEventListener("DOMContentLoaded", () => {
   initNotificationCenter();
   initSearch();
   initSubjectFilters();
+
+  // Mobile device notification & audio preparation
+  unlockAudioOnMobile();
+  registerServiceWorker();
 
   // Refresh dynamic status, schedule, and time every 30 seconds
   setInterval(() => {
