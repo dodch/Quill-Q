@@ -39,14 +39,17 @@ function A4PageSheet({
     editorRef.current = ed;
     onEditorCreated(page.id, ed);
 
-    const unsub = ed.onChange(() => {
-      onPageChange(page.id, ed);
-    });
+    let unsub = null;
+    if (editable) {
+      unsub = ed.onChange(() => {
+        onPageChange(page.id, ed);
+      });
+    }
 
     return () => {
       if (typeof unsub === "function") unsub();
     };
-  }, [page.id]);
+  }, [page.id, editable]);
 
   return (
     <div className="a4-page-container" id={`a4-page-wrapper-${page.id}`}>

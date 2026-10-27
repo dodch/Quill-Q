@@ -95,6 +95,7 @@
   }
 
   async function saveDocumentToFirestore(manual = false) {
+    if (!canEditDocument) return;
     if (isSaving || !db || !currentUser || !currentSubject) return;
 
     const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
@@ -163,6 +164,8 @@
     }
   }
 
+  let canEditDocument = true;
+
   async function loadExistingDocument(docId) {
     try {
       const docRef = db.collection("subjects").doc(currentSubject.id).collection("documents").doc(docId);
@@ -170,26 +173,63 @@
 
       if (!snapshot.exists) {
         showToast("Document not found. Creating a fresh document.", "error");
-        mountReactBlockNote();
+        canEditDocument = true;
+        applyEditingPermissions(true);
+        mountReactBlockNote(undefined, true);
         return;
       }
 
       const data = snapshot.data();
+      const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
+      canEditDocument = isSuperAdmin || (currentUser && data.authorId === currentUser.uid);
+
+      applyEditingPermissions(canEditDocument, data.authorName);
+
       if (titleInput && data.title) {
         titleInput.value = data.title;
-        document.title = `${data.title} – Quill-Q Editor`;
+        document.title = `${data.title} – Quill-Q ${canEditDocument ? "Editor" : "Reader"}`;
       }
 
-      mountReactBlockNote(data.content);
-      updateSaveStatus("saved");
+      mountReactBlockNote(data.content, canEditDocument);
+      if (canEditDocument) {
+        updateSaveStatus("saved");
+      }
     } catch (err) {
       console.error("Error loading document:", err);
       showToast("Error loading document: " + err.message, "error");
-      mountReactBlockNote();
+      canEditDocument = true;
+      applyEditingPermissions(true);
+      mountReactBlockNote(undefined, true);
     }
   }
 
-  function mountReactBlockNote(initialContent) {
+  function applyEditingPermissions(canEdit, authorName = "") {
+    if (!canEdit) {
+      // Viewer Mode: Hide manual save button and save status indicator
+      if (btnSaveDoc) btnSaveDoc.style.display = "none";
+      if (saveStatus) {
+        saveStatus.className = "editor-save-status";
+        saveStatus.style.color = "#7d756d";
+        if (saveStatusIcon) saveStatusIcon.className = "fi fi-rr-eye";
+        if (saveStatusText) saveStatusText.textContent = authorName ? `By ${authorName}` : "Read only";
+      }
+
+      // Title input is read-only for viewer
+      if (titleInput) {
+        titleInput.readOnly = true;
+        titleInput.style.cursor = "default";
+      }
+    } else {
+      // Editor Mode: Show save button
+      if (btnSaveDoc) btnSaveDoc.style.display = "inline-flex";
+      if (titleInput) {
+        titleInput.readOnly = false;
+        titleInput.style.cursor = "text";
+      }
+    }
+  }
+
+  function mountReactBlockNote(initialContent, editable = true) {
     if (!editorContainer) return;
 
     const renderFn = window.renderMultiPageBlockNote || window.renderBlockNoteReact;
@@ -208,8 +248,11 @@
         initialContent: initialContent || undefined,
         docTitle: docTitle,
         subjectName: subjName,
+        editable: editable,
         onChange: () => {
-          triggerAutosaveDebounced();
+          if (editable) {
+            triggerAutosaveDebounced();
+          }
         },
         onBridgeReady: (bridge) => {
           reactEditorBridge = bridge;
