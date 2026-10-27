@@ -66,7 +66,7 @@
     subjects.forEach((s) => {
       const opt = document.createElement("option");
       opt.value = s.id;
-      opt.textContent = `${s.name} (${s.code})`;
+      opt.textContent = s.name;
       if (s.id === currentSubjectId) opt.selected = true;
       subjectSelect.appendChild(opt);
     });
@@ -88,12 +88,8 @@
       heroCard.className = `subject-hero-card ${subject.bgClass || "card-peach"}`;
     }
 
-    if (heroCode) heroCode.textContent = subject.code || "SUBJECT";
     if (heroTitle) heroTitle.textContent = subject.name;
     if (heroDesc) heroDesc.textContent = subject.description;
-    if (heroProf) heroProf.textContent = subject.prof;
-    if (heroRoom) heroRoom.textContent = subject.room;
-    if (heroSchedule) heroSchedule.textContent = subject.schedule;
 
     if (heroIcon && typeof getSubjectIconSvg === "function") {
       heroIcon.innerHTML = getSubjectIconSvg(subject.icon);
@@ -138,7 +134,7 @@
           ${!isSearch ? `
             <a href="editor.html?subject=${encodeURIComponent(currentSubjectId)}&action=new" class="btn-create-doc" style="margin-top: 8px;">
               <i class="fi fi-sr-add"></i>
-              <span>+ Create First Document</span>
+              <span>Create First Document</span>
             </a>
           ` : ""}
         </div>

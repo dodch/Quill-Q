@@ -107,7 +107,7 @@ function A4PageSheet({
             title="Insert a new A4 page below"
           >
             <i className="fi fi-rr-plus"></i>
-            <span>+ Insert Page Below</span>
+            <span>Insert Page Below</span>
           </button>
           <div className="a4-divider-line"></div>
         </div>

@@ -6187,14 +6187,11 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 .subject-hero-card {
   border: 2.5px solid #1a1816;
   border-radius: 24px 22px 26px 20px / 22px 26px 20px 24px;
-  padding: 28px 32px;
+  padding: 24px 28px;
   box-shadow: 5px 7px 0 #1a1816;
   margin-bottom: 28px;
   position: relative;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
   transition: background-color 0.25s ease;
 }
 
@@ -6658,13 +6655,14 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 .editor-back-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 7px;
   background: #fdf6e2;
   border: 2px solid #1a1816;
   border-radius: 12px;
-  padding: 6px 12px;
+  padding: 6px 14px;
   font-family: 'Patrick Hand', cursive;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #1a1816;
   text-decoration: none;
@@ -6672,6 +6670,17 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   transition: all 0.16s ease;
   cursor: pointer;
   flex-shrink: 0;
+  line-height: 1;
+}
+
+.editor-back-btn i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  line-height: 1;
+  position: relative;
+  top: 1px;
 }
 
 .editor-back-btn:hover {
@@ -7224,19 +7233,31 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 .a4-btn-insert-page {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 7px;
   background: #ffffff;
   border: 2px dashed #1a1816;
   border-radius: 14px;
-  padding: 6px 16px;
+  padding: 6px 18px;
   font-family: 'Patrick Hand', cursive;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #1a1816;
   cursor: pointer;
   box-shadow: 2px 2px 0 #1a1816;
   transition: all 0.15s ease;
   white-space: nowrap;
+  line-height: 1;
+}
+
+.a4-btn-insert-page i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  line-height: 1;
+  position: relative;
+  top: 1px;
 }
 
 .a4-btn-insert-page:hover {

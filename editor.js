@@ -237,9 +237,6 @@
     if (backBtn) {
       backBtn.href = `subject.html?id=${encodeURIComponent(currentSubject.id)}`;
     }
-    if (backLabel) {
-      backLabel.textContent = currentSubject.shortName || currentSubject.name;
-    }
     if (subjectBadge) {
       subjectBadge.className = `editor-subject-badge ${currentSubject.bgClass || "card-peach"}`;
     }
