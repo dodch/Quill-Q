@@ -63,7 +63,6 @@ function A4PageSheet({
             {subjectName && <span className="a4-header-subject">{subjectName}</span>}
           </div>
           <div className="a4-header-right">
-            <span className="a4-page-num-pill">Page {index + 1} of {totalPages}</span>
             {totalPages > 1 && editable && (
               <button
                 type="button"

@@ -127,6 +127,7 @@
         content: jsonString,
         excerpt: excerpt,
         pageCount: pageCount,
+        pinnedNotes: pinnedNotesCache || [],
         authorId: currentUser.uid,
         authorName: currentProfile?.displayName || currentUser.displayName || "Student",
         authorRole: currentProfile?.role || "student",
@@ -138,7 +139,12 @@
         // Create new Firestore document
         docPayload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
         const newDocRef = await collectionRef.add(docPayload);
+        const prevDraftKey = getPinnedNotesStorageKey();
         currentDocId = newDocRef.id;
+
+        // Migrate local storage key from draft to new docId
+        savePinnedNotes();
+        try { localStorage.removeItem(prevDraftKey); } catch (e) {}
 
         // Update URL query params without reloading
         const newUrl = new URL(window.location.href);
@@ -190,6 +196,15 @@
         document.title = `${data.title} – Quill-Q ${canEditDocument ? "Editor" : "Reader"}`;
       }
 
+      // Load saved pinned notes from Firestore document
+      if (Array.isArray(data.pinnedNotes)) {
+        pinnedNotesCache = data.pinnedNotes;
+        savePinnedNotes();
+        renderPinnedNotes();
+      } else {
+        loadPinnedNotes();
+      }
+
       mountReactBlockNote(data.content, canEditDocument);
       if (canEditDocument) {
         updateSaveStatus("saved");
@@ -199,6 +214,7 @@
       showToast("Error loading document: " + err.message, "error");
       canEditDocument = true;
       applyEditingPermissions(true);
+      loadPinnedNotes();
       mountReactBlockNote(undefined, true);
     }
   }
@@ -380,12 +396,241 @@
     }, 3000);
   }
 
+  // =========================================================
+  // ===== PINNED PAPER NOTES MANAGER (STATIC SIDE NOTES) ====
+  // =========================================================
+  const MAX_PINNED_NOTES = 3;
+  let pinnedNotesCache = [];
+
+  function getPinnedNotesStorageKey() {
+    const docKey = currentDocId || "draft";
+    const subjKey = currentSubject ? currentSubject.id : "gen";
+    return `quill_q_pinned_notes_${subjKey}_${docKey}`;
+  }
+
+  function loadPinnedNotes() {
+    try {
+      const saved = localStorage.getItem(getPinnedNotesStorageKey());
+      pinnedNotesCache = saved ? JSON.parse(saved) : [];
+      if (!Array.isArray(pinnedNotesCache)) pinnedNotesCache = [];
+    } catch (e) {
+      pinnedNotesCache = [];
+    }
+    renderPinnedNotes();
+  }
+
+  function savePinnedNotes() {
+    try {
+      localStorage.setItem(getPinnedNotesStorageKey(), JSON.stringify(pinnedNotesCache));
+    } catch (e) {}
+  }
+
+  function renderPinnedNotes() {
+    const listEl = document.getElementById("pinned-notes-list") || document.getElementById("pinned-notes-sidebar");
+    const addBtn = document.getElementById("btn-create-pinned-note");
+    const mobileTrigger = document.getElementById("mobile-pinned-notes-trigger");
+    const mobileBadge = document.getElementById("mobile-pin-badge");
+    if (!listEl) return;
+
+    const count = pinnedNotesCache.length;
+
+    // Update desktop Add Note button
+    if (addBtn) {
+      if (count >= MAX_PINNED_NOTES) {
+        addBtn.disabled = true;
+        addBtn.title = "Maximum 3 pinned notes reached";
+        addBtn.style.opacity = "0.55";
+        addBtn.style.cursor = "not-allowed";
+      } else {
+        addBtn.disabled = false;
+        addBtn.title = `Add a pinned note (${count}/${MAX_PINNED_NOTES})`;
+        addBtn.style.opacity = "1";
+        addBtn.style.cursor = "pointer";
+      }
+    }
+
+    // Update mobile pin button visibility and count badge
+    if (mobileTrigger) {
+      if (count > 0) {
+        mobileTrigger.classList.remove("view-hidden");
+        if (mobileBadge) mobileBadge.textContent = String(count);
+      } else {
+        mobileTrigger.classList.add("view-hidden");
+      }
+    }
+
+    if (count === 0) {
+      listEl.innerHTML = `
+        <div style="font-family: 'Caveat', cursive; font-size: 1.3rem; color: #8e8579; text-align: center; padding: 24px 10px;">
+          No notes pinned yet.<br/>Tap "+ Add Note" to pin one!
+        </div>
+      `;
+      closeMobilePinnedDrawer();
+      return;
+    }
+
+    listEl.innerHTML = pinnedNotesCache
+      .map((note, index) => {
+        const color = note.color || "pink";
+        // Alternate tape styles: Corner tapes or top horizontal tape
+        const isTopTape = note.tapeStyle === "top";
+        const tapeHtml = isTopTape
+          ? `<div class="pinned-top-tape"></div>`
+          : `
+            <div class="pinned-tape-section"></div>
+            <div class="pinned-tape-section"></div>
+          `;
+
+        const escapedText = String(note.text || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+
+        return `
+          <div class="pinned-paper-note ${color}" data-note-id="${note.id}">
+            ${tapeHtml}
+            <button type="button" class="pinned-note-delete" data-del-id="${note.id}" title="Remove note" aria-label="Remove note">
+              <i class="fi fi-rr-cross"></i>
+            </button>
+            <p>${escapedText}</p>
+          </div>
+        `;
+      })
+      .join("");
+
+    // Bind delete buttons
+    listEl.querySelectorAll(".pinned-note-delete").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-del-id");
+        deletePinnedNote(id);
+      });
+    });
+  }
+
+  function openMobilePinnedDrawer() {
+    const sidebar = document.getElementById("pinned-notes-sidebar");
+    const backdrop = document.getElementById("pinned-drawer-backdrop");
+    if (sidebar) sidebar.classList.add("drawer-open");
+    if (backdrop) backdrop.classList.remove("view-hidden");
+  }
+
+  function closeMobilePinnedDrawer() {
+    const sidebar = document.getElementById("pinned-notes-sidebar");
+    const backdrop = document.getElementById("pinned-drawer-backdrop");
+    if (sidebar) sidebar.classList.remove("drawer-open");
+    if (backdrop) backdrop.classList.add("view-hidden");
+  }
+
+  function deletePinnedNote(id) {
+    pinnedNotesCache = pinnedNotesCache.filter((n) => n.id !== id);
+    savePinnedNotes();
+    renderPinnedNotes();
+    showToast("Pinned note removed");
+    if (canEditDocument) {
+      triggerAutosaveDebounced();
+    }
+  }
+
+  function initPinnedNotesManager() {
+    const addBtn = document.getElementById("btn-create-pinned-note");
+    const modal = document.getElementById("pinned-note-modal");
+    const closeBtn = document.getElementById("modal-pinned-note-close");
+    const cancelBtn = document.getElementById("btn-cancel-pinned-note");
+    const form = document.getElementById("pinned-note-form");
+    const textarea = document.getElementById("pinned-note-text");
+
+    // Mobile Drawer Controls
+    const mobileTrigger = document.getElementById("mobile-pinned-notes-trigger");
+    const closeDrawerBtn = document.getElementById("btn-close-pinned-drawer");
+    const backdrop = document.getElementById("pinned-drawer-backdrop");
+
+    if (mobileTrigger) {
+      mobileTrigger.addEventListener("click", openMobilePinnedDrawer);
+    }
+    if (closeDrawerBtn) {
+      closeDrawerBtn.addEventListener("click", closeMobilePinnedDrawer);
+    }
+    if (backdrop) {
+      backdrop.addEventListener("click", closeMobilePinnedDrawer);
+    }
+
+    loadPinnedNotes();
+
+    function openModal() {
+      if (pinnedNotesCache.length >= MAX_PINNED_NOTES) {
+        showToast("Maximum of 3 pinned notes reached. Delete one first.", "error");
+        return;
+      }
+      if (form) form.reset();
+      if (modal) modal.classList.remove("view-hidden");
+      if (textarea) setTimeout(() => textarea.focus(), 60);
+    }
+
+    function closeModal() {
+      if (modal) modal.classList.add("view-hidden");
+    }
+
+    if (addBtn) addBtn.addEventListener("click", openModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+    }
+
+    if (form) {
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const text = textarea ? textarea.value.trim() : "";
+        if (!text) return;
+
+        if (pinnedNotesCache.length >= MAX_PINNED_NOTES) {
+          showToast("Maximum of 3 pinned notes allowed.", "error");
+          closeModal();
+          return;
+        }
+
+        const colorInput = form.querySelector('input[name="pinned-color"]:checked');
+        const color = colorInput ? colorInput.value : "pink";
+
+        // Alternate tape style: first note corner tapes, second top tape, third corner tapes
+        const tapeStyle = pinnedNotesCache.length % 2 === 1 ? "top" : "corners";
+
+        const newNote = {
+          id: "pin-" + Date.now() + "-" + Math.random().toString(36).substr(2, 5),
+          text: text,
+          color: color,
+          tapeStyle: tapeStyle,
+          createdAt: Date.now()
+        };
+
+        pinnedNotesCache.push(newNote);
+        savePinnedNotes();
+        renderPinnedNotes();
+        closeModal();
+        showToast("Note pinned to side!");
+
+        // Trigger autosave to sync with Firestore
+        if (canEditDocument) {
+          triggerAutosaveDebounced();
+        }
+
+        // On mobile, open drawer to show the newly pinned card
+        if (window.innerWidth <= 1220) {
+          openMobilePinnedDrawer();
+        }
+      });
+    }
+  }
+
   // Initialization
   document.addEventListener("DOMContentLoaded", () => {
+    currentDocId = getQueryParam("docId");
     setupSubjectContext();
     setupExportHandlers();
-
-    currentDocId = getQueryParam("docId");
+    initPinnedNotesManager();
 
     // Initialize Firebase
     if (typeof initFirebase === "function") {

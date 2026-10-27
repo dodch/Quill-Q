@@ -558,41 +558,65 @@ function updateTodayStatus() {
   }
 }
 
-// --- Render Home Quick Timeline (ALWAYS Today's Schedule) ---
+// --- Render Home Quick Timeline (Today's Schedule or Tomorrow's Schedule when End of Day) ---
 function renderSchedule() {
   const timelineEl = document.getElementById("timeline");
   const scheduleTitleEl = document.getElementById("schedule-title");
   if (!timelineEl) return;
 
   const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const todayKey = getDayKey(now);
-  const dayData = TIMETABLE[todayKey] || { dayName: now.toLocaleDateString("en-US", { weekday: "long" }), items: [] };
+  const todayData = TIMETABLE[todayKey] || { dayName: now.toLocaleDateString("en-US", { weekday: "long" }), items: [] };
+  const todayItems = todayData.items || [];
 
-  if (scheduleTitleEl) {
-    scheduleTitleEl.textContent = "Today's Schedule";
+  // Determine if all classes for today are completed (or if today is a day off)
+  let isDayDone = false;
+  if (todayItems.length === 0) {
+    isDayDone = true;
+  } else {
+    const lastClass = todayItems[todayItems.length - 1];
+    const { end } = parseTimeRange(lastClass.time);
+    if (currentMinutes >= end) {
+      isDayDone = true;
+    }
   }
 
-  if (!dayData.items || dayData.items.length === 0) {
+  // If today's classes have finished (or today is a free day), display tomorrow's schedule!
+  const showingTomorrow = isDayDone;
+  let targetKey = todayKey;
+  let targetData = todayData;
+
+  if (showingTomorrow) {
+    targetKey = getNextDayKey(todayKey);
+    targetData = TIMETABLE[targetKey] || { dayName: targetKey, items: [] };
+  }
+
+  if (scheduleTitleEl) {
+    scheduleTitleEl.textContent = showingTomorrow ? "Tomorrow's Schedule" : "Today's Schedule";
+  }
+
+  const itemsToRender = targetData.items || [];
+
+  if (itemsToRender.length === 0) {
     timelineEl.innerHTML = `
       <li class="tl-item" style="color: #7b7268; padding: 16px 8px; list-style: none; font-size: 13.5px;">
-        No classes scheduled for today (${dayData.dayName}).
+        No classes scheduled for ${showingTomorrow ? "tomorrow" : "today"} (${targetData.dayName || targetKey}).
       </li>`;
     return;
   }
 
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
   // Build unified entries (classes and break cutouts)
   const entries = [];
-  dayData.items.forEach((item, idx) => {
+  itemsToRender.forEach((item, idx) => {
     entries.push({
       type: "class",
       item: item,
       classIndex: idx
     });
 
-    if (idx < dayData.items.length - 1) {
-      const nextItem = dayData.items[idx + 1];
+    if (idx < itemsToRender.length - 1) {
+      const nextItem = itemsToRender[idx + 1];
       const currRange = parseTimeRange(item.time);
       const nextRange = parseTimeRange(nextItem.time);
       const breakMinutes = nextRange.start - currRange.end;
@@ -615,7 +639,7 @@ function renderSchedule() {
   timelineEl.innerHTML = entries
     .map((entry, idx) => {
       if (entry.type === "break") {
-        const isBreakCurrent = currentMinutes >= entry.startMinutes && currentMinutes < entry.endMinutes;
+        const isBreakCurrent = !showingTomorrow && currentMinutes >= entry.startMinutes && currentMinutes < entry.endMinutes;
 
         return `
           <li class="tl-item tl-item-break${isBreakCurrent ? " current-break" : ""}" style="--item-idx: ${idx};">
@@ -632,7 +656,7 @@ function renderSchedule() {
 
       const x = entry.item;
       const { start, end } = parseTimeRange(x.time);
-      const isCurrent = currentMinutes >= start && currentMinutes < end;
+      const isCurrent = !showingTomorrow && currentMinutes >= start && currentMinutes < end;
 
       const fullText = `${x.time} — ${x.subject} • ${x.room}`;
       return `
@@ -3766,6 +3790,10 @@ let chatUnreadCount = 0;
 let lastSeenMessageTimestamp = 0;
 let isChatViewActive = false;
 const locallyMarkedSeenIds = new Set();
+let chatBatchLimit = 15; // Load only the latest 15 messages initially to minimize Firestore reads & server load
+let oldestChatDoc = null; // Earliest DocumentSnapshot loaded for cursor-based pagination
+let hasMoreOldMessages = false;
+let isLoadingOlderMessages = false;
 
 // Format Chat Message Time (e.g., 10:45 AM)
 function formatChatTime(date) {
@@ -3809,10 +3837,13 @@ function escapeChatHTML(str) {
     .replace(/'/g, "&#039;");
 }
 
-// Render Chat Messages stream with date dividers and seen indicators
-function renderChatMessages() {
+// Render Chat Messages stream with date dividers, seen indicators, and lazy-loading top button
+function renderChatMessages(preserveScroll = false) {
   const container = document.getElementById("chat-messages-container");
   if (!container) return;
+
+  const previousScrollHeight = container.scrollHeight;
+  const previousScrollTop = container.scrollTop;
 
   if (!chatMessagesCache || chatMessagesCache.length === 0) {
     container.innerHTML = `
@@ -3827,6 +3858,19 @@ function renderChatMessages() {
 
   const myUid = (currentProfile && currentProfile.uid) || (currentUser && currentUser.uid) || "";
   let html = "";
+
+  // 1. Lazy Loading Bar at top of messages container if earlier messages exist
+  if (hasMoreOldMessages) {
+    html += `
+      <div class="chat-load-more-wrap" id="chat-load-more-wrap">
+        <button type="button" class="btn-chat-load-more" id="btn-chat-load-more" ${isLoadingOlderMessages ? "disabled" : ""}>
+          <i class="${isLoadingOlderMessages ? "fi fi-rr-spinner" : "fi fi-rr-time-past"}"></i>
+          <span>${isLoadingOlderMessages ? "Loading older messages..." : "Load previous messages"}</span>
+        </button>
+      </div>
+    `;
+  }
+
   let lastDateKey = null;
 
   chatMessagesCache.forEach((msg) => {
@@ -3953,6 +3997,15 @@ function renderChatMessages() {
 
   container.innerHTML = html;
 
+  // Bind click event to "Load previous messages" button
+  const loadMoreBtn = document.getElementById("btn-chat-load-more");
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      loadOlderChatMessages();
+    });
+  }
+
   // Bind click event to all seen-avatars clusters
   container.querySelectorAll(".chat-seen-avatars-wrap").forEach((cluster) => {
     cluster.addEventListener("click", (e) => {
@@ -3962,8 +4015,75 @@ function renderChatMessages() {
     });
   });
 
-  // Auto scroll to latest message smoothly
-  container.scrollTop = container.scrollHeight;
+  // Preserve scroll position if loading older messages above, otherwise scroll to latest bottom
+  if (preserveScroll) {
+    const scrollDiff = container.scrollHeight - previousScrollHeight;
+    container.scrollTop = previousScrollTop + scrollDiff;
+  } else {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+// Lazy Load Older Messages from Firestore (Cursor pagination using startAt / endBefore)
+async function loadOlderChatMessages() {
+  if (isLoadingOlderMessages || !hasMoreOldMessages || !oldestChatDoc || !db) return;
+
+  isLoadingOlderMessages = true;
+  renderChatMessages(true);
+
+  try {
+    const olderQuery = db
+      .collection("chats")
+      .doc("general")
+      .collection("messages")
+      .orderBy("createdAt", "desc")
+      .startAfter(oldestChatDoc)
+      .limit(chatBatchLimit);
+
+    const snapshot = await olderQuery.get();
+
+    if (snapshot.empty) {
+      hasMoreOldMessages = false;
+    } else {
+      const olderMessages = [];
+      snapshot.forEach((doc) => {
+        olderMessages.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+
+      // Update oldest document cursor
+      oldestChatDoc = snapshot.docs[snapshot.docs.length - 1];
+
+      // Since olderQuery was ordered descending, reverse to chronological ascending order
+      olderMessages.reverse();
+
+      // Filter out duplicates (if any) and prepend to cache
+      const existingIds = new Set(chatMessagesCache.map((m) => m.id));
+      const filteredOlder = olderMessages.filter((m) => !existingIds.has(m.id));
+
+      if (filteredOlder.length > 0) {
+        chatMessagesCache = [...filteredOlder, ...chatMessagesCache];
+        try {
+          localStorage.setItem("quill_q_chat_cache", JSON.stringify(chatMessagesCache.slice(-50)));
+        } catch (e) {}
+      }
+
+      // If fetched less than the limit, no more older messages remain
+      hasMoreOldMessages = snapshot.docs.length >= chatBatchLimit;
+    }
+  } catch (err) {
+    console.warn("Failed loading older chat messages:", err);
+    showInAppToast({
+      title: "Chat Error",
+      message: "Could not load previous messages.",
+      type: "warning"
+    });
+  } finally {
+    isLoadingOlderMessages = false;
+    renderChatMessages(true);
+  }
 }
 
 // Open Seen By Modal dialog listing all viewers
@@ -4228,13 +4348,13 @@ function bindServerChat(user) {
 
   const myUid = (profile && profile.uid) || (user && user.uid) || "";
 
-  // Query latest 60 messages
+  // Query only the couple latest messages (e.g. 15 messages) to save server reads and memory
   const query = db
     .collection("chats")
     .doc("general")
     .collection("messages")
     .orderBy("createdAt", "asc")
-    .limitToLast(60);
+    .limitToLast(chatBatchLimit);
 
   let initialLoad = true;
 
@@ -4248,11 +4368,22 @@ function bindServerChat(user) {
         });
       });
 
-      if (messages.length > 0) {
+      if (snapshot.docs.length > 0) {
+        // Store oldest document snapshot from the active stream for cursor pagination
+        oldestChatDoc = snapshot.docs[0];
+        // If we received a full initial batch equal to the limit, assume older messages exist
+        if (initialLoad) {
+          hasMoreOldMessages = snapshot.docs.length >= chatBatchLimit;
+        }
+
         chatMessagesCache = messages;
         try {
           localStorage.setItem("quill_q_chat_cache", JSON.stringify(chatMessagesCache));
         } catch (e) {}
+        renderChatMessages();
+      } else {
+        hasMoreOldMessages = false;
+        chatMessagesCache = [];
         renderChatMessages();
       }
 

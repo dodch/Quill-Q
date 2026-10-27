@@ -778,6 +778,11 @@ a { color: inherit; text-decoration: none; }
   border-radius: 23px 27px 24px 28px / 26px 22px 28px 23px;
 }
 
+.bento-subject-card.card-yellow {
+  background: #fdf0cd;
+  border-radius: 25px 24px 27px 23px / 24px 27px 23px 26px;
+}
+
 /* Card Header */
 .bento-card-top {
   display: flex;
@@ -912,9 +917,20 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 1.5px 2px 0 #1a1816;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   transition: all 0.15s ease;
   line-height: 1;
+}
+
+.btn-paperclip-add-note i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  line-height: 1;
+  position: relative;
+  top: 1px;
 }
 
 .btn-paperclip-add-note:hover {
@@ -5671,6 +5687,55 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   margin: 0;
 }
 
+/* Load More Previous Messages Bar */
+.chat-load-more-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 6px 0 12px;
+  width: 100%;
+}
+
+.btn-chat-load-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fdf6e2;
+  border: 1.5px solid #1a1816;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a1816;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #1a1816;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.btn-chat-load-more:hover:not(:disabled) {
+  background: #faeac2;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #1a1816;
+}
+
+.btn-chat-load-more:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #1a1816;
+}
+
+.btn-chat-load-more:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 1px 1px 0 #1a1816;
+}
+
+.btn-chat-load-more i {
+  font-size: 14px;
+}
+
 /* Date Sticky Divider */
 .chat-date-divider {
   display: flex;
@@ -6233,19 +6298,19 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 .subject-back-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
   background: #fdf6e2;
   border: 2px solid #1a1816;
-  border-radius: 12px;
-  padding: 8px 14px;
-  font-family: 'Patrick Hand', cursive;
+  border-radius: 10px;
   font-size: 1.15rem;
-  font-weight: 700;
   color: #1a1816;
   text-decoration: none;
   box-shadow: 2px 2px 0 #1a1816;
   transition: all 0.16s ease;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .subject-back-btn:hover {
@@ -6323,6 +6388,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 .subject-hero-card.card-blue { background: #d7e8fa; }
 .subject-hero-card.card-green { background: #dcf2e3; }
 .subject-hero-card.card-purple { background: #e8dcf8; }
+.subject-hero-card.card-yellow { background: #fdf0cd; }
 
 .subject-hero-header {
   display: flex;
@@ -6537,7 +6603,13 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 }
 
 .btn-create-doc i {
-  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  line-height: 1;
+  position: relative;
+  top: 1px;
 }
 
 /* Document Grid */
@@ -6830,6 +6902,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 .editor-subject-badge.card-blue { background: #d7e8fa; }
 .editor-subject-badge.card-green { background: #dcf2e3; }
 .editor-subject-badge.card-purple { background: #e8dcf8; }
+.editor-subject-badge.card-yellow { background: #fdf0cd; }
 
 .editor-save-status {
   display: inline-flex;
@@ -7491,9 +7564,10 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   }
 
   .subject-back-btn {
-    padding: 6px 10px;
-    font-size: 1.05rem;
-    gap: 6px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    font-size: 1rem;
   }
 
   .subject-nav-brand span {
@@ -7733,6 +7807,418 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     white-space: nowrap;
   }
 }
+
+/* ==========================================================================
+   PINNED PAPER NOTES SYSTEM (Static Unscrollable Side Notes with Washi Tape)
+   ========================================================================== */
+
+:root {
+  --pinned-tape-gray: #dbd8be;
+  --pinned-tape-edge-gray: #b7b49d;
+}
+
+/* Pinned Notes Sidebar: fixed to viewport left, unscrollable, stays static */
+.pinned-notes-sidebar {
+  position: fixed;
+  left: 20px;
+  top: 90px;
+  display: flex;
+  flex-direction: column;
+  z-index: 90;
+  pointer-events: none; /* Let clicks through container except for actual papers */
+  width: 250px;
+}
+
+.pinned-notes-drawer-header {
+  display: none; /* Hidden on desktop */
+}
+
+.pinned-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+}
+
+@media (max-width: 1440px) {
+  .pinned-notes-sidebar {
+    left: 12px;
+    top: 80px;
+    width: 210px;
+  }
+  .pinned-notes-list {
+    gap: 24px;
+  }
+}
+
+/* Mobile Floating Pin Trigger Button (fixed on left side of screen) */
+.mobile-pinned-notes-trigger {
+  display: none; /* Desktop default: hidden */
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 9999;
+  background: #fdf6e2;
+  color: #1a1816;
+  border: 2px solid #1a1816;
+  border-left: none;
+  border-radius: 0 14px 14px 0;
+  padding: 10px 14px 10px 10px;
+  box-shadow: 3px 4px 0px #1a1816;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.16s ease, background-color 0.16s ease;
+}
+
+.mobile-pinned-notes-trigger:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.mobile-pinned-notes-trigger i {
+  font-size: 20px;
+  color: #e0835f;
+  transform: rotate(-35deg);
+  display: inline-block;
+}
+
+.mobile-pin-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #1a1816;
+  color: #ffffff;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 13px;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #ffffff;
+}
+
+/* Backdrop for Mobile Slide-Out Drawer */
+.pinned-drawer-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 24, 22, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 99990;
+}
+
+/* Mobile & Tablet Mode: transforms sidebar into an animated slide-out sheet */
+@media (max-width: 1220px) {
+  .mobile-pinned-notes-trigger {
+    display: inline-flex;
+  }
+
+  .pinned-drawer-backdrop:not(.view-hidden) {
+    display: block;
+  }
+
+  .pinned-notes-sidebar {
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 290px;
+    max-width: 85vw;
+    height: 100vh;
+    background: #faf7f0;
+    border-right: 2.5px solid #1a1816;
+    box-shadow: 6px 0 24px rgba(26, 24, 22, 0.22);
+    padding: 24px 20px;
+    box-sizing: border-box;
+    z-index: 99995;
+    pointer-events: auto;
+    overflow-y: auto;
+    transform: translateX(-105%);
+    transition: transform 0.28s cubic-bezier(0.34, 1.3, 0.64, 1);
+  }
+
+  .pinned-notes-sidebar.drawer-open {
+    transform: translateX(0);
+  }
+
+  .pinned-notes-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    border-bottom: 2px dashed #d5ccbe;
+  }
+
+  .pinned-drawer-title {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1a1816;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pinned-drawer-title i {
+    color: #e0835f;
+    font-size: 18px;
+  }
+
+  .btn-close-pinned-drawer {
+    background: transparent;
+    border: none;
+    font-size: 26px;
+    line-height: 1;
+    color: #1a1816;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  .pinned-notes-list {
+    gap: 36px;
+    align-items: center;
+    padding-bottom: 30px;
+  }
+}
+
+/* Pinned Paper Note Card */
+.pinned-paper-note {
+  position: relative;
+  pointer-events: auto;
+  min-width: 190px;
+  max-width: 240px;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Caveat', cursive;
+  font-size: 1.55rem;
+  line-height: 1.25;
+  color: #1a1816;
+  padding: 22px 18px;
+  box-sizing: border-box;
+  text-align: center;
+  word-break: break-word;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  user-select: none;
+}
+
+.pinned-paper-note:hover {
+  transform: scale(1.03) rotate(0deg) !important;
+  z-index: 100;
+}
+
+/* Rotation variations for natural handmade look */
+.pinned-paper-note:nth-child(1) {
+  transform: rotate(-2.5deg);
+}
+.pinned-paper-note:nth-child(2) {
+  transform: rotate(1.8deg);
+}
+.pinned-paper-note:nth-child(3) {
+  transform: rotate(-1.5deg);
+}
+
+/* Fold line effect across the center */
+.pinned-paper-note::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: 
+    linear-gradient(rgba(255,255,255,0), 50%, var(--paper-dark), 51%, rgba(255,255,255,0)),
+    linear-gradient(to right, rgba(255,255,255,0), 50%, var(--paper-dark), 51%, rgba(255,255,255,0));
+}
+
+.pinned-paper-note p {
+  margin: 0;
+  position: relative;
+  z-index: 2;
+  font-weight: 600;
+}
+
+/* Delete note button on hover */
+.pinned-note-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(26, 24, 22, 0.15);
+  border: none;
+  color: #1a1816;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+  z-index: 10;
+}
+
+.pinned-paper-note:hover .pinned-note-delete {
+  opacity: 1;
+}
+
+.pinned-note-delete:hover {
+  background: #c92a2a;
+  color: #ffffff;
+}
+
+/* Tape Styles: Corner Tapes & Top Tape */
+.pinned-tape-section {
+  position: absolute;
+  width: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.pinned-tape-section:first-of-type {
+  top: 0;
+}
+
+.pinned-tape-section:last-of-type {
+  bottom: 0;
+}
+
+.pinned-tape-section::before,
+.pinned-tape-section::after {
+  content: "";
+  width: 44px;
+  height: 18px;
+  position: absolute;
+  background-color: var(--pinned-tape-gray);
+  opacity: 0.7;
+  border-right: 1px dotted var(--pinned-tape-edge-gray);
+  border-left: 1px dotted var(--pinned-tape-edge-gray);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.pinned-tape-section:first-of-type::before {
+  transform: rotate(-45deg);
+  left: -12px;
+  top: -4px;
+}
+
+.pinned-tape-section:first-of-type::after {
+  transform: rotate(45deg);
+  right: -12px;
+  top: -4px;
+}
+
+.pinned-tape-section:last-of-type::before {
+  transform: rotate(45deg);
+  left: -12px;
+  bottom: -4px;
+}
+
+.pinned-tape-section:last-of-type::after {
+  transform: rotate(-45deg);
+  right: -12px;
+  bottom: -4px;
+}
+
+/* Alternative style: Top Tape */
+.pinned-top-tape {
+  position: absolute;
+  height: 18px;
+  top: -8px;
+  left: -5%;
+  width: 110%;
+  background-color: var(--pinned-tape-gray);
+  border-right: 1px dotted var(--pinned-tape-edge-gray);
+  border-left: 1px dotted var(--pinned-tape-edge-gray);
+  opacity: 0.72;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Color Palettes */
+.pinned-paper-note.pink {
+  --paper-color: #ecb2ba;
+  --paper-dark: #c6939a;
+  background: linear-gradient(to bottom right, var(--paper-dark), 20%, rgba(236, 178, 186, 0)), var(--paper-color);
+  box-shadow: 2px 3px 5px rgba(198, 147, 154, 0.5);
+}
+
+.pinned-paper-note.blue {
+  --paper-color: #d5e0f9;
+  --paper-dark: #c2d0ea;
+  background: linear-gradient(to bottom right, var(--paper-dark), 20%, rgba(213, 224, 249, 0)), var(--paper-color);
+  box-shadow: 2px 3px 5px rgba(194, 208, 234, 0.5);
+}
+
+.pinned-paper-note.yellow {
+  --paper-color: #fcebbb;
+  --paper-dark: #e8d08f;
+  background: linear-gradient(to bottom right, var(--paper-dark), 20%, rgba(252, 235, 187, 0)), var(--paper-color);
+  box-shadow: 2px 3px 5px rgba(232, 208, 143, 0.5);
+}
+
+.pinned-paper-note.green {
+  --paper-color: #d9f2db;
+  --paper-dark: #bce3bf;
+  background: linear-gradient(to bottom right, var(--paper-dark), 20%, rgba(217, 242, 219, 0)), var(--paper-color);
+  box-shadow: 2px 3px 5px rgba(188, 227, 191, 0.5);
+}
+
+.pinned-paper-note.purple {
+  --paper-color: #e8daf8;
+  --paper-dark: #cbbbe3;
+  background: linear-gradient(to bottom right, var(--paper-dark), 20%, rgba(232, 218, 248, 0)), var(--paper-color);
+  box-shadow: 2px 3px 5px rgba(203, 187, 227, 0.5);
+}
+
+/* Color Picker Swatches in Modal */
+.pinned-color-picker {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.pinned-color-opt {
+  cursor: pointer;
+  display: inline-flex;
+}
+
+.pinned-color-opt input[type="radio"] {
+  display: none;
+}
+
+.pinned-color-swatch {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 2px solid #1a1816;
+  box-shadow: 2px 2px 0 #1a1816;
+  transition: transform 0.15s ease;
+}
+
+.pinned-color-opt input[type="radio"]:checked + .pinned-color-swatch {
+  transform: translateY(-3px) scale(1.1);
+  box-shadow: 3px 4px 0 #1a1816;
+  outline: 2px solid #1a1816;
+  outline-offset: 2px;
+}
+
+.swatch-pink { background: #ecb2ba; }
+.swatch-blue { background: #d5e0f9; }
+.swatch-yellow { background: #fcebbb; }
+.swatch-green { background: #d9f2db; }
+.swatch-purple { background: #e8daf8; }
 
 
 

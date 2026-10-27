@@ -18,12 +18,12 @@
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Outfit:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="styles.min.css?v=31" />
+  <link rel="stylesheet" href="styles.min.css?v=37" />
   <link rel="stylesheet" href="libs/blocknote-react.bundle.css?v=3" />
 
   <style>
@@ -53,6 +53,12 @@
         <i class="fi fi-rr-check" id="save-status-icon"></i>
         <span id="save-status-text">Saved</span>
       </div>
+
+      <!-- Left Side Create Note Button -->
+      <button type="button" class="editor-btn-secondary btn-create-pinned-note" id="btn-create-pinned-note" title="Add a pinned note (up to 3)">
+        <i class="fi fi-rr-plus"></i>
+        <span>Add Note</span>
+      </button>
     </div>
 
     <div class="editor-bar-right">
@@ -96,6 +102,79 @@
     </div>
   </main>
 
+  <!-- Mobile Floating Pin Trigger Button -->
+  <button type="button" class="mobile-pinned-notes-trigger view-hidden" id="mobile-pinned-notes-trigger" aria-label="View pinned notes" title="View pinned notes">
+    <i class="fi fi-sr-thumbtack"></i>
+    <span class="mobile-pin-badge" id="mobile-pin-badge">0</span>
+  </button>
+
+  <!-- Mobile Drawer Backdrop Overlay -->
+  <div class="pinned-drawer-backdrop view-hidden" id="pinned-drawer-backdrop"></div>
+
+  <!-- Pinned Static Notes on Left Side (Unscrollable on desktop, slide-out drawer on mobile) -->
+  <aside class="pinned-notes-sidebar" id="pinned-notes-sidebar" aria-label="Pinned Notes">
+    <div class="pinned-notes-drawer-header">
+      <span class="pinned-drawer-title"><i class="fi fi-sr-thumbtack"></i> Pinned Notes</span>
+      <button type="button" class="btn-close-pinned-drawer" id="btn-close-pinned-drawer" aria-label="Close pinned notes">&times;</button>
+    </div>
+    <div class="pinned-notes-list" id="pinned-notes-list"></div>
+  </aside>
+
+  <!-- Modal: Create Pinned Paper Note -->
+  <div class="task-modal-backdrop view-hidden" id="pinned-note-modal" style="z-index: 99998;">
+    <div class="task-modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-pinned-note-title" style="max-width: 440px;">
+      <div class="task-modal-header">
+        <h3 class="task-modal-title" id="modal-pinned-note-title">Pin a Note</h3>
+        <button type="button" class="task-modal-close" id="modal-pinned-note-close" aria-label="Close modal">&times;</button>
+      </div>
+      <form class="task-modal-form" id="pinned-note-form">
+        <div class="modal-form-group">
+          <label class="modal-form-label" for="pinned-note-text">Note Message</label>
+          <textarea 
+            class="modal-form-input" 
+            id="pinned-note-text" 
+            rows="3" 
+            placeholder="e.g. remember to analyze the rhyme scheme in verse 2..." 
+            required 
+            maxlength="140"
+            style="resize: vertical; font-family: 'Caveat', cursive; font-size: 1.5rem; line-height: 1.2;"
+          ></textarea>
+        </div>
+
+        <div class="modal-form-group">
+          <label class="modal-form-label">Paper Color</label>
+          <div class="pinned-color-picker" id="pinned-color-picker">
+            <label class="pinned-color-opt">
+              <input type="radio" name="pinned-color" value="pink" checked />
+              <span class="pinned-color-swatch swatch-pink" title="Pink Tape Note"></span>
+            </label>
+            <label class="pinned-color-opt">
+              <input type="radio" name="pinned-color" value="blue" />
+              <span class="pinned-color-swatch swatch-blue" title="Blue Tape Note"></span>
+            </label>
+            <label class="pinned-color-opt">
+              <input type="radio" name="pinned-color" value="yellow" />
+              <span class="pinned-color-swatch swatch-yellow" title="Yellow Tape Note"></span>
+            </label>
+            <label class="pinned-color-opt">
+              <input type="radio" name="pinned-color" value="green" />
+              <span class="pinned-color-swatch swatch-green" title="Green Tape Note"></span>
+            </label>
+            <label class="pinned-color-opt">
+              <input type="radio" name="pinned-color" value="purple" />
+              <span class="pinned-color-swatch swatch-purple" title="Purple Tape Note"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="task-modal-actions">
+          <button type="button" class="task-btn-cancel" id="btn-cancel-pinned-note">Cancel</button>
+          <button type="submit" class="task-btn-save" id="btn-save-pinned-note">Pin Note</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Custom Dialog Modal (Replaces browser alert and confirm) -->
   <div class="task-modal-backdrop view-hidden" id="custom-dialog-modal" style="z-index: 99999;">
     <div class="task-modal-card custom-dialog-card" role="alertdialog" aria-modal="true">
@@ -129,9 +208,9 @@
   <script src="custom-dialog.js"></script>
 
   <!-- React + BlockNote + Mantine Bundle -->
-  <script src="libs/blocknote-react.bundle.js?v=4"></script>
+  <script src="libs/blocknote-react.bundle.js?v=5"></script>
 
   <!-- BlockNote Standalone Editor Controller -->
-  <script src="editor.js?v=4"></script>
+  <script src="editor.js?v=8"></script>
 </body>
 </html>
