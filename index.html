@@ -39,7 +39,7 @@
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
   </noscript>
-  <link rel="stylesheet" href="styles.min.css?v=24" />
+  <link rel="stylesheet" href="styles.min.css?v=32" />
   <script>
     try {
       var p = JSON.parse(localStorage.getItem("quill_q_profile") || "null");
@@ -1375,29 +1375,26 @@
           </div>
         </section>
 
-        <!-- 2. Subjects view only: notes.png Paperclip Note (Quick Materials & Class Representatives) -->
+        <!-- 2. Subjects view only: notes.png Paperclip Note (Quick Notes with Expiration Date) -->
         <section class="subjects-side-wrap view-hidden" id="subjects-side-wrap">
           <div class="sticky-paperclip-card">
-            <!-- Authentic user-provided notes.webp paper background -->
+            <!-- Authentic clean unlined paper background so note lines flow dynamically -->
             <picture>
-              <source srcset="assets/notes.webp" type="image/webp" />
-              <img src="assets/notes.webp" alt="Clipped note paper" class="paperclip-bg-img" aria-hidden="true" loading="lazy" decoding="async" />
+              <source srcset="assets/notes_clean.webp" type="image/webp" />
+              <img src="assets/notes_clean.webp" alt="Clipped note paper" class="paperclip-bg-img" aria-hidden="true" loading="lazy" decoding="async" />
             </picture>
             <div class="paperclip-inner">
-              <h3 class="paperclip-title">Quick Materials</h3>
-              <div class="paperclip-links">
-                <a href="#" class="paperclip-item" onclick="event.preventDefault()">
-                  <span class="paperclip-folder-icon">📁</span>
-                  <span class="paperclip-item-label">Shared Drive Link</span>
-                </a>
-                <a href="#" class="paperclip-item" onclick="event.preventDefault()">
-                  <span class="paperclip-folder-icon">📁</span>
-                  <span class="paperclip-item-label">Past Exams Vault</span>
-                </a>
-                <a href="#" class="paperclip-item" onclick="event.preventDefault()">
-                  <span class="paperclip-folder-icon">📁</span>
-                  <span class="paperclip-item-label">Vocabulary &amp; Term Glossary</span>
-                </a>
+              <div class="paperclip-header-row">
+                <h3 class="paperclip-title">Quick Notes</h3>
+                <button type="button" class="btn-paperclip-add-note" id="btn-add-quick-note" title="Add a quick note with expiration date">
+                  <i class="fi fi-rr-plus"></i>
+                  <span>Add Note</span>
+                </button>
+              </div>
+
+              <!-- Real-time scrollable notes list -->
+              <div class="paperclip-notes-list" id="paperclip-notes-list">
+                <div class="paperclip-empty-msg">No quick notes yet. Click "+ Add Note" to post one!</div>
               </div>
             </div>
           </div>
@@ -1480,6 +1477,34 @@
           <button type="button" class="task-btn-cancel" id="modal-task-cancel">Cancel</button>
           <button type="submit" class="task-btn-save" id="modal-task-submit">
             <span id="modal-submit-text">Add Task</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Quick Note -->
+  <div class="task-modal-backdrop view-hidden" id="quick-note-modal" style="z-index: 9998;">
+    <div class="task-modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-quick-note-title">
+      <div class="task-modal-header">
+        <h3 class="task-modal-title" id="modal-quick-note-title">Add Quick Note</h3>
+        <button type="button" class="task-modal-close" id="modal-quick-note-close" aria-label="Close dialog">&times;</button>
+      </div>
+      <form class="task-modal-form" id="quick-note-modal-form">
+        <div class="modal-form-group">
+          <label class="modal-form-label" for="quick-note-text">Note Content</label>
+          <textarea class="modal-form-input" id="quick-note-text" rows="3" placeholder="e.g. Bring your poetry textbook tomorrow..." required style="resize: vertical; font-family: 'Patrick Hand', cursive; font-size: 1.15rem;"></textarea>
+        </div>
+
+        <div class="modal-form-group">
+          <label class="modal-form-label" for="quick-note-expires">Expiration Date (Auto-removes when date is reached)</label>
+          <input type="date" class="modal-form-input" id="quick-note-expires" required />
+        </div>
+
+        <div class="task-modal-actions">
+          <button type="button" class="task-btn-cancel" id="modal-quick-note-cancel">Cancel</button>
+          <button type="submit" class="task-btn-save" id="modal-quick-note-submit">
+            <span>Post Note</span>
           </button>
         </div>
       </form>
@@ -1576,6 +1601,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-  <script src="app.min.js?v=23"></script>
+  <script src="app.min.js?v=33"></script>
 </body>
 </html>

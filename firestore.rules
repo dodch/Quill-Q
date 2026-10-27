@@ -68,6 +68,16 @@ service cloud.firestore {
       allow delete: if isApprovedUser() && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
 
+    // Shared server-wide Quick Notes on Subjects view:
+    // - Only approved students, teachers, and admin can read & create
+    // - Author or Super Admin can delete
+    match /quickNotes/{noteId} {
+      allow read: if isApprovedUser();
+      allow create: if isApprovedUser() && request.resource.data.userId == request.auth.uid;
+      allow update: if isApprovedUser() && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow delete: if isApprovedUser() && (resource.data.userId == request.auth.uid || isSuperAdmin());
+    }
+
     // Server-wide Timetables & Schedules:
     // - ONLY approved users can read/download the schedule
     // - ONLY Super Admin can create, modify, or delete schedules

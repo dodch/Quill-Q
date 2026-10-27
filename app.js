@@ -1812,6 +1812,27 @@ function showCustomAlert(message, title = "Notice", iconHtml = '<i class="fi fi-
 }
 
 function showCustomConfirm(message, title = "Are you sure?", iconHtml = '<i class="fi fi-rr-interrogation"></i>', confirmBtnLabel = "Confirm", cancelBtnLabel = "Cancel", isDanger = false) {
+  // Support options object signature: showCustomConfirm({ message, title, confirmText, ... }) or (message, title, iconHtml, ...)
+  let opt = {};
+  if (typeof message === "object" && message !== null) {
+    opt = message;
+    message = opt.message || "";
+    title = opt.title || "Are you sure?";
+    iconHtml = opt.iconHtml || '<i class="fi fi-rr-interrogation"></i>';
+    confirmBtnLabel = opt.confirmText || opt.confirmBtnLabel || "Confirm";
+    cancelBtnLabel = opt.cancelText || opt.cancelBtnLabel || "Cancel";
+    isDanger = !!(opt.isDanger || opt.danger);
+  } else {
+    // If the 3rd argument is NOT html/icon (i.e. caller passed confirmBtnLabel like "Delete"), adjust arguments
+    if (typeof iconHtml === "string" && !iconHtml.includes("<") && !iconHtml.includes("fi-") && iconHtml.length < 20) {
+      // Caller called: showCustomConfirm(msg, title, confirmBtnLabel, cancelBtnLabel, isDanger)
+      isDanger = Boolean(confirmBtnLabel);
+      cancelBtnLabel = typeof confirmBtnLabel === "string" ? confirmBtnLabel : "Cancel";
+      confirmBtnLabel = iconHtml;
+      iconHtml = '<i class="fi fi-rr-trash"></i>';
+    }
+  }
+
   return new Promise((resolve) => {
     const modal = document.getElementById("custom-dialog-modal");
     const iconEl = document.getElementById("custom-dialog-icon");
@@ -1842,7 +1863,7 @@ function showCustomConfirm(message, title = "Are you sure?", iconHtml = '<i clas
     dialogResolveFn = (result) => {
       modal.classList.add("view-hidden");
       dialogResolveFn = null;
-      resolve(result);
+      resolve(!!result);
     };
 
     modal.classList.remove("view-hidden");
@@ -2335,6 +2356,264 @@ function initHomeworksManager() {
   // Initial render
   renderHomeworksView();
   syncHomeHomeworkNote();
+}
+
+// ===== Quick Notes Manager (Subjects View Paperclip Note) =====
+let currentQuickNotes = [];
+let quickNotesUnsubscribe = null;
+
+function isNoteExpired(note) {
+  if (!note || !note.expiresAt) return false;
+  // Parse expiration date as end-of-day in local time
+  const parts = note.expiresAt.split("-");
+  if (parts.length === 3) {
+    const expDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 23, 59, 59);
+    return new Date() > expDate;
+  }
+  return false;
+}
+
+function formatExpirationDate(expStr) {
+  if (!expStr) return "";
+  const parts = expStr.split("-");
+  if (parts.length === 3) {
+    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  return expStr;
+}
+
+function renderQuickNotes() {
+  const container = document.getElementById("paperclip-notes-list");
+  if (!container) return;
+
+  const validNotes = currentQuickNotes.filter((n) => !isNoteExpired(n));
+
+  if (validNotes.length === 0) {
+    container.innerHTML = `<div class="paperclip-empty-msg">No quick notes yet. Click "+ Add Note" to post one!</div>`;
+    return;
+  }
+
+  const isSuperAdmin = currentUser && (currentUser.email === "dodchadam@gmail.com" || currentUser.email === "dotchadam@gmail.com");
+
+  container.innerHTML = validNotes.map((note) => {
+    const canDelete = isSuperAdmin || (currentUser && note.userId === currentUser.uid);
+    const expLabel = formatExpirationDate(note.expiresAt);
+    const authorName = note.authorName || "Student";
+
+    return `
+      <div class="paperclip-note-entry" data-note-id="${escapeHtml(note.id)}">
+        <div class="paperclip-note-top">
+          <p class="paperclip-note-text">${escapeHtml(note.text)}</p>
+          ${canDelete ? `
+            <button type="button" class="paperclip-note-btn-del" data-note-id="${escapeHtml(note.id)}" title="Delete Note" aria-label="Delete note">
+              <i class="fi fi-rr-trash"></i>
+            </button>
+          ` : ""}
+        </div>
+        <div class="paperclip-note-footer">
+          <span class="paperclip-note-author" title="${escapeHtml(authorName)}">By ${escapeHtml(authorName)}</span>
+          <span class="paperclip-note-exp" title="Expires at end of day">
+            <i class="fi fi-rr-clock"></i> Exp: ${expLabel}
+          </span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // Attach delete handlers with confirmation
+  container.querySelectorAll(".paperclip-note-btn-del").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const noteId = btn.dataset.noteId;
+      if (!noteId) return;
+
+      const confirmed = await showCustomConfirm(
+        "Are you sure you want to delete this quick note?",
+        "Delete Note",
+        '<i class="fi fi-rr-trash"></i>',
+        "Delete",
+        "Cancel",
+        true
+      );
+      if (!confirmed) return;
+
+      // Optimistically remove
+      currentQuickNotes = currentQuickNotes.filter((n) => n.id !== noteId);
+      renderQuickNotes();
+      try {
+        localStorage.setItem("quill_q_quick_notes", JSON.stringify(currentQuickNotes));
+      } catch (err) {}
+
+      if (db) {
+        try {
+          await db.collection("quickNotes").doc(noteId).delete();
+        } catch (dbErr) {
+          console.warn("Could not delete quick note from Firestore:", dbErr);
+        }
+      }
+    });
+  });
+}
+
+function initQuickNotesManager() {
+  const btnAdd = document.getElementById("btn-add-quick-note");
+  const modal = document.getElementById("quick-note-modal");
+  const modalClose = document.getElementById("modal-quick-note-close");
+  const modalCancel = document.getElementById("modal-quick-note-cancel");
+  const form = document.getElementById("quick-note-modal-form");
+  const inputContent = document.getElementById("quick-note-text");
+  const inputExpires = document.getElementById("quick-note-expires");
+
+  function openQuickNoteModal() {
+    if (!modal) return;
+    if (inputContent) inputContent.value = "";
+    if (inputExpires) {
+      // Default to 3 days from now
+      const defaultDate = new Date();
+      defaultDate.setDate(defaultDate.getDate() + 3);
+      inputExpires.value = defaultDate.toISOString().split("T")[0];
+      // Min date is today
+      inputExpires.min = new Date().toISOString().split("T")[0];
+    }
+    modal.classList.remove("view-hidden");
+    setTimeout(() => {
+      if (inputContent) inputContent.focus();
+    }, 60);
+  }
+
+  function closeQuickNoteModal() {
+    if (modal) modal.classList.add("view-hidden");
+  }
+
+  if (btnAdd) btnAdd.addEventListener("click", openQuickNoteModal);
+  if (modalClose) modalClose.addEventListener("click", closeQuickNoteModal);
+  if (modalCancel) modalCancel.addEventListener("click", closeQuickNoteModal);
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeQuickNoteModal();
+    });
+  }
+
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = inputContent ? inputContent.value.trim() : "";
+      const expiresAt = inputExpires ? inputExpires.value : "";
+
+      if (!text || !expiresAt) return;
+
+      const user = currentUser || (auth && auth.currentUser);
+      if (!user) {
+        showCustomAlert("Please sign in to post a quick note.", "Sign In Required");
+        return;
+      }
+
+      closeQuickNoteModal();
+
+      const noteId = "note_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
+      const newNote = {
+        id: noteId,
+        text: text,
+        expiresAt: expiresAt,
+        userId: user.uid,
+        authorName: (currentProfile && currentProfile.displayName) || user.displayName || user.email.split("@")[0],
+        createdAt: new Date().toISOString()
+      };
+
+      // Optimistic update
+      currentQuickNotes.unshift(newNote);
+      renderQuickNotes();
+      try {
+        localStorage.setItem("quill_q_quick_notes", JSON.stringify(currentQuickNotes));
+      } catch (err) {}
+
+      if (db) {
+        try {
+          await db.collection("quickNotes").doc(noteId).set(newNote);
+        } catch (dbErr) {
+          console.error("Error creating quick note:", dbErr);
+          showCustomAlert("Error saving quick note: " + (dbErr.message || "Permission denied"));
+        }
+      }
+    });
+  }
+
+  // Local storage cached load
+  const cached = localStorage.getItem("quill_q_quick_notes");
+  if (cached) {
+    try {
+      currentQuickNotes = JSON.parse(cached).filter((n) => !isNoteExpired(n));
+      renderQuickNotes();
+    } catch (e) {
+      currentQuickNotes = [];
+    }
+  }
+
+  // Periodic expiration prune every 30s
+  setInterval(() => {
+    const unexpired = currentQuickNotes.filter((n) => {
+      if (isNoteExpired(n)) {
+        if (db && currentUser && (n.userId === currentUser.uid || currentUser.email === "dodchadam@gmail.com")) {
+          db.collection("quickNotes").doc(n.id).delete().catch(console.warn);
+        }
+        return false;
+      }
+      return true;
+    });
+
+    if (unexpired.length !== currentQuickNotes.length) {
+      currentQuickNotes = unexpired;
+      try {
+        localStorage.setItem("quill_q_quick_notes", JSON.stringify(unexpired));
+      } catch (err) {}
+      renderQuickNotes();
+    }
+  }, 30000);
+}
+
+// Attaches real-time listener to /quickNotes collection once user is authenticated
+function bindQuickNotesListener(user) {
+  if (quickNotesUnsubscribe) {
+    quickNotesUnsubscribe();
+    quickNotesUnsubscribe = null;
+  }
+
+  if (user && db) {
+    try {
+      quickNotesUnsubscribe = db.collection("quickNotes")
+        .onSnapshot((snapshot) => {
+          const list = [];
+          snapshot.forEach((doc) => {
+            list.push({ id: doc.id, ...doc.data() });
+          });
+
+          // Sort by creation time newest first
+          list.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+
+          const active = [];
+          list.forEach((n) => {
+            if (isNoteExpired(n)) {
+              if (currentUser && (n.userId === currentUser.uid || currentUser.email === "dodchadam@gmail.com")) {
+                db.collection("quickNotes").doc(n.id).delete().catch(console.warn);
+              }
+            } else {
+              active.push(n);
+            }
+          });
+
+          currentQuickNotes = active;
+          try {
+            localStorage.setItem("quill_q_quick_notes", JSON.stringify(active));
+          } catch (err) {}
+          renderQuickNotes();
+        }, (err) => {
+          console.warn("Firestore quickNotes sync warning:", err);
+        });
+    } catch (e) {
+      console.warn("Could not attach quickNotes listener:", e);
+    }
+  }
 }
 
 // --- Course search filters timelines and homework tasks ---
@@ -3112,11 +3391,13 @@ function initFirebaseAuthAndProfile() {
             bindUserTasks(user);
             bindServerSchedule(user);
             bindServerChat(user);
+            bindQuickNotesListener(user);
             navigateToDashboard();
           } else {
             bindUserTasks(null);
             bindServerSchedule(null);
             bindServerChat(null);
+            bindQuickNotesListener(null);
             navigateToPendingApproval(profile);
           }
         }
@@ -3127,6 +3408,7 @@ function initFirebaseAuthAndProfile() {
         bindUserTasks(null);
         bindServerSchedule(null);
         bindServerChat(null);
+        bindQuickNotesListener(null);
         applyProfileToUI(null);
       }
     });
@@ -4133,6 +4415,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderDate();
   initNav();
   initHomeworksManager();
+  initQuickNotesManager();
   initChatManager();
   initNotificationCenter();
   initSearch();

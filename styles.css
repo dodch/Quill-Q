@@ -879,58 +879,182 @@ a { color: inherit; text-decoration: none; }
   transform-origin: 74px 190px;
 }
 
-.paperclip-title {
+.paperclip-header-row {
   position: absolute;
-  top: 110px;
-  left: 74px;
-  font-size: 27px;
-  font-weight: 600;
+  top: 104px;
+  left: 68px;
+  right: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.paperclip-title {
+  font-size: 26px;
+  font-weight: 700;
   color: #1a1815;
   margin: 0;
   letter-spacing: 0.2px;
-}
-
-.paperclip-links {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.paperclip-item {
-  position: absolute;
-  left: 74px;
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  text-decoration: none;
-  color: #1e1b18;
-  font-size: 19px;
-  font-weight: 400;
   line-height: 1;
-  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.btn-paperclip-add-note {
+  background: #fdf6e2;
+  border: 1.5px solid #1a1816;
+  border-radius: 10px;
+  padding: 4px 10px;
+  font-family: "Patrick Hand", cursive;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1816;
+  cursor: pointer;
+  box-shadow: 1.5px 2px 0 #1a1816;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.btn-paperclip-add-note:hover {
+  background: #faeac2;
+  transform: translateY(-1px);
+  box-shadow: 2px 3px 0 #1a1816;
+}
+
+.btn-paperclip-add-note:active {
+  transform: translateY(1px);
+  box-shadow: 1px 1px 0 #1a1816;
+}
+
+.paperclip-notes-list {
+  position: absolute;
+  top: 154px;
+  left: 62px;
+  right: 52px;
+  bottom: 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: #d4cdbf transparent;
+}
+
+.paperclip-notes-list::-webkit-scrollbar {
+  width: 4px;
+}
+.paperclip-notes-list::-webkit-scrollbar-thumb {
+  background: #d4cdbf;
+  border-radius: 4px;
+}
+
+.paperclip-empty-msg {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 19px;
+  color: #8c8275;
+  font-style: italic;
+  padding: 32px 10px;
+  text-align: center;
+  line-height: 1.45;
+}
+
+/* Handwritten Note Entry on Paper */
+.paperclip-note-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  padding-bottom: 12px;
+  background: transparent;
+  border-bottom: 2px solid #8e8579; /* Hand-drawn look separation line */
+  transition: all 0.15s ease;
+}
+
+.paperclip-note-entry:last-child {
+  border-bottom: 2px solid #8e8579;
+}
+
+.paperclip-note-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Handwritten ink text */
+.paperclip-note-text {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #1a1816;
+  margin: 0;
+  word-break: break-word;
+  white-space: pre-wrap;
+  letter-spacing: 0.3px;
+}
+
+.paperclip-note-btn-del {
+  background: transparent;
+  border: none;
+  color: #a3988b;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 14px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.paperclip-note-entry:hover .paperclip-note-btn-del {
+  opacity: 1;
+}
+
+.paperclip-note-btn-del:hover {
+  color: #c92a2a;
+  background: rgba(201, 42, 42, 0.12);
+}
+
+.paperclip-note-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 15px;
+  color: #635b52;
+  margin-top: 2px;
+}
+
+.paperclip-note-author {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 120px;
+  color: #6e655b;
 }
 
-/* Item 1 (Shared Drive Link): Above Line 1 */
-.paperclip-links .paperclip-item:nth-child(1) {
-  top: 165px;
-}
-
-/* Item 2 (Past Exams Vault): Below Line 1, Above Line 2 */
-.paperclip-links .paperclip-item:nth-child(2) {
-  top: 250px;
-}
-
-/* Item 3 (Vocabulary & Term Glossary): Below Line 2 */
-.paperclip-links .paperclip-item:nth-child(3) {
-  top: 326px;
-}
-
-.paperclip-item:hover {
-  transform: translateX(4px);
-  color: #8c3619;
+.paperclip-note-exp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: #c92a2a;
+  background: rgba(201, 42, 42, 0.08);
+  border: 1px dashed rgba(201, 42, 42, 0.35);
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 13.5px;
+  line-height: 1.2;
 }
 
 /* ========== Dedicated Homework & Reminders View ========== */
@@ -3732,32 +3856,32 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     box-shadow: 2px 2px 0px #1a1816 !important;
   }
 
-  /* Subjects Quick Materials Card */
+  /* Subjects Quick Notes Card on mobile */
   .paperclip-inner {
     position: static !important;
     width: 100% !important;
     height: auto !important;
     transform: none !important;
   }
+  .paperclip-header-row {
+    position: static !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 12px !important;
+  }
   .paperclip-title {
     position: static !important;
     font-size: 22px !important;
-    margin-bottom: 12px !important;
+    margin: 0 !important;
   }
-  .paperclip-links {
+  .paperclip-notes-list {
     position: static !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 8px !important;
     height: auto !important;
-  }
-  .paperclip-item {
-    position: static !important;
-    padding: 8px 12px !important;
-    background: #ffffff !important;
-    border: 1.5px solid #1a1816 !important;
-    border-radius: 10px !important;
-    box-shadow: 1.5px 1.5px 0px #1a1816 !important;
+    max-height: 280px !important;
   }
 
   /* Landing page mobile adaptations */
@@ -6844,12 +6968,22 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   font-family: 'Outfit', sans-serif !important;
   color: #1a1816 !important;
   padding: 0 !important;
+  position: relative;
 }
 
 .bn-editor {
-  padding: 0 !important;
+  padding-left: 38px !important;
+  padding-right: 8px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
   font-size: 1.1rem !important;
   line-height: 1.65 !important;
+}
+
+/* Ensure the floating side menu (drag handle + plus icon) stays inside the page sheet */
+.bn-side-menu {
+  z-index: 10 !important;
+  margin-left: 6px !important;
 }
 
 .bn-block-content {
@@ -7316,7 +7450,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   }
 }
 
-/* Responsive adjustments */
+/* Responsive adjustments for Subject Hub & Multi-Page Editor */
 @media (max-width: 1040px) {
   .a4-right-page-rail {
     left: auto;
@@ -7334,35 +7468,269 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 @media (max-width: 860px) {
   .a4-page-sheet {
     padding: 24px 20px;
-    border-radius: 12px;
-    min-height: 700px;
+    border-radius: 14px;
+    min-height: 600px;
+  }
+  .editor-main-canvas {
+    padding: 0 14px;
+    margin: 20px auto 40px;
   }
 }
 
 @media (max-width: 768px) {
-  .subject-hero-card {
-    padding: 20px;
+  /* Subject Hub Page Layout */
+  .subject-hub-page {
+    padding: 14px 12px 50px;
   }
+
+  .subject-top-nav {
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    border-radius: 16px;
+    gap: 10px;
+  }
+
+  .subject-back-btn {
+    padding: 6px 10px;
+    font-size: 1.05rem;
+    gap: 6px;
+  }
+
+  .subject-nav-brand span {
+    font-size: 1.3rem;
+  }
+
+  .subject-user-meta {
+    max-width: 120px;
+  }
+
+  .subject-user-name {
+    font-size: 0.88rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Hero Card */
+  .subject-hero-card {
+    padding: 18px 16px;
+    border-radius: 18px;
+    margin-bottom: 20px;
+    box-shadow: 4px 5px 0 #1a1816;
+  }
+
+  .subject-hero-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .subject-hero-left {
+    gap: 14px;
+    flex: 1 1 100%;
+  }
+
+  .subject-hero-icon-box {
+    width: 58px;
+    height: 58px;
+    border-radius: 14px;
+  }
+
+  .subject-hero-icon-box svg {
+    width: 32px;
+    height: 32px;
+  }
+
   .subject-hero-title {
     font-size: 1.85rem;
   }
-  .editor-paper-sheet {
-    padding: 24px 20px;
-    border-radius: 14px;
-    box-shadow: 4px 5px 0 #1a1816;
+
+  .subject-hero-desc {
+    font-size: 0.92rem;
+    line-height: 1.35;
   }
-  .editor-doc-title-input {
-    font-size: 2rem;
+
+  /* Subject Switcher */
+  .subject-switcher-wrap {
+    width: 100%;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1.5px dashed rgba(26, 24, 22, 0.2);
   }
+
+  .subject-switcher-select {
+    flex: 1;
+    max-width: 220px;
+    padding: 6px 12px;
+    font-size: 1rem;
+  }
+
+  /* Action Bar (Search & Create CTA) */
   .docs-action-bar {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
+    margin-bottom: 20px;
   }
+
   .docs-search-wrap {
+    width: 100%;
     max-width: 100%;
+    flex: none;
   }
+
+  .docs-action-right {
+    width: 100%;
+  }
+
   .btn-create-doc {
+    width: 100%;
     justify-content: center;
+    padding: 11px 18px;
+    font-size: 1.2rem;
+  }
+
+  /* Documents Grid */
+  .docs-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .doc-card {
+    padding: 18px 16px;
+    min-height: 170px;
+    border-radius: 16px;
+  }
+
+  .doc-card-title {
+    font-size: 1.45rem;
+  }
+
+  /* Editor Top Bar */
+  .editor-top-bar {
+    padding: 10px 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .editor-bar-left {
+    gap: 8px;
+  }
+
+  .editor-back-btn {
+    padding: 5px 10px;
+    font-size: 1.05rem;
+  }
+
+  .editor-subject-badge {
+    padding: 2px 8px;
+    font-size: 0.95rem;
+  }
+
+  .editor-save-status {
+    font-size: 0.92rem;
+    padding: 0 4px;
+  }
+
+  .editor-bar-right {
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  .editor-btn-secondary {
+    padding: 6px 10px;
+    font-size: 0.95rem;
+  }
+
+  .editor-btn-primary {
+    padding: 6px 14px;
+    font-size: 1.05rem;
+  }
+
+  /* Title Card */
+  .editor-title-card {
+    padding: 12px 16px;
+    border-radius: 14px;
+    margin-bottom: 16px;
+    box-shadow: 3px 4px 0 #1a1816;
+  }
+
+  .editor-doc-title-input {
+    font-size: 1.9rem;
+  }
+
+  /* A4 Page Mobile Behavior */
+  .a4-page-sheet {
+    padding: 18px 18px 24px;
+    border-radius: 12px;
+    box-shadow: 3px 4px 0 #1a1816;
+    min-height: 480px;
+  }
+
+  .bn-editor {
+    padding-left: 32px !important;
+    padding-right: 4px !important;
+  }
+
+  .bn-side-menu {
+    margin-left: 8px !important;
+  }
+
+  .a4-running-header {
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+  }
+
+  .a4-header-title {
+    max-width: 180px;
+  }
+
+  .a4-running-footer {
+    padding-top: 12px;
+  }
+
+  .a4-page-break-divider {
+    margin: 22px 0;
+    gap: 10px;
+  }
+
+  .a4-btn-insert-page {
+    padding: 5px 14px;
+    font-size: 0.98rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Compact mobile screens (iPhone, smaller Android) */
+  .subject-nav-brand span {
+    display: none;
+  }
+
+  .subject-user-meta {
+    max-width: 80px;
+  }
+
+  .subject-user-role {
+    display: none;
+  }
+
+  .editor-btn-secondary span {
+    display: none;
+  }
+
+  .editor-btn-secondary {
+    padding: 7px 10px;
+  }
+
+  .editor-btn-primary span {
+    font-size: 0.95rem;
+  }
+
+  .editor-subject-badge {
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
