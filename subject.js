@@ -1,0 +1,425 @@
+/**
+ * subject.js - Unified Subject Hub Controller for Quill-Q
+ * Handles subject metadata rendering, real-time Firestore sync, client-side filtering,
+ * and navigation to the BlockNote full-page editor.
+ */
+
+(function () {
+  let db = null;
+  let auth = null;
+  let currentUser = null;
+  let currentProfile = null;
+  let currentSubjectId = "writing";
+  let documentsUnsubscribe = null;
+  let allDocumentsCache = [];
+
+  const SUPER_ADMIN_EMAILS = ["dodchadam@gmail.com", "dotchadam@gmail.com"];
+
+  // DOM Elements
+  const heroCard = document.getElementById("subject-hero-card");
+  const heroIcon = document.getElementById("subject-hero-icon");
+  const heroCode = document.getElementById("subject-code-pill");
+  const heroTitle = document.getElementById("subject-hero-title");
+  const heroDesc = document.getElementById("subject-hero-desc");
+  const heroProf = document.getElementById("subject-prof-name");
+  const heroRoom = document.getElementById("subject-room-name");
+  const heroSchedule = document.getElementById("subject-schedule-name");
+  const subjectSelect = document.getElementById("subject-select");
+  const btnCreateDoc = document.getElementById("btn-create-document");
+  const docsGrid = document.getElementById("docs-grid");
+  const searchInput = document.getElementById("docs-search-input");
+  const navAvatar = document.getElementById("nav-user-avatar");
+  const navName = document.getElementById("nav-user-name");
+  const navRole = document.getElementById("nav-user-role");
+
+  function isSuperAdminUser(profile, user) {
+    if (user && user.email && SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase().trim())) return true;
+    if (profile && profile.email && SUPER_ADMIN_EMAILS.includes(profile.email.toLowerCase().trim())) return true;
+    if (profile && profile.role === "admin") return true;
+    return false;
+  }
+
+  function getQueryParam(key) {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(key);
+  }
+
+  function formatTimeAgo(timestamp) {
+    if (!timestamp) return "Recently";
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const diffSecs = Math.floor((now - date) / 1000);
+
+    if (diffSecs < 60) return "Just now";
+    if (diffSecs < 3600) return `${Math.floor(diffSecs / 60)}m ago`;
+    if (diffSecs < 86400) return `${Math.floor(diffSecs / 3600)}h ago`;
+    if (diffSecs < 604800) return `${Math.floor(diffSecs / 86400)}d ago`;
+
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  function initSubjectDropdown() {
+    if (!subjectSelect || typeof getAllSubjects !== "function") return;
+    const subjects = getAllSubjects();
+    subjectSelect.innerHTML = "";
+
+    subjects.forEach((s) => {
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = `${s.name} (${s.code})`;
+      if (s.id === currentSubjectId) opt.selected = true;
+      subjectSelect.appendChild(opt);
+    });
+
+    subjectSelect.addEventListener("change", (e) => {
+      switchSubject(e.target.value);
+    });
+  }
+
+  function renderSubjectHero(subjectId) {
+    const subject = typeof getSubjectById === "function" ? getSubjectById(subjectId) : null;
+    if (!subject) return;
+
+    currentSubjectId = subject.id;
+    document.title = `${subject.name} – Quill-Q Document Library`;
+
+    // Apply color class
+    if (heroCard) {
+      heroCard.className = `subject-hero-card ${subject.bgClass || "card-peach"}`;
+    }
+
+    if (heroCode) heroCode.textContent = subject.code || "SUBJECT";
+    if (heroTitle) heroTitle.textContent = subject.name;
+    if (heroDesc) heroDesc.textContent = subject.description;
+    if (heroProf) heroProf.textContent = subject.prof;
+    if (heroRoom) heroRoom.textContent = subject.room;
+    if (heroSchedule) heroSchedule.textContent = subject.schedule;
+
+    if (heroIcon && typeof getSubjectIconSvg === "function") {
+      heroIcon.innerHTML = getSubjectIconSvg(subject.icon);
+    }
+
+    if (btnCreateDoc) {
+      btnCreateDoc.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}&action=new`;
+    }
+
+    if (subjectSelect) {
+      subjectSelect.value = currentSubjectId;
+    }
+  }
+
+  function switchSubject(newSubjectId) {
+    if (newSubjectId === currentSubjectId) return;
+
+    // Update URL query parameter without full reload
+    const url = new URL(window.location.href);
+    url.searchParams.set("id", newSubjectId);
+    window.history.replaceState({}, "", url.toString());
+
+    renderSubjectHero(newSubjectId);
+    bindDocumentsListener();
+  }
+
+  function renderDocumentCards(docs) {
+    if (!docsGrid) return;
+    docsGrid.innerHTML = "";
+
+    if (!docs || docs.length === 0) {
+      const isSearch = searchInput && searchInput.value.trim().length > 0;
+      docsGrid.innerHTML = `
+        <div class="docs-empty-state">
+          <div class="docs-empty-icon">
+            <i class="fi fi-rr-document"></i>
+          </div>
+          <h2 class="docs-empty-title">${isSearch ? "No matching documents found" : "No documents yet for this subject"}</h2>
+          <p class="docs-empty-desc">
+            ${isSearch ? "Try searching with different keywords." : "Be the first to capture lecture notes, study guides, or collaborative exercises!"}
+          </p>
+          ${!isSearch ? `
+            <a href="editor.html?subject=${encodeURIComponent(currentSubjectId)}&action=new" class="btn-create-doc" style="margin-top: 8px;">
+              <i class="fi fi-sr-add"></i>
+              <span>+ Create First Document</span>
+            </a>
+          ` : ""}
+        </div>
+      `;
+      return;
+    }
+
+    const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
+
+    docs.forEach((doc) => {
+      const card = document.createElement("article");
+      card.className = "doc-card";
+      card.tabIndex = 0;
+
+      const title = doc.title || "Untitled Document";
+      const excerpt = doc.excerpt || "Empty document...";
+      const authorName = doc.authorName || "Student";
+      const authorRole = doc.authorRole || "Student";
+      const authorAvatar = doc.authorAvatar || "assets/avatars/avatar-1.svg";
+      const timeAgo = formatTimeAgo(doc.updatedAt || doc.createdAt);
+      const canDelete = isSuperAdmin || (currentUser && doc.authorId === currentUser.uid);
+
+      card.innerHTML = `
+        <div class="doc-card-top">
+          <span class="doc-card-badge">
+            <i class="fi fi-rr-file-edit"></i>
+            <span>Notes</span>
+          </span>
+          <div class="doc-card-actions">
+            <a href="editor.html?subject=${encodeURIComponent(currentSubjectId)}&docId=${encodeURIComponent(doc.id)}" 
+               class="doc-btn-icon" title="Open in Full-Page Editor" aria-label="Open editor">
+              <i class="fi fi-rr-arrow-up-right"></i>
+            </a>
+            ${canDelete ? `
+              <button class="doc-btn-icon doc-btn-delete" data-doc-id="${doc.id}" title="Delete Document" aria-label="Delete document">
+                <i class="fi fi-rr-trash"></i>
+              </button>
+            ` : ""}
+          </div>
+        </div>
+
+        <h3 class="doc-card-title">${escapeHtml(title)}</h3>
+        <p class="doc-card-excerpt">${escapeHtml(excerpt)}</p>
+
+        <div class="doc-card-footer">
+          <div class="doc-card-author">
+            <img src="${escapeHtml(authorAvatar)}" alt="${escapeHtml(authorName)}" class="doc-card-avatar" onerror="this.src='assets/avatars/avatar-1.svg'" />
+            <div class="doc-card-meta">
+              <span class="doc-card-author-name">${escapeHtml(authorName)}</span>
+              <span class="doc-card-time">${timeAgo}</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Entire card clicks open the editor (unless clicking the delete button)
+      card.addEventListener("click", (e) => {
+        if (e.target.closest(".doc-btn-delete")) return;
+        window.location.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}&docId=${encodeURIComponent(doc.id)}`;
+      });
+
+      // Handle delete
+      const delBtn = card.querySelector(".doc-btn-delete");
+      if (delBtn) {
+        delBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          deleteDocument(doc.id, title);
+        });
+      }
+
+      docsGrid.appendChild(card);
+    });
+  }
+
+  function escapeHtml(str) {
+    if (!str) return "";
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  async function deleteDocument(docId, docTitle) {
+    let confirmed = false;
+    if (typeof window.showCustomConfirm === "function") {
+      confirmed = await window.showCustomConfirm(
+        `Are you sure you want to delete "${docTitle}"? All lecture notes and pages in this document will be permanently removed.`,
+        "Delete Document?",
+        '<i class="fi fi-rr-trash"></i>',
+        "Delete Document",
+        "Keep Document",
+        true
+      );
+    } else {
+      confirmed = window.confirm(`Are you sure you want to delete "${docTitle}"? This cannot be undone.`);
+    }
+
+    if (!confirmed) return;
+
+    try {
+      if (!db) return;
+      await db.collection("subjects").doc(currentSubjectId).collection("documents").doc(docId).delete();
+      showToast("Document deleted successfully");
+    } catch (err) {
+      console.error("Error deleting document:", err);
+      showToast("Failed to delete document: " + err.message, "error");
+    }
+  }
+
+  function bindDocumentsListener() {
+    if (documentsUnsubscribe) {
+      try { documentsUnsubscribe(); } catch (e) {}
+      documentsUnsubscribe = null;
+    }
+
+    if (!db || !currentUser) return;
+
+    const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
+    const isApproved = currentProfile && (currentProfile.status === "approved" || isSuperAdmin);
+
+    if (!isApproved) {
+      if (docsGrid) {
+        docsGrid.innerHTML = `
+          <div class="docs-empty-state">
+            <div class="docs-empty-icon" style="background: #ffe3e3;">
+              <i class="fi fi-rr-lock" style="color: #c92a2a;"></i>
+            </div>
+            <h2 class="docs-empty-title">Pending Administrator Approval</h2>
+            <p class="docs-empty-desc">
+              Your account is currently waiting for admin approval. Once approved, you will have access to all subject documents and rich text editors.
+            </p>
+          </div>
+        `;
+      }
+      return;
+    }
+
+    // Show loading state
+    if (docsGrid) {
+      docsGrid.innerHTML = `
+        <div class="doc-card" style="opacity: 0.6; pointer-events: none;">
+          <div class="doc-card-top">
+            <span class="doc-card-badge">Loading...</span>
+          </div>
+          <h3 class="doc-card-title">Fetching subject documents...</h3>
+          <p class="doc-card-excerpt">Synchronizing with Quill-Q server...</p>
+        </div>
+      `;
+    }
+
+    const docRef = db.collection("subjects").doc(currentSubjectId).collection("documents");
+
+    documentsUnsubscribe = docRef.onSnapshot(
+      (snapshot) => {
+        const docs = [];
+        snapshot.forEach((d) => {
+          docs.push({ id: d.id, ...d.data() });
+        });
+
+        // Sort by updatedAt descending
+        docs.sort((a, b) => {
+          const tA = a.updatedAt ? (a.updatedAt.toMillis ? a.updatedAt.toMillis() : new Date(a.updatedAt).getTime()) : 0;
+          const tB = b.updatedAt ? (b.updatedAt.toMillis ? b.updatedAt.toMillis() : new Date(b.updatedAt).getTime()) : 0;
+          return tB - tA;
+        });
+
+        allDocumentsCache = docs;
+        filterAndRenderDocs();
+      },
+      (error) => {
+        console.error("Firestore document listener error:", error);
+        if (docsGrid) {
+          docsGrid.innerHTML = `
+            <div class="docs-empty-state">
+              <div class="docs-empty-icon" style="background: #ffe3e3;">
+                <i class="fi fi-rr-cross-circle" style="color: #c92a2a;"></i>
+              </div>
+              <h2 class="docs-empty-title">Could not load documents</h2>
+              <p class="docs-empty-desc">${error.message}</p>
+            </div>
+          `;
+        }
+      }
+    );
+  }
+
+  function filterAndRenderDocs() {
+    const q = searchInput ? searchInput.value.toLowerCase().trim() : "";
+    if (!q) {
+      renderDocumentCards(allDocumentsCache);
+      return;
+    }
+
+    const filtered = allDocumentsCache.filter((doc) => {
+      const titleMatch = (doc.title || "").toLowerCase().includes(q);
+      const excerptMatch = (doc.excerpt || "").toLowerCase().includes(q);
+      const authorMatch = (doc.authorName || "").toLowerCase().includes(q);
+      return titleMatch || excerptMatch || authorMatch;
+    });
+
+    renderDocumentCards(filtered);
+  }
+
+  function showToast(msg, type = "success") {
+    const container = document.getElementById("inapp-toast-container");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = `inapp-toast ${type === "error" ? "toast-error" : ""}`;
+    toast.innerHTML = `<span>${escapeHtml(msg)}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(-10px)";
+      setTimeout(() => toast.remove(), 250);
+    }, 3000);
+  }
+
+  // Live search filtering
+  if (searchInput) {
+    searchInput.addEventListener("input", filterAndRenderDocs);
+  }
+
+  // Initialization lifecycle
+  document.addEventListener("DOMContentLoaded", () => {
+    // 1. Determine subject from query parameter
+    const querySub = getQueryParam("id") || getQueryParam("subject");
+    if (querySub && typeof getSubjectById === "function" && getSubjectById(querySub)) {
+      currentSubjectId = getSubjectById(querySub).id;
+    }
+
+    initSubjectDropdown();
+    renderSubjectHero(currentSubjectId);
+
+    // 2. Initialize Firebase
+    if (typeof initFirebase === "function") {
+      const fb = initFirebase();
+      auth = fb.auth;
+      db = fb.db;
+    }
+
+    // 3. Auth state listener
+    if (auth) {
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+          // Not signed in -> return to main index dashboard
+          window.location.href = "index.html";
+          return;
+        }
+
+        currentUser = user;
+
+        // Fetch User Profile from Firestore
+        try {
+          const userDoc = await db.collection("users").doc(user.uid).get();
+          if (userDoc.exists) {
+            currentProfile = userDoc.data();
+          } else {
+            currentProfile = {
+              displayName: user.displayName || user.email.split("@")[0],
+              email: user.email,
+              role: "student",
+              status: "pending"
+            };
+          }
+        } catch (e) {
+          console.warn("Could not load user profile:", e);
+          currentProfile = { email: user.email, role: "student", status: "pending" };
+        }
+
+        // Update nav bar user info
+        if (navName) navName.textContent = currentProfile.displayName || user.displayName || "Student";
+        if (navRole) navRole.textContent = currentProfile.role || "Student";
+        if (navAvatar && currentProfile.avatarUrl) navAvatar.src = currentProfile.avatarUrl;
+
+        // Bind real-time documents listener
+        bindDocumentsListener();
+      });
+    }
+  });
+})();

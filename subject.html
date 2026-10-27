@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" class="allow-scroll">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Subject Documents – Quill-Q</title>
+  <meta name="description" content="Quill-Q unified subject document library and lecture note hub." />
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#f7f4ea" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#191917" media="(prefers-color-scheme: dark)" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="shortcut icon" href="favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
+  <link rel="stylesheet" href="styles.min.css?v=24" />
+
+  <style>
+    html, body {
+      height: auto !important;
+      min-height: 100vh !important;
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
+    }
+  </style>
+</head>
+<body class="subject-hub-page">
+
+  <div class="subject-hub-container">
+    <!-- Top Navigation Bar -->
+    <header class="subject-top-nav">
+      <div class="subject-nav-left">
+        <a href="index.html" class="subject-back-btn" id="btn-back-dashboard" title="Return to Dashboard">
+          <i class="fi fi-rr-arrow-left"></i>
+          <span>Dashboard</span>
+        </a>
+        <div class="subject-nav-brand">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1a1816" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path>
+            <line x1="16" y1="8" x2="2" y2="22"></line>
+            <line x1="17.5" y1="15" x2="9" y2="15"></line>
+          </svg>
+          <span>Quill-Q</span>
+        </div>
+      </div>
+
+      <div class="subject-nav-user" id="subject-nav-user">
+        <img src="assets/avatars/avatar-1.svg" alt="User Avatar" class="subject-user-avatar" id="nav-user-avatar" />
+        <div class="subject-user-meta">
+          <span class="subject-user-name" id="nav-user-name">Loading...</span>
+          <span class="subject-user-role" id="nav-user-role">Student</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Unified Subject Hero Banner -->
+    <section class="subject-hero-card card-peach" id="subject-hero-card">
+      <div class="subject-hero-header">
+        <div class="subject-hero-left">
+          <div class="subject-hero-icon-box" id="subject-hero-icon">
+            <!-- Populated from subject config -->
+          </div>
+          <div class="subject-hero-title-wrap">
+            <span class="subject-code-pill" id="subject-code-pill">ENG-202</span>
+            <h1 class="subject-hero-title" id="subject-hero-title">Writing</h1>
+            <p class="subject-hero-desc" id="subject-hero-desc">
+              Academic and professional essay construction, thesis formulation, and rhetoric.
+            </p>
+          </div>
+        </div>
+
+        <!-- Subject Switcher -->
+        <div class="subject-switcher-wrap">
+          <label for="subject-select" class="subject-switcher-label">Switch Subject:</label>
+          <select id="subject-select" class="subject-switcher-select" aria-label="Select subject">
+            <!-- Dynamically populated from registry -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Subject Metadata Badges -->
+      <div class="subject-hero-pills">
+        <div class="subject-info-pill subject-prof-pill">
+          <i class="fi fi-sr-user"></i>
+          <span id="subject-prof-name" dir="rtl">نسرين بن الصادق</span>
+        </div>
+        <div class="subject-info-pill">
+          <i class="fi fi-sr-marker"></i>
+          <span id="subject-room-name">Salle 15</span>
+        </div>
+        <div class="subject-info-pill">
+          <i class="fi fi-sr-calendar-clock"></i>
+          <span id="subject-schedule-name">Mon 10:00 – 11:30</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Document Library Toolbar & Actions -->
+    <div class="docs-action-bar">
+      <div class="docs-search-wrap">
+        <i class="fi fi-rr-search docs-search-icon"></i>
+        <input type="text" id="docs-search-input" class="docs-search-input" placeholder="Search lesson notes, summaries, topics..." />
+      </div>
+
+      <div class="docs-action-right">
+        <!-- Prominent Create Document CTA -->
+        <a href="editor.html" class="btn-create-doc" id="btn-create-document">
+          <i class="fi fi-sr-add"></i>
+          <span>+ Create Document</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Documents Grid Container -->
+    <main class="docs-grid" id="docs-grid">
+      <!-- Loading Skeleton Cards -->
+      <div class="doc-card" style="opacity: 0.6; pointer-events: none;">
+        <div class="doc-card-top">
+          <span class="doc-card-badge">Loading...</span>
+        </div>
+        <h3 class="doc-card-title">Fetching subject documents...</h3>
+        <p class="doc-card-excerpt">Connecting to Quill-Q secure repository...</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Custom Dialog Modal (Replaces browser alert and confirm) -->
+  <div class="task-modal-backdrop view-hidden" id="custom-dialog-modal" style="z-index: 99999;">
+    <div class="task-modal-card custom-dialog-card" role="alertdialog" aria-modal="true">
+      <div class="custom-dialog-body">
+        <div class="custom-dialog-icon" id="custom-dialog-icon">ℹ️</div>
+        <div class="custom-dialog-text-wrap">
+          <h4 class="custom-dialog-title" id="custom-dialog-title">Notice</h4>
+          <p class="custom-dialog-message" id="custom-dialog-message"></p>
+        </div>
+      </div>
+      <div class="task-modal-actions custom-dialog-actions" id="custom-dialog-actions">
+        <button type="button" class="task-btn-cancel" id="custom-dialog-cancel" style="display:none;">Cancel</button>
+        <button type="button" class="task-btn-save" id="custom-dialog-confirm">
+          <span id="custom-dialog-confirm-text">OK</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="inapp-toast-container" id="inapp-toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Firebase SDKs (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+  <!-- Quill-Q Shared Scripts -->
+  <script src="firebase-config.js"></script>
+  <script src="subjects-config.js"></script>
+  <script src="custom-dialog.js"></script>
+  <script src="subject.js"></script>
+</body>
+</html>

@@ -31,6 +31,18 @@ html, body {
   overflow: hidden;
 }
 
+/* Allow scrolling on standalone pages */
+html.allow-scroll,
+html:has(body.subject-hub-page),
+html:has(body.editor-page),
+body.subject-hub-page,
+body.editor-page {
+  height: auto !important;
+  min-height: 100vh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
 body {
   font-family: "Outfit", system-ui, sans-serif;
   color: var(--text);
@@ -731,6 +743,8 @@ a { color: inherit; text-decoration: none; }
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
 .bento-subject-card:hover {
@@ -6052,6 +6066,1285 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     padding: 2px 3px;
   }
 }
+
+/* ==========================================================================
+   SUBJECT HUB & BLOCKNOTE EDITOR STYLES
+   ========================================================================== */
+
+/* Subject Hub Page Layout */
+.subject-hub-page {
+  min-height: 100vh;
+  background-color: #faf8f5;
+  color: #1a1816;
+  font-family: 'Outfit', sans-serif;
+  padding: 24px 20px 60px;
+  position: relative;
+}
+
+.subject-hub-container {
+  max-width: 1140px;
+  margin: 0 auto;
+}
+
+/* Top Navigation Bar */
+.subject-top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 12px 18px;
+  background: #ffffff;
+  border: 2.5px solid #1a1816;
+  border-radius: 18px 16px 20px 18px;
+  box-shadow: 4px 5px 0 #1a1816;
+}
+
+.subject-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.subject-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fdf6e2;
+  border: 2px solid #1a1816;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1a1816;
+  text-decoration: none;
+  box-shadow: 2px 2px 0 #1a1816;
+  transition: all 0.16s ease;
+  cursor: pointer;
+}
+
+.subject-back-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #1a1816;
+  background: #faeac2;
+}
+
+.subject-back-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #1a1816;
+}
+
+.subject-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1816;
+}
+
+.subject-nav-brand img {
+  width: 28px;
+  height: 28px;
+}
+
+.subject-nav-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.subject-user-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid #1a1816;
+  object-fit: cover;
+  background: #f0ebe1;
+}
+
+.subject-user-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.subject-user-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.subject-user-role {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #635b54;
+  text-transform: capitalize;
+}
+
+/* Subject Hero Card */
+.subject-hero-card {
+  border: 2.5px solid #1a1816;
+  border-radius: 24px 22px 26px 20px / 22px 26px 20px 24px;
+  padding: 28px 32px;
+  box-shadow: 5px 7px 0 #1a1816;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: background-color 0.25s ease;
+}
+
+.subject-hero-card.card-peach { background: #fae4d7; }
+.subject-hero-card.card-blue { background: #d7e8fa; }
+.subject-hero-card.card-green { background: #dcf2e3; }
+.subject-hero-card.card-purple { background: #e8dcf8; }
+
+.subject-hero-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.subject-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1 1 360px;
+}
+
+.subject-hero-icon-box {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  border: 2.5px solid #1a1816;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 3px 4px 0 #1a1816;
+  flex-shrink: 0;
+}
+
+.subject-hero-icon-box svg {
+  width: 44px;
+  height: 44px;
+}
+
+.subject-hero-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subject-code-pill {
+  display: inline-block;
+  align-self: flex-start;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: #ffffff;
+  border: 1.5px solid #1a1816;
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+
+.subject-hero-title {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #1a1816;
+  margin: 0;
+}
+
+.subject-hero-desc {
+  font-size: 0.98rem;
+  color: #3b3530;
+  margin: 0;
+  max-width: 650px;
+  line-height: 1.4;
+}
+
+/* Quick Subject Switcher */
+.subject-switcher-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.subject-switcher-label {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1816;
+}
+
+.subject-switcher-select {
+  background: #ffffff;
+  border: 2px solid #1a1816;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1816;
+  box-shadow: 2px 3px 0 #1a1816;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.16s ease;
+}
+
+.subject-switcher-select:focus {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 4px 0 #1a1816;
+}
+
+/* Meta Pills in Hero */
+.subject-hero-pills {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.subject-info-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 2px solid #1a1816;
+  border-radius: 12px;
+  padding: 6px 14px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  box-shadow: 2px 3px 0 #1a1816;
+}
+
+.subject-prof-pill {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.15rem;
+  font-weight: 700;
+  background: #fffdf5;
+}
+
+/* Document Hub Action Bar */
+.docs-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.docs-search-wrap {
+  position: relative;
+  flex: 1 1 280px;
+  max-width: 440px;
+}
+
+.docs-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #635b54;
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.docs-search-input {
+  width: 100%;
+  background: #ffffff;
+  border: 2.5px solid #1a1816;
+  border-radius: 14px;
+  padding: 10px 14px 10px 40px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  box-shadow: 3px 4px 0 #1a1816;
+  outline: none;
+  transition: all 0.18s ease;
+}
+
+.docs-search-input:focus {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 5px 0 #1a1816;
+  border-color: #1a1816;
+}
+
+.docs-action-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Primary Create Document Button */
+.btn-create-doc {
+  background: #f6cf7c;
+  border: 2.5px solid #1a1816;
+  box-shadow: 3px 4px 0 #1a1816;
+  border-radius: 14px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #1a1816;
+}
+
+.btn-create-doc:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 6px 0 #1a1816;
+  background: #ffd978;
+}
+
+.btn-create-doc:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 2px 0 #1a1816;
+}
+
+.btn-create-doc i {
+  font-size: 1.1rem;
+}
+
+/* Document Grid */
+.docs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+/* Document Paper Card */
+.doc-card {
+  background: #ffffff;
+  border: 2.5px solid #1a1816;
+  border-radius: 20px 18px 22px 16px / 18px 22px 16px 20px;
+  padding: 22px 24px;
+  box-shadow: 4px 5px 0 #1a1816;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 200px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  text-decoration: none;
+  color: #1a1816;
+  cursor: pointer;
+}
+
+.doc-card:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 6px 8px 0 #1a1816;
+}
+
+.doc-card:active {
+  transform: translate(1px, 2px);
+  box-shadow: 2px 3px 0 #1a1816;
+}
+
+.doc-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.doc-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.92rem;
+  font-weight: 700;
+  background: #fdf6e2;
+  border: 1.5px solid #1a1816;
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+
+.doc-card-title {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 10px 0;
+  color: #1a1816;
+  word-break: break-word;
+}
+
+.doc-card-excerpt {
+  font-size: 0.95rem;
+  color: #554e47;
+  line-height: 1.45;
+  margin: 0 0 16px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1;
+}
+
+.doc-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1.5px dashed #d5cec5;
+  padding-top: 14px;
+  margin-top: auto;
+}
+
+.doc-card-author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-card-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #1a1816;
+  object-fit: cover;
+  background: #ede6dc;
+}
+
+.doc-card-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.doc-card-author-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.doc-card-time {
+  font-size: 0.74rem;
+  color: #7d756d;
+}
+
+.doc-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.doc-btn-icon {
+  background: #f7f3ec;
+  border: 1.5px solid #1a1816;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a1816;
+  cursor: pointer;
+  transition: all 0.14s ease;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.doc-btn-icon:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 2px 2px 0 #1a1816;
+}
+
+.doc-btn-delete:hover {
+  background: #ffdede;
+  color: #c92a2a;
+  border-color: #c92a2a;
+}
+
+/* Empty State Card */
+.docs-empty-state {
+  grid-column: 1 / -1;
+  background: #ffffff;
+  border: 2.5px dashed #a69e94;
+  border-radius: 24px;
+  padding: 60px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.docs-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #faf3e0;
+  border: 2px solid #1a1816;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  color: #1a1816;
+  box-shadow: 3px 3px 0 #1a1816;
+}
+
+.docs-empty-title {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1816;
+}
+
+.docs-empty-desc {
+  max-width: 440px;
+  color: #635b54;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ==========================================================================
+   STANDALONE FULL-PAGE BLOCKNOTE EDITOR (editor.html)
+   ========================================================================== */
+
+.editor-page {
+  min-height: 100vh;
+  background-color: #faf8f5;
+  color: #1a1816;
+  font-family: 'Outfit', sans-serif;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+}
+
+/* Editor Sticky Top Bar */
+.editor-top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #ffffff;
+  border-bottom: 2.5px solid #1a1816;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 4px 0 rgba(26, 24, 22, 0.08);
+}
+
+.editor-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.editor-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fdf6e2;
+  border: 2px solid #1a1816;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1816;
+  text-decoration: none;
+  box-shadow: 2px 2px 0 #1a1816;
+  transition: all 0.16s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.editor-back-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #1a1816;
+  background: #faeac2;
+}
+
+.editor-subject-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: 1.5px solid #1a1816;
+  border-radius: 8px;
+  padding: 3px 10px;
+  flex-shrink: 0;
+}
+
+.editor-subject-badge.card-peach { background: #fae4d7; }
+.editor-subject-badge.card-blue { background: #d7e8fa; }
+.editor-subject-badge.card-green { background: #dcf2e3; }
+.editor-subject-badge.card-purple { background: #e8dcf8; }
+
+.editor-save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.05rem;
+  color: #665f57;
+  flex-shrink: 0;
+  padding: 2px 8px;
+}
+
+.editor-save-status.status-saved {
+  color: #2b8a3e;
+}
+
+.editor-save-status.status-saving {
+  color: #d9480f;
+}
+
+.editor-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.editor-btn-secondary {
+  background: #ffffff;
+  border: 2px solid #1a1816;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1816;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #1a1816;
+  transition: all 0.16s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.editor-btn-secondary:hover {
+  background: #fbf7ee;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #1a1816;
+}
+
+.editor-btn-primary {
+  background: #5bae86;
+  border: 2px solid #1a1816;
+  border-radius: 12px;
+  padding: 8px 18px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 2px 3px 0 #1a1816;
+  transition: all 0.16s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.editor-btn-primary:hover {
+  background: #4a9e76;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 4px 0 #1a1816;
+}
+
+.editor-btn-primary:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #1a1816;
+}
+
+/* Standalone Document Canvas (Notion-Style Centered Paper) */
+.editor-main-canvas {
+  flex: 1 1 auto;
+  max-width: 900px;
+  width: 100%;
+  margin: 32px auto 60px;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.editor-paper-sheet {
+  background: #ffffff;
+  border: 2.5px solid #1a1816;
+  border-radius: 18px 22px 20px 24px / 22px 20px 24px 18px;
+  box-shadow: 6px 8px 0 #1a1816;
+  padding: 44px 52px;
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Document Title Editable Header */
+.editor-doc-title-input {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #1a1816;
+  border: none;
+  border-bottom: 2px dashed transparent;
+  outline: none;
+  background: transparent;
+  padding: 0 0 12px 0;
+  margin-bottom: 24px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.18s ease;
+}
+
+.editor-doc-title-input:hover,
+.editor-doc-title-input:focus {
+  border-bottom-color: #1a1816;
+}
+
+.editor-doc-title-input::placeholder {
+  color: #b0a79d;
+}
+
+/* BlockNote Mount Container */
+#blocknote-editor-container {
+  flex: 1 1 auto;
+  min-height: 480px;
+}
+
+/* BlockNote UI Styling Overrides to seamlessly match Quill-Q Hand-Drawn Paper Theme */
+.bn-container {
+  background: transparent !important;
+  font-family: 'Outfit', sans-serif !important;
+  color: #1a1816 !important;
+  padding: 0 !important;
+}
+
+.bn-editor {
+  padding: 0 !important;
+  font-size: 1.1rem !important;
+  line-height: 1.65 !important;
+}
+
+.bn-block-content {
+  font-family: 'Outfit', sans-serif !important;
+}
+
+.bn-block-content h1,
+.bn-block-content h2,
+.bn-block-content h3 {
+  font-family: 'Patrick Hand', cursive !important;
+  color: #1a1816 !important;
+  letter-spacing: 0.2px !important;
+}
+
+.bn-toolbar,
+.bn-menu {
+  background: #ffffff !important;
+  border: 2px solid #1a1816 !important;
+  border-radius: 12px !important;
+  box-shadow: 3px 4px 0 #1a1816 !important;
+}
+
+.bn-menu-item:hover {
+  background: #fbf5e7 !important;
+}
+
+/* ==========================================================================
+   Universal A4 Multi-Page BlockNote System
+   Universal Standard A4 Dimensions: 816px × 1056px (approx 210mm × 297mm @ 96dpi)
+   ========================================================================== */
+
+/* Multi-Page Root Container */
+.multipage-editor-root {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Small Right-Side Page Preview Rail: Fixed & anchored cleanly to the right of the canvas */
+.a4-right-page-rail {
+  position: fixed;
+  left: calc(50% + 430px); /* 430px is half of 816px (408px) + 22px gutter */
+  right: auto;
+  top: 140px;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+}
+
+/* Fallback for smaller viewports where 50% + 430px would exceed the screen */
+@media (max-width: 980px) {
+  .a4-right-page-rail {
+    left: auto;
+    right: 14px;
+    top: 120px;
+  }
+}
+
+.a4-rail-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: #fdfaf3;
+  border: 2px solid #1a1816;
+  border-radius: 20px;
+  padding: 8px 6px;
+  box-shadow: 3px 4px 0 #1a1816;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.a4-rail-track::-webkit-scrollbar {
+  display: none;
+}
+
+.a4-rail-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  transition: transform 0.15s ease;
+  outline: none;
+}
+
+.a4-rail-thumb:hover {
+  transform: scale(1.06);
+}
+
+/* Miniature A4 Sheet preview */
+.a4-rail-thumb-sheet {
+  width: 32px;
+  height: 44px; /* A4 aspect ratio */
+  background: #ffffff;
+  border: 1.5px solid #1a1816;
+  border-radius: 5px;
+  box-shadow: 2px 2px 0 rgba(26, 24, 22, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  box-sizing: border-box;
+  padding: 3px 2px;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.a4-rail-thumb-num {
+  font-family: 'Patrick Hand', cursive, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #1a1816;
+}
+
+.a4-rail-thumb-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 70%;
+}
+
+.a4-rail-thumb-line {
+  height: 1.5px;
+  background: #ded7c8;
+  border-radius: 1px;
+}
+
+.a4-rail-thumb-line.line-1 {
+  width: 100%;
+}
+
+.a4-rail-thumb-line.line-2 {
+  width: 65%;
+}
+
+/* Active Highlight */
+.a4-rail-thumb.active .a4-rail-thumb-sheet {
+  background: #f8cb72;
+  border: 2px solid #1a1816;
+  box-shadow: 2px 3px 0 #1a1816;
+}
+
+.a4-rail-thumb.active .a4-rail-thumb-num {
+  color: #1a1816;
+  font-weight: 700;
+}
+
+.a4-rail-thumb.active .a4-rail-thumb-line {
+  background: rgba(26, 24, 22, 0.4);
+}
+
+/* Mini Add Button in Rail */
+.a4-rail-add-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #1a1816;
+  box-shadow: 1.5px 2px 0 #1a1816;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #1a1816;
+  transition: all 0.15s ease;
+  margin-top: 2px;
+}
+
+.a4-rail-add-btn:hover {
+  background: #f8cb72;
+  transform: translateY(-1px);
+  box-shadow: 2px 3px 0 #1a1816;
+}
+
+.a4-rail-add-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #1a1816;
+}
+
+/* Title Card (Above A4 sheets) */
+.editor-title-card {
+  max-width: 816px;
+  width: 100%;
+  margin: 0 auto 24px;
+  background: #ffffff;
+  border: 2.5px solid #1a1816;
+  border-radius: 16px;
+  box-shadow: 4px 5px 0 #1a1816;
+  padding: 16px 28px;
+  box-sizing: border-box;
+}
+
+.editor-title-card .editor-doc-title-input {
+  margin-bottom: 0;
+  padding-bottom: 4px;
+}
+
+/* Pages Canvas Area */
+.a4-pages-canvas {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Individual A4 Page Container */
+.a4-page-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Universal A4 Sheet Container */
+.a4-page-sheet {
+  width: 100%;
+  max-width: 816px; /* Universal A4 standard width (210mm @ 96dpi) */
+  min-height: 1056px; /* Universal A4 standard height (297mm @ 96dpi) */
+  background: #ffffff;
+  border: 2.5px solid #1a1816;
+  border-radius: 14px 18px 16px 20px / 18px 16px 20px 14px;
+  box-shadow: 5px 7px 0 #1a1816;
+  padding: 40px 54px 36px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: box-shadow 0.2s ease;
+}
+
+.a4-page-sheet:hover {
+  box-shadow: 6px 9px 0 #1a1816;
+}
+
+/* Running Header */
+.a4-running-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  margin-bottom: 24px;
+  border-bottom: 1.5px dashed #ded7c8;
+  user-select: none;
+}
+
+.a4-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #8c8275;
+}
+
+.a4-header-title {
+  color: #3b3732;
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.a4-header-sep {
+  color: #b0a79d;
+}
+
+.a4-header-subject {
+  color: #5bae86;
+  text-transform: capitalize;
+}
+
+.a4-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.a4-page-num-pill {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #6d6459;
+  background: #f7f4ea;
+  border: 1px solid #d4cdbf;
+  border-radius: 12px;
+  padding: 2px 9px;
+}
+
+.a4-btn-remove-page {
+  background: transparent;
+  border: none;
+  color: #b0a79d;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.a4-btn-remove-page:hover {
+  color: #c92a2a;
+  background: #ffe3e3;
+}
+
+/* Page Body Content (BlockNote Host) */
+.a4-page-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.a4-page-body .bn-container {
+  flex: 1 1 auto;
+}
+
+.a4-loading-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 240px;
+  color: #8c8275;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.2rem;
+}
+
+/* Running Footer */
+.a4-running-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1.5px dashed #ded7c8;
+  font-size: 0.78rem;
+  color: #a3998d;
+  font-weight: 500;
+  user-select: none;
+}
+
+.a4-watermark {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.95rem;
+  color: #b0a79d;
+}
+
+/* Page Break Divider & Insert Button */
+.a4-page-break-divider {
+  width: 100%;
+  max-width: 816px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 32px 0;
+  user-select: none;
+}
+
+.a4-divider-line {
+  flex: 1 1 auto;
+  height: 2px;
+  border-top: 2px dashed #b0a79d;
+}
+
+.a4-btn-insert-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 2px dashed #1a1816;
+  border-radius: 14px;
+  padding: 6px 16px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1816;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #1a1816;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.a4-btn-insert-page:hover {
+  background: #fbf5e7;
+  border-style: solid;
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0 #1a1816;
+}
+
+.a4-btn-insert-page:active {
+  transform: translateY(1px);
+  box-shadow: 1px 1px 0 #1a1816;
+}
+
+/* Print Styles: Strict Universal A4 Paper Separation */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 16mm;
+  }
+  body {
+    background: #ffffff !important;
+    padding: 0 !important;
+  }
+  .editor-top-bar,
+  .a4-right-page-rail,
+  .editor-title-card,
+  .a4-page-break-divider,
+  .a4-btn-remove-page,
+  .bn-toolbar,
+  .bn-menu,
+  .inapp-toast-container {
+    display: none !important;
+  }
+  .editor-main-canvas {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .a4-page-container {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  .a4-page-sheet {
+    max-width: 100% !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1040px) {
+  .a4-right-page-rail {
+    left: auto;
+    right: 12px;
+    top: 130px;
+  }
+}
+
+@media (max-width: 900px) {
+  .a4-right-page-rail {
+    display: none !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .a4-page-sheet {
+    padding: 24px 20px;
+    border-radius: 12px;
+    min-height: 700px;
+  }
+}
+
+@media (max-width: 768px) {
+  .subject-hero-card {
+    padding: 20px;
+  }
+  .subject-hero-title {
+    font-size: 1.85rem;
+  }
+  .editor-paper-sheet {
+    padding: 24px 20px;
+    border-radius: 14px;
+    box-shadow: 4px 5px 0 #1a1816;
+  }
+  .editor-doc-title-input {
+    font-size: 2rem;
+  }
+  .docs-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .docs-search-wrap {
+    max-width: 100%;
+  }
+  .btn-create-doc {
+    justify-content: center;
+  }
+}
+
 
 
 

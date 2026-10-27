@@ -86,6 +86,17 @@ service cloud.firestore {
       allow update: if isApprovedUser();
       allow delete: if isApprovedUser() && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
+
+    // Subject Documents & Lesson Notes
+    // - Only approved students, teachers, and admins can view subject documents
+    // - Approved users can create documents
+    // - Author or SuperAdmin can update or delete documents
+    match /subjects/{subjectId}/documents/{docId} {
+      allow read: if isApprovedUser();
+      allow create: if isApprovedUser() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isApprovedUser() && (resource.data.authorId == request.auth.uid || isSuperAdmin());
+      allow delete: if isApprovedUser() && (resource.data.authorId == request.auth.uid || isSuperAdmin());
+    }
   }
 }
 

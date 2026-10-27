@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "@blocknote/core": "^0.56.0",
+    "@blocknote/mantine": "^0.56.0",
+    "@blocknote/react": "^0.56.0",
+    "@mantine/core": "^9.7.4",
+    "@mantine/hooks": "^9.7.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}
