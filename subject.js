@@ -153,7 +153,7 @@
       const excerpt = doc.excerpt || "Empty document...";
       const authorName = doc.authorName || "Student";
       const authorRole = doc.authorRole || "Student";
-      const authorAvatar = doc.authorAvatar || "assets/avatars/avatar-1.svg";
+      const authorAvatar = doc.authorAvatar || doc.authorPhotoURL || "assets/avatar.jpg";
       const timeAgo = formatTimeAgo(doc.updatedAt || doc.createdAt);
       const canDelete = isSuperAdmin || (currentUser && doc.authorId === currentUser.uid);
 
@@ -181,7 +181,7 @@
 
         <div class="doc-card-footer">
           <div class="doc-card-author">
-            <img src="${escapeHtml(authorAvatar)}" alt="${escapeHtml(authorName)}" class="doc-card-avatar" onerror="this.src='assets/avatars/avatar-1.svg'" />
+            <img src="${escapeHtml(authorAvatar)}" alt="${escapeHtml(authorName)}" class="doc-card-avatar" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
             <div class="doc-card-meta">
               <span class="doc-card-author-name">${escapeHtml(authorName)}</span>
               <span class="doc-card-time">${timeAgo}</span>
@@ -411,7 +411,12 @@
         // Update nav bar user info
         if (navName) navName.textContent = currentProfile.displayName || user.displayName || "Student";
         if (navRole) navRole.textContent = currentProfile.role || "Student";
-        if (navAvatar && currentProfile.avatarUrl) navAvatar.src = currentProfile.avatarUrl;
+        if (navAvatar) {
+          const avatarUrl = currentProfile?.photoURL || currentProfile?.avatarUrl || user.photoURL || "assets/avatar.jpg";
+          navAvatar.src = avatarUrl;
+          navAvatar.referrerPolicy = "no-referrer";
+          navAvatar.onerror = () => { navAvatar.src = "assets/avatar.jpg"; };
+        }
 
         // Bind real-time documents listener
         bindDocumentsListener();

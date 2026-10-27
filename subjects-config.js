@@ -4,6 +4,48 @@
  */
 
 const SUBJECTS_REGISTRY = {
+  "drama": {
+    id: "drama",
+    name: "Drama",
+    shortName: "Drama",
+    code: "LIT-201A",
+    prof: "بن شهيدة مريم",
+    secondaryProfs: ["غمامي سناء", "كلثوم بالوافي"],
+    room: "Lab 3",
+    color: "#e0835f",
+    bgClass: "card-peach",
+    icon: "theater",
+    description: "Classical and modern dramatic literature, theatrical performance analysis, and play scripts.",
+    schedule: "Mon 13:30 (Lab 3)"
+  },
+  "poetry": {
+    id: "poetry",
+    name: "Poetry",
+    shortName: "Poetry",
+    code: "LIT-201B",
+    prof: "غمامي سناء",
+    secondaryProfs: ["بن شهيدة مريم"],
+    room: "Salle 15",
+    color: "#f6cf7c",
+    bgClass: "card-yellow",
+    icon: "poetry",
+    description: "Poetic forms, meter, verse analysis, and critical appreciation of English poetry across eras.",
+    schedule: "Wed 08:30 (Salle 15)"
+  },
+  "novel": {
+    id: "novel",
+    name: "Novel",
+    shortName: "Novel",
+    code: "LIT-201C",
+    prof: "كلثوم بالوافي",
+    secondaryProfs: [],
+    room: "Salle 16",
+    color: "#5bae86",
+    bgClass: "card-green",
+    icon: "novel",
+    description: "Foundational English and world novels, narrative structures, thematic depth, and prose fiction.",
+    schedule: "Wed 14:30 (Salle 16)"
+  },
   "drama-poetry-novel": {
     id: "drama-poetry-novel",
     name: "Drama / Poetry / Novel",
@@ -250,6 +292,21 @@ const SUBJECT_ICONS = {
     <path d="M9 14.5 V21 C9 23 12 25 17 25 C22 25 25 23 25 21 V14.5" stroke="#25211e" stroke-width="1.6"/>
     <path d="M29 12 V20" stroke="#e0835f" stroke-width="1.6" stroke-linecap="round"/>
     <circle cx="29" cy="21" r="1.3" fill="#e0835f"/>
+  </svg>`,
+  poetry: `<svg viewBox="0 0 34 34" class="sched-subject-icon icon-poetry" fill="none">
+    <!-- Quill Feather & Inkpot for Poetry -->
+    <path d="M9 25 C12 25 15 23 18 20 C22 16 26 10 27 5 C23 7 17 11 14 15 C11 19 9 22 9 25 Z" fill="#faeee9" stroke="#25211e" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M12 22 L24 10" stroke="#f6cf7c" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M6 28 C6 26 8 25 11 25 C14 25 16 26 16 28 Z" fill="#25211e"/>
+    <path d="M7 29 H15" stroke="#25211e" stroke-width="1.8" stroke-linecap="round"/>
+  </svg>`,
+  novel: `<svg viewBox="0 0 34 34" class="sched-subject-icon icon-novel" fill="none">
+    <!-- Thick Hardcover Book & Ribbon Bookmark for Novel -->
+    <path d="M7 7 C7 5.5 8.5 4 10.5 4 H25 C26.5 4 27.5 5 27.5 6.5 V24 C27.5 25.5 26.5 26.5 25 26.5 H10.5 C8.5 26.5 7 28 7 28 Z" fill="#dcf2e3" stroke="#25211e" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M7 7 V28 H25" stroke="#25211e" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M11 4 V15 L14 12 L17 15 V4" fill="#e0835f" stroke="#25211e" stroke-width="1.3" stroke-linejoin="round"/>
+    <line x1="12" y1="20" x2="22" y2="20" stroke="#25211e" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="12" y1="23.5" x2="19" y2="23.5" stroke="#25211e" stroke-width="1.5" stroke-linecap="round"/>
   </svg>`
 };
 

@@ -129,7 +129,7 @@
         authorId: currentUser.uid,
         authorName: currentProfile?.displayName || currentUser.displayName || "Student",
         authorRole: currentProfile?.role || "student",
-        authorAvatar: currentProfile?.avatarUrl || "assets/avatars/avatar-1.svg",
+        authorAvatar: currentProfile?.photoURL || currentProfile?.avatarUrl || currentUser?.photoURL || "assets/avatar.jpg",
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
