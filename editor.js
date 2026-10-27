@@ -438,27 +438,42 @@
     window.addEventListener("scroll", handleScrollEvent, { passive: true });
     document.addEventListener("scroll", handleScrollEvent, { passive: true });
 
-    // Also support touch / wheel for instant responsiveness on mobile and mousewheel
+    // Wheel detection (instant on mouse/trackpad)
     window.addEventListener("wheel", (e) => {
-      if (e.deltaY < -3) {
-        // Scrolling up with mousewheel/touchpad -> show immediately
+      if (e.deltaY < -4) {
+        // Scrolling up -> show immediately
         topBar.classList.remove("nav-hidden");
         topBar.classList.add("nav-visible");
+      } else if (e.deltaY > 6 && getScrollY() > 50) {
+        // Scrolling down -> hide smoothly
+        topBar.classList.add("nav-hidden");
+        topBar.classList.remove("nav-visible");
+        const moreMenu = document.getElementById("editor-more-menu");
+        if (moreMenu) moreMenu.classList.add("view-hidden");
       }
     }, { passive: true });
 
     let touchStartY = 0;
     window.addEventListener("touchstart", (e) => {
-      touchStartY = e.touches[0].clientY;
+      if (e.touches && e.touches[0]) {
+        touchStartY = e.touches[0].clientY;
+      }
     }, { passive: true });
 
     window.addEventListener("touchmove", (e) => {
+      if (!e.touches || !e.touches[0]) return;
       const touchY = e.touches[0].clientY;
       const touchDelta = touchY - touchStartY;
-      if (touchDelta > 15) {
-        // User swiped down (meaning page scrolls UP) -> show navbar
+      if (touchDelta > 12) {
+        // Swiping downwards (page scrolls UP) -> reveal navbar
         topBar.classList.remove("nav-hidden");
         topBar.classList.add("nav-visible");
+      } else if (touchDelta < -15 && getScrollY() > 50) {
+        // Swiping upwards (page scrolls DOWN) -> hide navbar
+        topBar.classList.add("nav-hidden");
+        topBar.classList.remove("nav-visible");
+        const moreMenu = document.getElementById("editor-more-menu");
+        if (moreMenu) moreMenu.classList.add("view-hidden");
       }
     }, { passive: true });
   }

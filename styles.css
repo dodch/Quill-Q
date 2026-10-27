@@ -6988,7 +6988,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   box-shadow: 0 4px 0 rgba(26, 24, 22, 0.08);
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
   will-change: transform;
-  animation: editorTopBarEntrance 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: editorTopBarEntrance 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes editorTopBarEntrance {
@@ -7003,12 +7003,13 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 }
 
 .editor-top-bar.nav-hidden {
-  transform: translateY(-105%);
-  box-shadow: none;
+  animation: none !important;
+  transform: translateY(-105%) !important;
+  box-shadow: none !important;
 }
 
 .editor-top-bar.nav-visible {
-  transform: translateY(0);
+  transform: translateY(0) !important;
 }
 
 /* Spacer so the page content starts below the fixed 64px header */
