@@ -144,9 +144,10 @@
 
     const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
 
-    docs.forEach((doc) => {
+    docs.forEach((doc, index) => {
       const card = document.createElement("article");
       card.className = "doc-card";
+      card.style.animationDelay = `${index * 0.06 + 0.18}s`;
       card.tabIndex = 0;
 
       const title = doc.title || "Untitled Document";

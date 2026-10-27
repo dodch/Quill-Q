@@ -730,7 +730,7 @@ a { color: inherit; text-decoration: none; }
   gap: 22px;
 }
 
-/* Bento Card Frame - Hand-Drawn Imperfect Style matching reference */
+/* Bento Card Frame - Clean Hand-Drawn Imperfect Style with Crisp Bouncy Lift */
 .bento-subject-card {
   border: 2.5px solid #1a1816;
   border-radius: 26px 24px 28px 22px / 24px 28px 22px 26px;
@@ -740,21 +740,28 @@ a { color: inherit; text-decoration: none; }
   justify-content: space-between;
   min-height: 146px;
   box-shadow: 4px 6px 0px #1a1816;
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
   cursor: pointer;
   text-decoration: none;
   color: inherit;
+  will-change: transform;
 }
 
 .bento-subject-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 8px 0px #1a1816;
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 7px 11px 0px #1a1816;
+  z-index: 2;
+}
+
+.bento-subject-card:hover .bento-card-art {
+  transform: scale(1.12) rotate(5deg);
 }
 
 .bento-subject-card:active {
-  transform: translate(2px, 3px);
+  transform: translateY(2px) scale(0.98);
   box-shadow: 2px 3px 0px #1a1816;
+  transition-duration: 0.1s;
 }
 
 /* Individualized hand-drawn imperfect contours & pastel fills per card */
@@ -798,8 +805,8 @@ a { color: inherit; text-decoration: none; }
   margin: 0 0 4px;
   letter-spacing: -0.3px;
   line-height: 1.25;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
 }
-
 
 .bento-card-art {
   width: 44px;
@@ -808,6 +815,7 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .bento-card-art svg,
@@ -1640,51 +1648,65 @@ a { color: inherit; text-decoration: none; }
 }
 
 .task-btn-cancel {
-  background: #f1ebd9;
-  border: 1.8px solid #1a1816;
-  border-radius: 12px;
-  padding: 10px 18px;
-  font-family: inherit;
-  font-size: 14.5px;
-  font-weight: 600;
-  color: #4a4238;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 42px;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #1a1816;
+  font-family: 'Patrick Hand', cursive, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding: 0 20px;
   cursor: pointer;
-  transition: background 0.18s ease;
+  border: 2px solid #1a1816;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  box-shadow: 2px 3px 0px #1a1816;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
 
 .task-btn-cancel:hover {
-  background: #e6dfcb;
+  background: #fdf5e2;
+  transform: translateY(-2px);
+  box-shadow: 3px 4px 0px #1a1816;
+}
+
+.task-btn-cancel:active {
+  transform: translateY(1px);
+  box-shadow: 1px 1px 0px #1a1816;
 }
 
 .task-btn-save {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 11px 24px;
+  height: 42px;
+  box-sizing: border-box;
+  padding: 0 24px;
   background-color: #f3dfca;
-  color: #2b2b2b;
-  font-family: inherit;
-  font-size: 15px;
+  color: #1a1816;
+  font-family: 'Patrick Hand', cursive, sans-serif;
+  font-size: 1.18rem;
   font-weight: 700;
   cursor: pointer;
-  border-style: solid;
-  border-color: #2b2b2b;
-  border-width: 2px 3px 2.5px 2px;
-  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
-  box-shadow: 2px 3px 0px rgba(0, 0, 0, 0.18);
-  transition: all 0.15s ease-in-out;
+  border: 2.2px solid #1a1816;
+  border-radius: 15px 255px 15px 225px / 225px 15px 255px 15px;
+  box-shadow: 2px 3px 0px #1a1816;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
 }
 
 .task-btn-save:hover {
-  background-color: #fae4d7;
-  transform: translateY(-1px);
-  border-radius: 20px 255px 20px 240px / 240px 20px 255px 20px;
-  box-shadow: 3px 4px 0px rgba(0, 0, 0, 0.22);
+  background-color: #ffd978;
+  transform: translateY(-2px);
+  box-shadow: 3px 4px 0px #1a1816;
 }
 
 .task-btn-save:active {
   transform: translateY(1px);
-  box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.2);
+  box-shadow: 1px 1px 0px #1a1816;
 }
 
 
@@ -6275,7 +6297,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   margin: 0 auto;
 }
 
-/* Top Navigation Bar */
+/* Top Navigation Bar with Bouncy Slide-Down Reveal */
 .subject-top-nav {
   display: flex;
   align-items: center;
@@ -6287,6 +6309,18 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   border: 2.5px solid #1a1816;
   border-radius: 18px 16px 20px 18px;
   box-shadow: 4px 5px 0 #1a1816;
+  animation: subjectNavBouncyEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes subjectNavBouncyEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .subject-nav-left {
@@ -6372,7 +6406,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   text-transform: capitalize;
 }
 
-/* Subject Hero Card */
+/* Subject Hero Card with Bouncy Spring Pop Reveal */
 .subject-hero-card {
   border: 2.5px solid #1a1816;
   border-radius: 24px 22px 26px 20px / 22px 26px 20px 24px;
@@ -6381,7 +6415,25 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   margin-bottom: 28px;
   position: relative;
   overflow: hidden;
-  transition: background-color 0.25s ease;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.25s ease;
+  will-change: transform;
+  animation: subjectHeroBouncyEntrance 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s both;
+}
+
+@keyframes subjectHeroBouncyEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.94) rotate(-0.5deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+.subject-hero-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 7px 11px 0 #1a1816;
 }
 
 .subject-hero-card.card-peach { background: #fae4d7; }
@@ -6416,11 +6468,23 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   justify-content: center;
   box-shadow: 3px 4px 0 #1a1816;
   flex-shrink: 0;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.subject-hero-card:hover .subject-hero-icon-box {
+  transform: scale(1.08) rotate(4deg);
+  box-shadow: 5px 6px 0 #1a1816;
 }
 
 .subject-hero-icon-box svg {
   width: 44px;
   height: 44px;
+  transition: transform 0.35s ease;
+}
+
+.subject-hero-icon-box:hover svg {
+  transform: rotate(-8deg) scale(1.1);
 }
 
 .subject-hero-title-wrap {
@@ -6440,6 +6504,11 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   border: 1.5px solid #1a1816;
   border-radius: 8px;
   padding: 2px 8px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.subject-hero-card:hover .subject-code-pill {
+  transform: rotate(-3deg) scale(1.05);
 }
 
 .subject-hero-title {
@@ -6449,6 +6518,11 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   line-height: 1.1;
   color: #1a1816;
   margin: 0;
+  transition: transform 0.25s ease;
+}
+
+.subject-hero-card:hover .subject-hero-title {
+  transform: translateX(3px);
 }
 
 .subject-hero-desc {
@@ -6485,7 +6559,12 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   box-shadow: 2px 3px 0 #1a1816;
   cursor: pointer;
   outline: none;
-  transition: all 0.16s ease;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.subject-switcher-select:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 4px 5px 0 #1a1816;
 }
 
 .subject-switcher-select:focus {
@@ -6512,6 +6591,11 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   font-size: 0.92rem;
   font-weight: 600;
   box-shadow: 2px 3px 0 #1a1816;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.subject-info-pill:hover {
+  transform: translateY(-2px) rotate(1deg);
 }
 
 .subject-prof-pill {
@@ -6521,7 +6605,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   background: #fffdf5;
 }
 
-/* Document Hub Action Bar */
+/* Document Hub Action Bar with Bouncy Reveal */
 .docs-action-bar {
   display: flex;
   align-items: center;
@@ -6529,6 +6613,18 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   gap: 16px;
   margin-bottom: 24px;
   flex-wrap: wrap;
+  animation: docsActionBarBouncyEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+}
+
+@keyframes docsActionBarBouncyEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .docs-search-wrap {
@@ -6545,6 +6641,12 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   color: #635b54;
   font-size: 1rem;
   pointer-events: none;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+}
+
+.docs-search-wrap:focus-within .docs-search-icon {
+  transform: translateY(-50%) scale(1.2) rotate(-8deg);
+  color: #1a1816;
 }
 
 .docs-search-input {
@@ -6557,12 +6659,12 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   font-size: 1rem;
   box-shadow: 3px 4px 0 #1a1816;
   outline: none;
-  transition: all 0.18s ease;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.18s ease;
 }
 
 .docs-search-input:focus {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 5px 0 #1a1816;
+  transform: translateY(-2px);
+  box-shadow: 5px 6px 0 #1a1816;
   border-color: #1a1816;
 }
 
@@ -6572,7 +6674,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   gap: 12px;
 }
 
-/* Primary Create Document Button */
+/* Primary Create Document Button with Bouncy Pop Animation */
 .btn-create-doc {
   background: #f6cf7c;
   border: 2.5px solid #1a1816;
@@ -6583,23 +6685,29 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   font-weight: 700;
   padding: 10px 22px;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   text-decoration: none;
   color: #1a1816;
+  will-change: transform;
 }
 
 .btn-create-doc:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 5px 6px 0 #1a1816;
+  transform: translateY(-4px) scale(1.04) rotate(-1deg);
+  box-shadow: 6px 9px 0 #1a1816;
   background: #ffd978;
 }
 
+.btn-create-doc:hover i {
+  transform: rotate(90deg) scale(1.15);
+}
+
 .btn-create-doc:active {
-  transform: translate(2px, 2px);
+  transform: translateY(2px) scale(0.96) rotate(0deg);
   box-shadow: 1px 2px 0 #1a1816;
+  transition-duration: 0.1s;
 }
 
 .btn-create-doc i {
@@ -6610,16 +6718,16 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   line-height: 1;
   position: relative;
   top: 1px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Document Grid */
 .docs-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+  gap: 22px;
 }
 
-/* Document Paper Card */
 .doc-card {
   background: #ffffff;
   border: 2.5px solid #1a1816;
@@ -6630,21 +6738,36 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   flex-direction: column;
   justify-content: space-between;
   min-height: 200px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
   text-decoration: none;
   color: #1a1816;
   cursor: pointer;
+  will-change: transform;
+  animation: docCardEntrance 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes docCardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .doc-card:hover {
-  transform: translate(-3px, -3px);
-  box-shadow: 6px 8px 0 #1a1816;
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 7px 10px 0 #1a1816;
+  z-index: 2;
 }
 
 .doc-card:active {
-  transform: translate(1px, 2px);
+  transform: translateY(2px) scale(0.98);
   box-shadow: 2px 3px 0 #1a1816;
+  transition-duration: 0.1s;
 }
 
 .doc-card-top {
@@ -6666,6 +6789,12 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   border: 1.5px solid #1a1816;
   border-radius: 8px;
   padding: 2px 8px;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease;
+}
+
+.doc-card:hover .doc-card-badge {
+  transform: rotate(-3deg) scale(1.08);
+  background: #faeac2;
 }
 
 .doc-card-title {
@@ -6676,6 +6805,12 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   margin: 0 0 10px 0;
   color: #1a1816;
   word-break: break-word;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.doc-card:hover .doc-card-title {
+  color: #0b6b44;
+  transform: translateX(2px);
 }
 
 .doc-card-excerpt {
@@ -6714,6 +6849,11 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   border: 1.5px solid #1a1816;
   object-fit: cover;
   background: #ede6dc;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.doc-card:hover .doc-card-avatar {
+  transform: scale(1.15) rotate(6deg);
 }
 
 .doc-card-meta {
@@ -6748,20 +6888,24 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   align-items: center;
   justify-content: center;
   color: #1a1816;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease, box-shadow 0.2s ease;
   cursor: pointer;
-  transition: all 0.14s ease;
   text-decoration: none;
-  font-size: 0.9rem;
 }
 
 .doc-btn-icon:hover {
+  transform: translateY(-2px) rotate(8deg) scale(1.1);
   background: #ffffff;
-  transform: translateY(-1px);
   box-shadow: 2px 2px 0 #1a1816;
 }
 
+.doc-btn-icon:active {
+  transform: translateY(1px) scale(0.95);
+  box-shadow: none;
+}
+
 .doc-btn-delete:hover {
-  background: #ffdede;
+  background: #ffe3e3;
   color: #c92a2a;
   border-color: #c92a2a;
 }
@@ -6825,10 +6969,14 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   margin: 0;
 }
 
-/* Editor Sticky Top Bar */
+/* Editor Sticky/Fixed Top Bar with Entrance Animation */
 .editor-top-bar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  box-sizing: border-box;
   z-index: 100;
   background: #ffffff;
   border-bottom: 2.5px solid #1a1816;
@@ -6838,6 +6986,36 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   justify-content: space-between;
   gap: 16px;
   box-shadow: 0 4px 0 rgba(26, 24, 22, 0.08);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
+  will-change: transform;
+  animation: editorTopBarEntrance 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes editorTopBarEntrance {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.editor-top-bar.nav-hidden {
+  transform: translateY(-105%);
+  box-shadow: none;
+}
+
+.editor-top-bar.nav-visible {
+  transform: translateY(0);
+}
+
+/* Spacer so the page content starts below the fixed 64px header */
+.editor-top-bar-spacer {
+  height: 64px;
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .editor-bar-left {
@@ -6852,31 +7030,18 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  width: 36px;
+  height: 36px;
   background: #fdf6e2;
   border: 2px solid #1a1816;
-  border-radius: 12px;
-  padding: 6px 14px;
-  font-family: 'Patrick Hand', cursive;
-  font-size: 1.15rem;
-  font-weight: 700;
+  border-radius: 10px;
+  font-size: 1.05rem;
   color: #1a1816;
   text-decoration: none;
   box-shadow: 2px 2px 0 #1a1816;
   transition: all 0.16s ease;
   cursor: pointer;
   flex-shrink: 0;
-  line-height: 1;
-}
-
-.editor-back-btn i {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.95rem;
-  line-height: 1;
-  position: relative;
-  top: 1px;
 }
 
 .editor-back-btn:hover {
@@ -6907,44 +7072,123 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 .editor-save-status {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-family: 'Patrick Hand', cursive;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   color: #665f57;
   flex-shrink: 0;
-  padding: 2px 8px;
+  padding: 3px 9px;
+  background: #f6f3eb;
+  border-radius: 12px;
+  border: 1px solid rgba(26, 24, 22, 0.12);
 }
 
 .editor-save-status.status-saved {
   color: #2b8a3e;
+  background: #ebfbee;
+  border-color: rgba(43, 138, 62, 0.25);
 }
 
 .editor-save-status.status-saving {
   color: #d9480f;
+  background: #fff4e6;
+  border-color: rgba(217, 72, 15, 0.25);
 }
 
 .editor-bar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
-.editor-btn-secondary {
+/* More Dropdown Menu */
+.editor-more-dropdown-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-editor-more {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.btn-editor-more i {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.editor-more-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
   background: #ffffff;
   border: 2px solid #1a1816;
   border-radius: 12px;
-  padding: 8px 14px;
+  box-shadow: 3px 4px 0 #1a1816;
+  padding: 6px;
+  min-width: 175px;
+  z-index: 105;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.editor-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
   font-family: 'Patrick Hand', cursive;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #1a1816;
   cursor: pointer;
+  text-align: left;
+  transition: background 0.14s ease;
+  width: 100%;
+}
+
+.editor-menu-item:hover {
+  background: #fdf5e2;
+}
+
+.editor-menu-item i {
+  font-size: 15px;
+  color: #7b7268;
+}
+
+.editor-btn-secondary {
+  height: 36px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 2px solid #1a1816;
+  border-radius: 10px;
+  padding: 0 14px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #1a1816;
+  cursor: pointer;
   box-shadow: 2px 2px 0 #1a1816;
-  transition: all 0.16s ease;
+  transition: all 0.14s ease;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+}
+
+.editor-btn-secondary i {
+  font-size: 14px;
+  line-height: 1;
 }
 
 .editor-btn-secondary:hover {
@@ -6953,27 +7197,41 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   box-shadow: 3px 3px 0 #1a1816;
 }
 
+.editor-btn-secondary:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #1a1816;
+}
+
 .editor-btn-primary {
+  height: 36px;
+  box-sizing: border-box;
   background: #5bae86;
   border: 2px solid #1a1816;
-  border-radius: 12px;
-  padding: 8px 18px;
+  border-radius: 10px;
+  padding: 0 16px;
   font-family: 'Patrick Hand', cursive;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 700;
+  line-height: 1;
   color: #ffffff;
   cursor: pointer;
-  box-shadow: 2px 3px 0 #1a1816;
-  transition: all 0.16s ease;
+  box-shadow: 2px 2px 0 #1a1816;
+  transition: all 0.14s ease;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+}
+
+.editor-btn-primary i {
+  font-size: 15px;
+  line-height: 1;
 }
 
 .editor-btn-primary:hover {
   background: #4a9e76;
   transform: translate(-1px, -1px);
-  box-shadow: 3px 4px 0 #1a1816;
+  box-shadow: 3px 3px 0 #1a1816;
 }
 
 .editor-btn-primary:active {
@@ -7249,7 +7507,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   box-shadow: 0 1px 0 #1a1816;
 }
 
-/* Title Card (Above A4 sheets) */
+/* Title Card (Above A4 sheets) with Float-In Entrance */
 .editor-title-card {
   max-width: 816px;
   width: 100%;
@@ -7260,6 +7518,18 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   box-shadow: 4px 5px 0 #1a1816;
   padding: 16px 28px;
   box-sizing: border-box;
+  animation: editorCardReveal 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+}
+
+@keyframes editorCardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .editor-title-card .editor-doc-title-input {
@@ -7283,7 +7553,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   align-items: center;
 }
 
-/* Universal A4 Sheet Container */
+/* Universal A4 Sheet Container with Smooth Entrance */
 .a4-page-sheet {
   width: 100%;
   max-width: 816px; /* Universal A4 standard width (210mm @ 96dpi) */
@@ -7299,6 +7569,18 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   flex-direction: column;
   position: relative;
   transition: box-shadow 0.2s ease;
+  animation: editorSheetEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.14s both;
+}
+
+@keyframes editorSheetEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .a4-page-sheet:hover {
@@ -7821,12 +8103,29 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 .pinned-notes-sidebar {
   position: fixed;
   left: 20px;
-  top: 90px;
+  top: 110px;
   display: flex;
   flex-direction: column;
   z-index: 90;
   pointer-events: none; /* Let clicks through container except for actual papers */
   width: 250px;
+}
+
+@media (min-width: 1221px) {
+  .pinned-notes-sidebar {
+    animation: pinnedSidebarEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both;
+  }
+}
+
+@keyframes pinnedSidebarEntrance {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .pinned-notes-drawer-header {
@@ -7843,7 +8142,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 @media (max-width: 1440px) {
   .pinned-notes-sidebar {
     left: 12px;
-    top: 80px;
+    top: 100px;
     width: 210px;
   }
   .pinned-notes-list {
@@ -7922,6 +8221,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   }
 
   .pinned-notes-sidebar {
+    animation: none !important;
     left: 0;
     top: 0;
     bottom: 0;

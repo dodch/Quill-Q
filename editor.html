@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="styles.min.css?v=37" />
+  <link rel="stylesheet" href="styles.min.css?v=45" />
   <link rel="stylesheet" href="libs/blocknote-react.bundle.css?v=3" />
 
   <style>
@@ -37,12 +37,11 @@
 </head>
 <body class="editor-page">
 
-  <!-- Sticky Top Bar -->
+  <!-- Clean, Minimal Sticky Top Bar -->
   <header class="editor-top-bar">
     <div class="editor-bar-left">
-      <a href="subject.html" class="editor-back-btn" id="editor-back-btn" title="Back to Subject">
+      <a href="subject.html" class="editor-back-btn" id="editor-back-btn" title="Back to Subject" aria-label="Back to Subject">
         <i class="fi fi-rr-arrow-left"></i>
-        <span>Back</span>
       </a>
 
       <span class="editor-subject-badge card-peach" id="editor-subject-badge">
@@ -53,33 +52,42 @@
         <i class="fi fi-rr-check" id="save-status-icon"></i>
         <span id="save-status-text">Saved</span>
       </div>
-
-      <!-- Left Side Create Note Button -->
-      <button type="button" class="editor-btn-secondary btn-create-pinned-note" id="btn-create-pinned-note" title="Add a pinned note (up to 3)">
-        <i class="fi fi-rr-plus"></i>
-        <span>Add Note</span>
-      </button>
     </div>
 
     <div class="editor-bar-right">
-      <!-- Export Actions -->
-      <button class="editor-btn-secondary" id="btn-export-md" title="Download all pages as Markdown file">
-        <i class="fi fi-rr-download"></i>
-        <span>Markdown</span>
+      <!-- Add Pinned Note Button -->
+      <button type="button" class="editor-btn-secondary btn-create-pinned-note" id="btn-create-pinned-note" title="Pin a note to side (up to 3)">
+        <i class="fi fi-rr-plus"></i>
+        <span>Note</span>
       </button>
 
-      <button class="editor-btn-secondary" id="btn-print-doc" title="Print or save as standard A4 PDF">
-        <i class="fi fi-rr-print"></i>
-        <span>Print A4</span>
-      </button>
+      <!-- More Actions Dropdown (Export MD, Print A4) -->
+      <div class="editor-more-dropdown-wrap" id="editor-more-dropdown-wrap">
+        <button type="button" class="editor-btn-secondary btn-editor-more" id="btn-editor-more" title="More options" aria-label="More options">
+          <i class="fi fi-rr-menu-dots-vertical"></i>
+        </button>
+        <div class="editor-more-menu view-hidden" id="editor-more-menu" role="menu">
+          <button type="button" class="editor-menu-item" id="btn-print-doc" role="menuitem">
+            <i class="fi fi-rr-print"></i>
+            <span>Print / PDF (A4)</span>
+          </button>
+          <button type="button" class="editor-menu-item" id="btn-export-md" role="menuitem">
+            <i class="fi fi-rr-download"></i>
+            <span>Export Markdown</span>
+          </button>
+        </div>
+      </div>
 
-      <!-- Primary Manual Save Button -->
-      <button class="editor-btn-primary" id="btn-save-doc" title="Save document now">
+      <!-- Primary Save Document Button -->
+      <button class="editor-btn-primary" id="btn-save-doc" title="Save document (Ctrl+S)">
         <i class="fi fi-rr-disk"></i>
-        <span>Save Document</span>
+        <span>Save</span>
       </button>
     </div>
   </header>
+
+  <!-- Spacer behind fixed header -->
+  <div class="editor-top-bar-spacer" aria-hidden="true"></div>
 
   <!-- Multi-Page Document Canvas -->
   <main class="editor-main-canvas">
@@ -129,14 +137,17 @@
       </div>
       <form class="task-modal-form" id="pinned-note-form">
         <div class="modal-form-group">
-          <label class="modal-form-label" for="pinned-note-text">Note Message</label>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+            <label class="modal-form-label" for="pinned-note-text" style="margin-bottom: 0;">Note Message</label>
+            <span id="pinned-note-word-count" style="font-size: 0.85rem; color: #7d756d; font-weight: 600;">0 / 18 words</span>
+          </div>
           <textarea 
             class="modal-form-input" 
             id="pinned-note-text" 
             rows="3" 
-            placeholder="e.g. remember to analyze the rhyme scheme in verse 2..." 
+            placeholder="e.g. remember to check the rhyme scheme in verse 2..." 
             required 
-            maxlength="140"
+            maxlength="200"
             style="resize: vertical; font-family: 'Caveat', cursive; font-size: 1.5rem; line-height: 1.2;"
           ></textarea>
         </div>
@@ -211,6 +222,6 @@
   <script src="libs/blocknote-react.bundle.js?v=5"></script>
 
   <!-- BlockNote Standalone Editor Controller -->
-  <script src="editor.js?v=8"></script>
+  <script src="editor.js?v=13"></script>
 </body>
 </html>

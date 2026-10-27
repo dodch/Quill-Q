@@ -307,9 +307,28 @@
   }
 
   function setupExportHandlers() {
+    // More Options Dropdown Toggle (Markdown, Print)
+    const btnMore = document.getElementById("btn-editor-more");
+    const moreMenu = document.getElementById("editor-more-menu");
+    const moreWrap = document.getElementById("editor-more-dropdown-wrap");
+
+    if (btnMore && moreMenu) {
+      btnMore.addEventListener("click", (e) => {
+        e.stopPropagation();
+        moreMenu.classList.toggle("view-hidden");
+      });
+
+      document.addEventListener("click", (e) => {
+        if (moreWrap && !moreWrap.contains(e.target)) {
+          moreMenu.classList.add("view-hidden");
+        }
+      });
+    }
+
     // Export to Markdown
     if (btnExportMd) {
       btnExportMd.addEventListener("click", async () => {
+        if (moreMenu) moreMenu.classList.add("view-hidden");
         if (!reactEditorBridge) return;
         try {
           const md = await reactEditorBridge.getMarkdown();
@@ -326,6 +345,7 @@
     // Print / PDF
     if (btnPrintDoc) {
       btnPrintDoc.addEventListener("click", () => {
+        if (moreMenu) moreMenu.classList.add("view-hidden");
         window.print();
       });
     }
@@ -364,6 +384,83 @@
         e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
       }
     });
+
+    initSmartStickyNavbar();
+  }
+
+  // Smart Sticky Navbar: slides up when scrolling down, reappears immediately when scrolling up
+  function initSmartStickyNavbar() {
+    const topBar = document.querySelector(".editor-top-bar");
+    if (!topBar) return;
+
+    let lastScrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    let ticking = false;
+    const hideThreshold = 8; // Pixels down before hiding
+    const showThreshold = 4; // Pixels up before revealing
+
+    const getScrollY = () => Math.max(0, window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0);
+
+    const onScroll = () => {
+      const currentScrollY = getScrollY();
+      const delta = currentScrollY - lastScrollY;
+
+      // Always show at or near the top
+      if (currentScrollY <= 40) {
+        topBar.classList.remove("nav-hidden");
+        topBar.classList.add("nav-visible");
+      } else if (delta > hideThreshold) {
+        // Scrolling DOWN -> hide bar smoothly
+        if (!topBar.classList.contains("nav-hidden")) {
+          topBar.classList.add("nav-hidden");
+          topBar.classList.remove("nav-visible");
+          const moreMenu = document.getElementById("editor-more-menu");
+          if (moreMenu) moreMenu.classList.add("view-hidden");
+        }
+      } else if (delta < -showThreshold) {
+        // Scrolling UP -> reveal bar immediately wherever the user is
+        if (topBar.classList.contains("nav-hidden") || !topBar.classList.contains("nav-visible")) {
+          topBar.classList.remove("nav-hidden");
+          topBar.classList.add("nav-visible");
+        }
+      }
+
+      lastScrollY = currentScrollY;
+      ticking = false;
+    };
+
+    const handleScrollEvent = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(onScroll);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScrollEvent, { passive: true });
+    document.addEventListener("scroll", handleScrollEvent, { passive: true });
+
+    // Also support touch / wheel for instant responsiveness on mobile and mousewheel
+    window.addEventListener("wheel", (e) => {
+      if (e.deltaY < -3) {
+        // Scrolling up with mousewheel/touchpad -> show immediately
+        topBar.classList.remove("nav-hidden");
+        topBar.classList.add("nav-visible");
+      }
+    }, { passive: true });
+
+    let touchStartY = 0;
+    window.addEventListener("touchstart", (e) => {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener("touchmove", (e) => {
+      const touchY = e.touches[0].clientY;
+      const touchDelta = touchY - touchStartY;
+      if (touchDelta > 15) {
+        // User swiped down (meaning page scrolls UP) -> show navbar
+        topBar.classList.remove("nav-hidden");
+        topBar.classList.add("nav-visible");
+      }
+    }, { passive: true });
   }
 
   function downloadTextFile(filename, text, mimeType = "text/plain") {
@@ -399,8 +496,14 @@
   // =========================================================
   // ===== PINNED PAPER NOTES MANAGER (STATIC SIDE NOTES) ====
   // =========================================================
-  const MAX_PINNED_NOTES = 3;
+  const MAX_PINNED_NOTES = 2; // Maximum 2 pinned notes
+  const MAX_PINNED_NOTE_WORDS = 18; // Maximum 18 words per pinned note
   let pinnedNotesCache = [];
+
+  function countWords(str) {
+    if (!str || !str.trim()) return 0;
+    return str.trim().split(/\s+/).filter(Boolean).length;
+  }
 
   function getPinnedNotesStorageKey() {
     const docKey = currentDocId || "draft";
@@ -539,6 +642,7 @@
     const cancelBtn = document.getElementById("btn-cancel-pinned-note");
     const form = document.getElementById("pinned-note-form");
     const textarea = document.getElementById("pinned-note-text");
+    const wordCountEl = document.getElementById("pinned-note-word-count");
 
     // Mobile Drawer Controls
     const mobileTrigger = document.getElementById("mobile-pinned-notes-trigger");
@@ -555,14 +659,33 @@
       backdrop.addEventListener("click", closeMobilePinnedDrawer);
     }
 
+    // Live word count updater
+    function updateWordCounter() {
+      if (!textarea || !wordCountEl) return;
+      const words = countWords(textarea.value);
+      wordCountEl.textContent = `${words} / ${MAX_PINNED_NOTE_WORDS} words`;
+      if (words > MAX_PINNED_NOTE_WORDS) {
+        wordCountEl.style.color = "#c92a2a";
+        wordCountEl.style.fontWeight = "700";
+      } else {
+        wordCountEl.style.color = "#7d756d";
+        wordCountEl.style.fontWeight = "600";
+      }
+    }
+
+    if (textarea) {
+      textarea.addEventListener("input", updateWordCounter);
+    }
+
     loadPinnedNotes();
 
     function openModal() {
       if (pinnedNotesCache.length >= MAX_PINNED_NOTES) {
-        showToast("Maximum of 3 pinned notes reached. Delete one first.", "error");
+        showToast("Maximum of 2 pinned notes reached. Delete one first.", "error");
         return;
       }
       if (form) form.reset();
+      updateWordCounter();
       if (modal) modal.classList.remove("view-hidden");
       if (textarea) setTimeout(() => textarea.focus(), 60);
     }
@@ -587,15 +710,22 @@
         if (!text) return;
 
         if (pinnedNotesCache.length >= MAX_PINNED_NOTES) {
-          showToast("Maximum of 3 pinned notes allowed.", "error");
+          showToast("Maximum of 2 pinned notes allowed.", "error");
           closeModal();
+          return;
+        }
+
+        const words = countWords(text);
+        if (words > MAX_PINNED_NOTE_WORDS) {
+          showToast(`Note is too long (${words} words). Maximum is ${MAX_PINNED_NOTE_WORDS} words.`, "error");
+          if (textarea) textarea.focus();
           return;
         }
 
         const colorInput = form.querySelector('input[name="pinned-color"]:checked');
         const color = colorInput ? colorInput.value : "pink";
 
-        // Alternate tape style: first note corner tapes, second top tape, third corner tapes
+        // Alternate tape style: first note corner tapes, second top tape
         const tapeStyle = pinnedNotesCache.length % 2 === 1 ? "top" : "corners";
 
         const newNote = {
