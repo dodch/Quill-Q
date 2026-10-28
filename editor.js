@@ -1191,9 +1191,12 @@
 
   function canCurrentUserManageNotes() {
     if (isStudentWorksheet || reviewingStudent) return false;
+    // On new documents being created, the user is the creator and can always add notes
+    if (!currentDocId || !loadedDocumentData) return true;
     const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
-    const isAuthor = currentUser && loadedDocumentData && loadedDocumentData.authorId === currentUser.uid;
-    return Boolean(isSuperAdmin || isAuthor);
+    const isTeacher = currentProfile && currentProfile.role === "teacher";
+    const isAuthor = currentUser && (!loadedDocumentData.authorId || loadedDocumentData.authorId === currentUser.uid);
+    return Boolean(isSuperAdmin || isTeacher || isAuthor || canEditDocument);
   }
 
   function renderPinnedNotes() {
@@ -1228,7 +1231,7 @@
 
     // Update mobile pin button visibility and count badge
     if (mobileTrigger) {
-      if (count > 0) {
+      if (count > 0 || canManageNotes) {
         mobileTrigger.classList.remove("view-hidden");
         if (mobileBadge) mobileBadge.textContent = String(count);
       } else {
@@ -1491,6 +1494,7 @@
           const typeParam = getQueryParam("type");
           currentDocType = typeParam === "exercise" ? "exercise" : "document";
           setupDocTypeUI();
+          loadPinnedNotes();
           mountReactBlockNote();
           if (titleInput) {
             titleInput.placeholder = currentDocType === "exercise" ? "Exercise Title (e.g. Punctuation Practice)..." : "Untitled Document...";

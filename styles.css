@@ -9518,6 +9518,25 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   }
 }
 
+/* Neo-brutalist Admin Portal access buttons in Profile */
+#btn-hero-admin-portal:hover {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 5px 6px 0px #1a1816 !important;
+  background: #f0a345 !important;
+}
+
+#btn-hero-admin-portal:active {
+  transform: translate(1px, 1px) !important;
+  box-shadow: 2px 2px 0px #1a1816 !important;
+}
+
+#profile-header-admin-btn-wrap a:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 5px 0px #1a1816;
+  background: #f0a345;
+}
+
+
 
 
 

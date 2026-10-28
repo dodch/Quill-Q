@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en" class="allow-scroll">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Admin Dashboard &amp; Schedule Editor – Quill-Q</title>
+  <meta name="description" content="Quill-Q Administrator Control Center: manage member approvals and live university timetables." />
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#f7f4ea" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="shortcut icon" href="favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="styles.min.css?v=56" />
+
+  <style>
+    /* Admin Portal Specific Styles */
+    body.admin-page-body {
+      background: #f7f4ea;
+      color: #1a1816;
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    .admin-container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+
+    /* Top Nav Bar */
+    .admin-top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: #ffffff;
+      border: 2.5px solid #1a1816;
+      border-radius: 18px;
+      padding: 12px 20px;
+      box-shadow: 4px 5px 0 #1a1816;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .admin-nav-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .admin-back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #fdf6e2;
+      border: 2px solid #1a1816;
+      border-radius: 10px;
+      padding: 6px 14px;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #1a1816;
+      text-decoration: none;
+      box-shadow: 2px 2px 0 #1a1816;
+      transition: all 0.16s ease;
+    }
+
+    .admin-back-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0 #1a1816;
+      background: #faeac2;
+    }
+
+    .admin-brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a1816;
+    }
+
+    .admin-brand-badge {
+      background: #e89838;
+      color: #1a1816;
+      border: 1.5px solid #1a1816;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .admin-user-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f8f6f0;
+      border: 1.5px solid #1a1816;
+      border-radius: 24px;
+      padding: 4px 12px 4px 4px;
+    }
+
+    .admin-user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1.5px solid #1a1816;
+      object-fit: cover;
+    }
+
+    .admin-user-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    /* Hero Banner */
+    .admin-hero {
+      background: #fae4d7;
+      border: 2.5px solid #1a1816;
+      border-radius: 20px;
+      padding: 24px 28px;
+      box-shadow: 4px 6px 0 #1a1816;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .admin-hero-title {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 2.3rem;
+      margin: 0 0 6px 0;
+      color: #1a1816;
+      line-height: 1.15;
+    }
+
+    .admin-hero-desc {
+      color: #5a4b43;
+      font-size: 1.05rem;
+      margin: 0 0 20px 0;
+      max-width: 680px;
+      line-height: 1.4;
+    }
+
+    /* Main Section Tabs */
+    .admin-main-tabs {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .admin-main-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+      border: 2px solid #1a1816;
+      border-radius: 12px;
+      padding: 10px 20px;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1a1816;
+      cursor: pointer;
+      box-shadow: 2px 3px 0 #1a1816;
+      transition: all 0.16s ease;
+    }
+
+    .admin-main-tab-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 4px 0 #1a1816;
+      background: #fdfaf3;
+    }
+
+    .admin-main-tab-btn.active {
+      background: #1a1816;
+      color: #ffffff;
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0 #1a1816;
+    }
+
+    .admin-main-tab-btn.active i {
+      color: #f7b267;
+    }
+
+    /* Panels */
+    .admin-panel-card {
+      background: #ffffff;
+      border: 2.5px solid #1a1816;
+      border-radius: 20px;
+      padding: 26px;
+      box-shadow: 4px 6px 0 #1a1816;
+      margin-bottom: 24px;
+    }
+
+    /* Schedule Day Selector Tabs */
+    .schedule-day-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+      border-bottom: 2px dashed #ded6c5;
+      padding-bottom: 16px;
+    }
+
+    .sched-day-pill {
+      background: #fbf8f1;
+      border: 2px solid #1a1816;
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #1a1816;
+      cursor: pointer;
+      box-shadow: 2px 2px 0 #1a1816;
+      transition: all 0.15s ease;
+    }
+
+    .sched-day-pill:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0 #1a1816;
+      background: #faeac2;
+    }
+
+    .sched-day-pill.active {
+      background: #e89838;
+      color: #1a1816;
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0 #1a1816;
+    }
+
+    /* Schedule Actions Header */
+    .schedule-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .schedule-day-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .schedule-day-heading {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.85rem;
+      font-weight: 700;
+      margin: 0;
+      color: #1a1816;
+    }
+
+    .schedule-date-input {
+      background: #faf6ee;
+      border: 1.5px solid #1a1816;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #4a4036;
+      outline: none;
+    }
+
+    .schedule-date-input:focus {
+      border-color: #e89838;
+      background: #ffffff;
+    }
+
+    .schedule-actions-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Slot Card in Schedule Editor */
+    .schedule-slots-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .schedule-slot-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #faf7f0;
+      border: 2px solid #1a1816;
+      border-radius: 14px;
+      padding: 14px 18px;
+      box-shadow: 2.5px 3px 0 #1a1816;
+      gap: 16px;
+      transition: transform 0.15s ease;
+      flex-wrap: wrap;
+    }
+
+    .schedule-slot-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 3.5px 4px 0 #1a1816;
+      background: #ffffff;
+    }
+
+    .slot-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1 1 300px;
+    }
+
+    .slot-order-tools {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .btn-slot-move {
+      background: #ffffff;
+      border: 1.5px solid #1a1816;
+      border-radius: 6px;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 11px;
+      box-shadow: 1px 1px 0 #1a1816;
+    }
+
+    .btn-slot-move:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .slot-time-badge {
+      background: #ffffff;
+      border: 1.5px solid #1a1816;
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a1816;
+      white-space: nowrap;
+      box-shadow: 1.5px 1.5px 0 #1a1816;
+    }
+
+    .slot-info-block {
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .slot-subject-title {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: #1a1816;
+      margin: 0 0 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .slot-subject-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1.2px solid #1a1816;
+      display: inline-block;
+    }
+
+    .slot-sub-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.92rem;
+      color: #5a5148;
+      flex-wrap: wrap;
+    }
+
+    .slot-prof-name {
+      font-weight: 600;
+      color: #1a1816;
+    }
+
+    .slot-pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #ffffff;
+      border: 1.2px solid #1a1816;
+      border-radius: 8px;
+      padding: 2px 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .slot-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-slot-edit {
+      background: #d5e0f9;
+      border: 1.5px solid #1a1816;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 1.5px 1.5px 0 #1a1816;
+    }
+
+    .btn-slot-edit:hover {
+      background: #c2d0ea;
+    }
+
+    .btn-slot-delete {
+      background: #ffc9c9;
+      border: 1.5px solid #1a1816;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 1.5px 1.5px 0 #1a1816;
+      color: #991b1b;
+    }
+
+    .btn-slot-delete:hover {
+      background: #ffa8a8;
+    }
+
+    /* Modal Form for Add/Edit Slot */
+    .admin-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 24, 22, 0.5);
+      backdrop-filter: blur(3px);
+      z-index: 100000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .admin-modal-card {
+      background: #ffffff;
+      border: 3px solid #1a1816;
+      border-radius: 20px;
+      padding: 26px;
+      width: 100%;
+      max-width: 540px;
+      box-shadow: 5px 7px 0 #1a1816;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .admin-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .admin-form-label {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1a1816;
+    }
+
+    .admin-form-input, .admin-form-select {
+      background: #faf6ee;
+      border: 2px solid #1a1816;
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      color: #1a1816;
+      outline: none;
+      box-sizing: border-box;
+      width: 100%;
+    }
+
+    .admin-form-input:focus, .admin-form-select:focus {
+      background: #ffffff;
+      border-color: #e89838;
+      box-shadow: 2px 2px 0 #e89838;
+    }
+
+    .preset-chips-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .preset-chip {
+      background: #f4efe4;
+      border: 1.2px solid #1a1816;
+      border-radius: 8px;
+      padding: 2px 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #4a4036;
+    }
+
+    .preset-chip:hover {
+      background: #e89838;
+      color: #1a1816;
+    }
+
+    .color-swatches-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .color-swatch-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: 2px solid #1a1816;
+      cursor: pointer;
+      transition: transform 0.12s;
+    }
+
+    .color-swatch-btn.selected {
+      transform: scale(1.18);
+      outline: 2px solid #1a1816;
+      outline-offset: 2px;
+    }
+
+    /* Access Denied Card */
+    .access-denied-screen {
+      text-align: center;
+      padding: 80px 20px;
+      max-width: 480px;
+      margin: 60px auto;
+      background: #ffffff;
+      border: 3px solid #1a1816;
+      border-radius: 20px;
+      box-shadow: 4px 6px 0 #1a1816;
+    }
+
+    @media (max-width: 600px) {
+      .admin-container {
+        padding: 12px 10px 60px;
+      }
+      .admin-top-nav {
+        padding: 10px 14px;
+      }
+      .admin-hero {
+        padding: 18px 16px;
+      }
+      .admin-hero-title {
+        font-size: 1.85rem;
+      }
+      .admin-panel-card {
+        padding: 16px 12px;
+      }
+      .schedule-slot-item {
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+<body class="admin-page-body">
+
+  <!-- Access Denied State (Shown if not admin) -->
+  <div class="access-denied-screen view-hidden" id="access-denied-box">
+    <div style="font-size: 48px; margin-bottom: 12px;">🛡️</div>
+    <h2 style="font-family: 'Patrick Hand', cursive; font-size: 28px; margin: 0 0 8px;">Admin Access Required</h2>
+    <p style="color: #63584e; margin: 0 0 24px; font-size: 15px; line-height: 1.45;">
+      You must be logged in as an authorized administrator to view this portal.
+    </p>
+    <a href="index.html" class="admin-back-btn" style="display: inline-flex;">
+      <i class="fi fi-rr-arrow-left"></i>
+      <span>Return to Dashboard</span>
+    </a>
+  </div>
+
+  <!-- Main Authenticated Admin Container -->
+  <div class="admin-container view-hidden" id="admin-main-container">
+
+    <!-- Top Navigation Bar -->
+    <header class="admin-top-nav">
+      <div class="admin-nav-left">
+        <a href="index.html" class="admin-back-btn" title="Back to Dashboard">
+          <i class="fi fi-rr-arrow-left"></i>
+          <span>Dashboard</span>
+        </a>
+        <div class="admin-brand-wrap">
+          <i class="fi fi-sr-shield-check" style="color: #e89838;"></i>
+          <span>Quill-Q Admin</span>
+          <span class="admin-brand-badge">Portal</span>
+        </div>
+      </div>
+
+      <div class="admin-nav-right">
+        <div class="admin-user-badge">
+          <img src="assets/avatar.jpg" alt="Admin avatar" class="admin-user-avatar" id="admin-nav-avatar" />
+          <span class="admin-user-name" id="admin-nav-name">Adam</span>
+        </div>
+        <button type="button" class="btn-create-account" id="btn-admin-logout" style="padding: 7px 14px; font-size: 13.5px;" title="Sign out">
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero Header -->
+    <section class="admin-hero">
+      <h1 class="admin-hero-title">Administration &amp; Schedule Hub</h1>
+      <p class="admin-hero-desc">
+        Welcome to your dedicated admin portal. Approve new student and teacher registrations, manage academic roles, and edit the live university class timetable.
+      </p>
+
+      <!-- Main Tabs Switcher -->
+      <div class="admin-main-tabs">
+        <button type="button" class="admin-main-tab-btn active" id="btn-tab-schedule">
+          <i class="fi fi-sr-calendar"></i>
+          <span>Weekly Schedule Editor</span>
+        </button>
+        <button type="button" class="admin-main-tab-btn" id="btn-tab-members">
+          <i class="fi fi-sr-users"></i>
+          <span>Member Approvals (<span id="badge-total-pending">0</span>)</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- SECTION 1: WEEKLY SCHEDULE EDITOR -->
+    <section class="admin-panel-card" id="panel-schedule">
+      <div class="schedule-header-row">
+        <div class="schedule-day-title-wrap">
+          <h2 class="schedule-day-heading" id="selected-day-heading">Monday's Schedule</h2>
+          <input type="text" class="schedule-date-input" id="input-day-date-label" value="Monday, Oct 19" placeholder="Date Label (e.g. Oct 19)" title="Label shown on dashboard for this day" />
+        </div>
+
+        <div class="schedule-actions-group">
+          <button type="button" class="btn-create-account" id="btn-add-class-slot" style="background: #e89838; padding: 8px 16px; font-size: 14.5px;">
+            <i class="fi fi-rr-plus"></i>
+            <span>Add Class Slot</span>
+          </button>
+          <button type="button" class="btn-create-account" id="btn-save-schedule" style="background: #5bae86; padding: 8px 18px; font-size: 14.5px;" title="Save modifications to Firestore server">
+            <i class="fi fi-rr-disk"></i>
+            <span id="btn-save-schedule-text">Save Changes to Server</span>
+          </button>
+          <button type="button" class="btn-create-account" id="btn-reset-default-schedule" style="background: #fdf6e2; color: #1a1816; padding: 8px 14px; font-size: 13.5px;" title="Reset schedule to official seed">
+            <i class="fi fi-rr-refresh"></i>
+            <span>Reset Seed</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Day Pills Selector -->
+      <div class="schedule-day-tabs" id="schedule-day-tabs">
+        <button type="button" class="sched-day-pill active" data-day="Mon">Mon (Monday)</button>
+        <button type="button" class="sched-day-pill" data-day="Tue">Tue (Tuesday)</button>
+        <button type="button" class="sched-day-pill" data-day="Wed">Wed (Wednesday)</button>
+        <button type="button" class="sched-day-pill" data-day="Thu">Thu (Thursday)</button>
+        <button type="button" class="sched-day-pill" data-day="Fri">Fri (Friday)</button>
+        <button type="button" class="sched-day-pill" data-day="Sat">Sat (Saturday)</button>
+        <button type="button" class="sched-day-pill" data-day="Sun">Sun (Sunday)</button>
+      </div>
+
+      <!-- Class Slots List -->
+      <div class="schedule-slots-container" id="schedule-slots-list">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- SECTION 2: MEMBER APPROVALS & USERS -->
+    <section class="admin-panel-card view-hidden" id="panel-members">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px dashed #ded6c5; padding-bottom: 14px; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h2 style="font-family: 'Patrick Hand', cursive; font-size: 28px; margin: 0; color: #1a1816;">Member Approvals &amp; Roles</h2>
+          <p style="margin: 2px 0 0; font-size: 14px; color: #63584e;">Review new registrations, grant access, or manage student and teacher roles.</p>
+        </div>
+        <button type="button" class="btn-create-account" id="btn-refresh-members" style="padding: 7px 16px; font-size: 14px; display: inline-flex; align-items: center; gap: 6px;">
+          <i class="fi fi-rr-refresh"></i>
+          <span>Refresh Members</span>
+        </button>
+      </div>
+
+      <!-- Sub-tabs: Pending vs Approved -->
+      <div style="display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap;">
+        <button type="button" class="admin-tab-btn active" id="tab-members-pending" style="padding: 8px 18px; border-radius: 10px; font-weight: 700; border: 2px solid #1a1816; background: #e89838; cursor: pointer;">
+          Pending Review (<span id="members-pending-count">0</span>)
+        </button>
+        <button type="button" class="admin-tab-btn" id="tab-members-approved" style="padding: 8px 18px; border-radius: 10px; font-weight: 700; border: 2px solid #1a1816; background: #f4efe4; cursor: pointer;">
+          Approved Members (<span id="members-approved-count">0</span>)
+        </button>
+      </div>
+
+      <!-- Search Filter -->
+      <div style="margin-bottom: 18px;">
+        <input type="search" id="input-search-members" class="admin-form-input" placeholder="Search members by name, email, or role..." />
+      </div>
+
+      <!-- Members List Container -->
+      <div id="admin-members-list" style="display: flex; flex-direction: column; gap: 12px;">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ADD / EDIT CLASS SLOT MODAL -->
+  <div class="admin-modal-backdrop view-hidden" id="modal-class-slot">
+    <div class="admin-modal-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; border-bottom: 2px dashed #ded6c5; padding-bottom: 12px;">
+        <h3 style="font-family: 'Patrick Hand', cursive; font-size: 26px; margin: 0; color: #1a1816;" id="modal-slot-title">Add Class Slot</h3>
+        <button type="button" class="btn-slot-move" id="btn-close-slot-modal" style="width: 28px; height: 28px; font-size: 14px;">✕</button>
+      </div>
+
+      <form id="form-class-slot" autocomplete="off">
+        <input type="hidden" id="slot-edit-index" value="-1" />
+
+        <!-- Time Range Field -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="slot-input-time">Time Range</label>
+          <input type="text" class="admin-form-input" id="slot-input-time" placeholder="e.g. 08:30 AM – 10:00 AM" required />
+          <div class="preset-chips-row">
+            <span class="preset-chip time-preset">08:30 AM – 10:00 AM</span>
+            <span class="preset-chip time-preset">10:00 AM – 11:30 AM</span>
+            <span class="preset-chip time-preset">11:30 AM – 01:00 PM</span>
+            <span class="preset-chip time-preset">01:00 PM – 02:30 PM</span>
+            <span class="preset-chip time-preset">01:30 PM – 03:00 PM</span>
+            <span class="preset-chip time-preset">02:30 PM – 04:00 PM</span>
+            <span class="preset-chip time-preset">03:00 PM – 04:30 PM</span>
+            <span class="preset-chip time-preset">04:00 PM – 05:30 PM</span>
+          </div>
+        </div>
+
+        <!-- Subject Field -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="slot-input-subject">Subject Name</label>
+          <input type="text" class="admin-form-input" id="slot-input-subject" placeholder="e.g. Writing" required />
+          <div class="preset-chips-row" id="subject-presets-container">
+            <!-- Dynamically populated from university subjects -->
+          </div>
+        </div>
+
+        <!-- Professor / Teacher Field -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="slot-input-prof">Professor / Teacher</label>
+          <input type="text" class="admin-form-input" id="slot-input-prof" placeholder="e.g. نسرين بن الصادق" required />
+          <div class="preset-chips-row" id="teacher-presets-container">
+            <!-- Populated from official faculty -->
+          </div>
+        </div>
+
+        <!-- Room & Type Row -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="slot-input-room">Room / Amphi</label>
+            <input type="text" class="admin-form-input" id="slot-input-room" placeholder="e.g. Salle-15" required />
+            <div class="preset-chips-row">
+              <span class="preset-chip room-preset">Salle-10</span>
+              <span class="preset-chip room-preset">Salle-11</span>
+              <span class="preset-chip room-preset">Salle-12</span>
+              <span class="preset-chip room-preset">Salle-13</span>
+              <span class="preset-chip room-preset">Salle-14</span>
+              <span class="preset-chip room-preset">Salle-15</span>
+              <span class="preset-chip room-preset">Salle-16</span>
+              <span class="preset-chip room-preset">Salle-18</span>
+              <span class="preset-chip room-preset">Amphi 1</span>
+              <span class="preset-chip room-preset">Amphi 3</span>
+              <span class="preset-chip room-preset">Amphi 4</span>
+              <span class="preset-chip room-preset">Amphi 6</span>
+              <span class="preset-chip room-preset">lab-3</span>
+            </div>
+          </div>
+
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="slot-select-type">Type</label>
+            <select class="admin-form-select" id="slot-select-type">
+              <option value="TD">TD (Travaux Dirigés)</option>
+              <option value="C">C (Cours)</option>
+              <option value="CI">CI (Cours Intégré)</option>
+              <option value="TP">TP (Travaux Pratiques)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Color Tag Picker -->
+        <div class="admin-form-group">
+          <label class="admin-form-label">Color Theme</label>
+          <input type="hidden" id="slot-input-color" value="#f6cf7c" />
+          <div class="color-swatches-row" id="slot-color-swatches">
+            <button type="button" class="color-swatch-btn selected" style="background: #f6cf7c;" data-color="#f6cf7c"></button>
+            <button type="button" class="color-swatch-btn" style="background: #e8987a;" data-color="#e8987a"></button>
+            <button type="button" class="color-swatch-btn" style="background: #5bae86;" data-color="#5bae86"></button>
+            <button type="button" class="color-swatch-btn" style="background: #a9c6ec;" data-color="#a9c6ec"></button>
+            <button type="button" class="color-swatch-btn" style="background: #e0835f;" data-color="#e0835f"></button>
+            <button type="button" class="color-swatch-btn" style="background: #d8b4e2;" data-color="#d8b4e2"></button>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn-create-account" id="btn-cancel-slot" style="background: #fdf6e2; color: #1a1816; flex: 1;">Cancel</button>
+          <button type="submit" class="btn-create-account" id="btn-confirm-slot" style="background: #5bae86; flex: 1;">Save Slot</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- In-app Toasts -->
+  <div class="inapp-toast-container" id="inapp-toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Firebase SDKs (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+  <!-- Quill-Q Shared Scripts -->
+  <script src="firebase-config.js"></script>
+  <script src="subjects-config.js"></script>
+  <script src="custom-dialog.js"></script>
+  <script src="admin.js?v=4"></script>
+</body>
+</html>

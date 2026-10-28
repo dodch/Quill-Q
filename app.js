@@ -103,13 +103,12 @@ function bindServerSchedule(user) {
     return;
   }
 
-  // Load cached schedule if present and up-to-date
+  // Load cached schedule if present
   const localSched = localStorage.getItem("quill_q_server_schedule");
   if (localSched) {
     try {
       const parsed = JSON.parse(localSched);
-      const isUpToDate = parsed && parsed.Mon && parsed.Mon.scheduleVersion >= OFFICIAL_SCHEDULE_VERSION;
-      if (isUpToDate) {
+      if (parsed && (parsed.Mon || parsed.Tue)) {
         TIMETABLE = parsed;
         updateTodayStatus();
         renderDetailedSchedule(currentSelectedDay);
@@ -139,9 +138,9 @@ function bindServerSchedule(user) {
           }
         });
 
-        // If collection is empty OR server schedule is outdated, Super Admin pushes the official accurate schedule!
-        if (isSuperAdmin && (snapshot.empty || serverVersion < OFFICIAL_SCHEDULE_VERSION)) {
-          console.log(`[Schedule Sync] Pushing updated schedule v${OFFICIAL_SCHEDULE_VERSION} to Firestore server...`);
+        // If collection is completely empty, Super Admin seeds initial schedule
+        if (isSuperAdmin && snapshot.empty) {
+          console.log(`[Schedule Sync] Initializing empty /schedules on Firestore...`);
           const batch = db.batch();
           Object.keys(DEFAULT_TIMETABLE_SEED).forEach((dayKey) => {
             const ref = db.collection("schedules").doc(dayKey);
@@ -149,7 +148,7 @@ function bindServerSchedule(user) {
           });
           try {
             await batch.commit();
-            console.log("[Schedule Sync] Firestore /schedules successfully updated!");
+            console.log("[Schedule Sync] Firestore /schedules successfully initialized!");
           } catch (seedErr) {
             console.warn("Schedule server sync error:", seedErr);
           }
@@ -2892,6 +2891,10 @@ function applyProfileToUI(profile) {
     if (sideName) sideName.textContent = "Student";
     if (sideRole) sideRole.textContent = "Student • English Business Grp 1";
     if (btnGetStarted) btnGetStarted.textContent = "Get Started";
+    const navAdmin = document.getElementById("nav-admin");
+    if (navAdmin) navAdmin.classList.add("view-hidden");
+    const adminCta = document.getElementById("profile-admin-cta");
+    if (adminCta) adminCta.classList.add("view-hidden");
     return;
   }
 
@@ -3554,7 +3557,24 @@ function renderProfileView() {
     pStatusText.style.color = isApproved ? "#166534" : "#b45309";
   }
 
-  // Admin section: visible strictly to dotchadam@gmail.com / admin role
+  // Admin Portal entry points: visible strictly to dotchadam@gmail.com / admin role
+  const adminHeroBtn = document.getElementById("profile-admin-btn-wrap");
+  const adminHeaderBtn = document.getElementById("profile-header-admin-btn-wrap");
+  const adminCta = document.getElementById("profile-admin-cta");
+
+  if (adminHeroBtn) {
+    if (isAdmin) adminHeroBtn.classList.remove("view-hidden");
+    else adminHeroBtn.classList.add("view-hidden");
+  }
+  if (adminHeaderBtn) {
+    if (isAdmin) adminHeaderBtn.classList.remove("view-hidden");
+    else adminHeaderBtn.classList.add("view-hidden");
+  }
+  if (adminCta) {
+    if (isAdmin) adminCta.classList.remove("view-hidden");
+    else adminCta.classList.add("view-hidden");
+  }
+
   if (adminPanel) {
     if (isAdmin) {
       adminPanel.classList.remove("view-hidden");

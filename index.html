@@ -39,7 +39,7 @@
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
   </noscript>
-  <link rel="stylesheet" href="styles.min.css?v=47" />
+  <link rel="stylesheet" href="styles.min.css?v=48" />
   <script>
     try {
       var p = JSON.parse(localStorage.getItem("quill_q_profile") || "null");
@@ -1217,10 +1217,17 @@
 
         <!-- DEDICATED PROFILE & ADMIN DASHBOARD VIEW -->
         <div class="view-panel view-hidden" id="view-profile">
-          <div class="profile-view-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px;">
+          <div class="profile-view-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 12px;">
             <div class="profile-view-title-wrap">
               <h2 class="subjects-view-title" style="margin: 0; font-family: 'Patrick Hand', cursive; font-size: 32px; color: #1a1816;">My Profile &amp; Account</h2>
               <p style="margin: 2px 0 0; font-size: 14.5px; color: #72685d;">Manage your personal profile and system administration</p>
+            </div>
+            <div id="profile-header-admin-btn-wrap" class="view-hidden">
+              <a href="admin.html" style="display: inline-flex; align-items: center; gap: 8px; background: #e89838; color: #1a1816; font-family: 'Patrick Hand', cursive; font-size: 19px; font-weight: 700; padding: 8px 18px; border: 2.5px solid #1a1816; border-radius: 14px; box-shadow: 3px 4px 0px #1a1816; text-decoration: none; cursor: pointer;">
+                <i class="fi fi-sr-shield-check"></i>
+                <span>Admin Portal</span>
+                <i class="fi fi-rr-arrow-right"></i>
+              </a>
             </div>
           </div>
 
@@ -1243,43 +1250,50 @@
                   <div><strong style="color: #1a1816;">Status:</strong> <span id="profile-page-status-text" style="color: #166534; font-weight: 700;">Approved</span></div>
                 </div>
               </div>
+
+              <!-- Prominent Admin Portal Button directly inside Hero Card -->
+              <div id="profile-admin-btn-wrap" class="view-hidden" style="margin-left: auto;">
+                <a href="admin.html" id="btn-hero-admin-portal" style="display: inline-flex; align-items: center; gap: 9px; background: #e89838; color: #1a1816; font-family: 'Patrick Hand', cursive; font-size: 20px; font-weight: 700; padding: 11px 22px; border: 2.5px solid #1a1816; border-radius: 16px; box-shadow: 3px 4px 0px #1a1816; text-decoration: none; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;">
+                  <i class="fi fi-sr-shield-check" style="font-size: 20px;"></i>
+                  <span>Admin Portal</span>
+                  <i class="fi fi-rr-arrow-right" style="font-size: 15px;"></i>
+                </a>
+              </div>
             </div>
 
-            <!-- ADMIN ONLY SECTION: User Approvals & Management -->
-            <div class="admin-panel-box view-hidden" id="admin-management-panel" style="background: #ffffff; border: 2.5px solid #1a1816; border-radius: 20px; padding: 24px; box-shadow: 4px 6px 0px #1a1816;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 2px dashed #e5dfd3; padding-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <span style="font-size: 22px; color: #1a1816; display: flex; align-items: center;"><i class="fi fi-sr-shield-check"></i></span>
+            <!-- ADMIN ONLY LINK: Open Dedicated Admin Portal Full Banner -->
+            <div class="admin-portal-cta-card view-hidden" id="profile-admin-cta" style="background: #ffffff; border: 2.5px solid #1a1816; border-radius: 20px; padding: 22px 24px; box-shadow: 4px 6px 0px #1a1816; margin-top: 14px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <span style="font-size: 32px; color: #e89838; display: flex; align-items: center;"><i class="fi fi-sr-shield-check"></i></span>
                   <div>
-                    <h3 style="font-family: 'Patrick Hand', cursive; font-size: 24px; margin: 0; color: #1a1816;">Admin Dashboard: Member Approvals</h3>
-                    <p style="margin: 0; font-size: 13px; color: #72685d;">Approve or decline new students and teachers who register</p>
+                    <h3 style="font-family: 'Patrick Hand', cursive; font-size: 24px; margin: 0; color: #1a1816;">Administrator Control Center</h3>
+                    <p style="margin: 2px 0 0; font-size: 14px; color: #6d6357;">Manage member registrations, access roles, and edit the live university class timetable in the dedicated portal.</p>
                   </div>
                 </div>
-                <button type="button" class="btn-create-account" id="btn-refresh-admin-users" style="padding: 6px 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
-                  <span>Refresh Users</span>
-                  <i class="fi fi-rr-refresh" style="font-size: 13px;"></i>
-                </button>
-              </div>
-
-              <!-- Admin Tabs: Pending Review vs Approved Members -->
-              <div style="display: flex; gap: 8px; margin-bottom: 18px;">
-                <button type="button" class="admin-tab-btn active" id="tab-admin-pending" style="padding: 7px 16px; border-radius: 10px; font-weight: 700; border: 2px solid #1a1816; background: #e89838; cursor: pointer;">
-                  Pending (<span id="admin-pending-count">0</span>)
-                </button>
-                <button type="button" class="admin-tab-btn" id="tab-admin-approved" style="padding: 7px 16px; border-radius: 10px; font-weight: 700; border: 2px solid #1a1816; background: #f4efe4; cursor: pointer;">
-                  Approved Members (<span id="admin-approved-count">0</span>)
-                </button>
-              </div>
-
-              <!-- User List Container -->
-              <div id="admin-users-list" style="display: flex; flex-direction: column; gap: 12px;">
-                <div style="text-align: center; padding: 30px 10px; color: #7c7266;">
-                  <div style="font-size: 24px; margin-bottom: 6px;"><i class="fi fi-rr-spinner" style="display: inline-block; animation: spin 1s infinite linear;"></i></div>
-                  <div>Loading registrations...</div>
-                </div>
+                <a href="admin.html" class="btn-create-account" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 15px; background: #e89838;">
+                  <span>Open Admin Portal</span>
+                  <i class="fi fi-rr-arrow-right"></i>
+                </a>
               </div>
             </div>
           </div>
+          <script>
+            (function() {
+              try {
+                var p = JSON.parse(localStorage.getItem('quill_q_profile') || '{}');
+                var isAdm = p.role === 'admin' || (p.email && (p.email.toLowerCase().indexOf('dodchadam') !== -1 || p.email.toLowerCase().indexOf('dotchadam') !== -1));
+                if (isAdm) {
+                  var b = document.getElementById('profile-admin-btn-wrap');
+                  if (b) b.classList.remove('view-hidden');
+                  var c = document.getElementById('profile-admin-cta');
+                  if (c) c.classList.remove('view-hidden');
+                  var h = document.getElementById('profile-header-admin-btn-wrap');
+                  if (h) h.classList.remove('view-hidden');
+                }
+              } catch(e) {}
+            })();
+          </script>
         </div>
 
         <!-- DEDICATED CHAT VIEW -->
@@ -1601,6 +1615,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-  <script src="app.min.js?v=37"></script>
+  <script src="app.min.js?v=38"></script>
 </body>
 </html>
