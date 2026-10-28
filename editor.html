@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="styles.min.css?v=51" />
+  <link rel="stylesheet" href="styles.min.css?v=56" />
   <link rel="stylesheet" href="libs/blocknote-react.bundle.css?v=3" />
 
   <style>
@@ -152,28 +152,31 @@
         <i class="fi fi-rr-arrow-left"></i>
       </a>
 
-      <span class="editor-subject-badge card-peach" id="editor-subject-badge">
-        <span id="editor-subject-name">Subject</span>
-      </span>
-
-      <!-- Document / Exercise Type Badge -->
-      <span class="editor-type-badge view-hidden" id="editor-type-badge" title="Document Type">
-        <i class="fi fi-rr-edit" id="editor-type-icon"></i>
-        <span id="editor-type-label">Exercise</span>
-      </span>
-
-      <!-- Document Author & Editor Badge -->
-      <div class="editor-author-chip view-hidden" id="editor-author-chip" title="Document Author & Contributor">
-        <div class="editor-author-avatars" id="editor-author-avatars"></div>
-        <div class="editor-author-details">
-          <span class="editor-author-by" id="editor-author-by">By Student</span>
-          <span class="editor-author-edited" id="editor-author-edited"></span>
-        </div>
+      <!-- Subject & Doc Type Breadcrumb (Simple inline text, no boxes/buttons) -->
+      <div class="editor-nav-breadcrumb" id="editor-nav-breadcrumb">
+        <span class="editor-subject-badge card-peach" id="editor-subject-badge">
+          <span id="editor-subject-name">Subject</span>
+        </span>
+        <span class="editor-type-badge view-hidden" id="editor-type-badge" title="Document Type">
+          <i class="fi fi-rr-edit" id="editor-type-icon" style="display:none;"></i>
+          <span class="editor-type-dot">.</span>
+          <span id="editor-type-label">exercise</span>
+        </span>
       </div>
 
-      <div class="editor-save-status status-saved" id="editor-save-status">
-        <i class="fi fi-rr-check" id="save-status-icon"></i>
-        <span id="save-status-text">Saved</span>
+      <!-- Document Author & Editor Badge (Compact Avatar + Floating Tooltip) -->
+      <div class="editor-author-chip view-hidden" id="editor-author-chip" tabindex="0" role="region" aria-label="Author & editor info">
+        <div class="editor-author-avatars" id="editor-author-avatars"></div>
+        <div class="editor-author-tooltip" id="editor-author-tooltip" role="tooltip">
+          <div class="author-tooltip-row">
+            <span class="author-tooltip-role">Written by</span>
+            <span class="author-tooltip-name" id="editor-author-by">Student</span>
+          </div>
+          <div class="author-tooltip-row is-editor-row" id="editor-author-edited-wrap" style="display: none;">
+            <span class="author-tooltip-role">Edited by</span>
+            <span class="author-tooltip-name" id="editor-author-edited"></span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -213,10 +216,10 @@
         </div>
       </div>
 
-      <!-- Primary Save Document Button -->
-      <button class="editor-btn-primary" id="btn-save-doc" title="Save document (Ctrl+S)">
-        <i class="fi fi-rr-disk"></i>
-        <span>Save</span>
+      <!-- Primary Save Document & Live Status Button -->
+      <button type="button" class="editor-btn-primary editor-btn-save state-saved" id="btn-save-doc" title="All changes saved (Ctrl+S)">
+        <i class="fi fi-rr-check" id="btn-save-icon"></i>
+        <span id="btn-save-text">Saved</span>
       </button>
     </div>
   </header>

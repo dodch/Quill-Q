@@ -42,10 +42,9 @@
   const backLabel = document.getElementById("editor-back-label");
   const subjectBadge = document.getElementById("editor-subject-badge");
   const subjectName = document.getElementById("editor-subject-name");
-  const saveStatus = document.getElementById("editor-save-status");
-  const saveStatusIcon = document.getElementById("save-status-icon");
-  const saveStatusText = document.getElementById("save-status-text");
   const btnSaveDoc = document.getElementById("btn-save-doc");
+  const btnSaveIcon = document.getElementById("btn-save-icon");
+  const btnSaveText = document.getElementById("btn-save-text");
   const btnPrintDoc = document.getElementById("btn-print-doc");
 
   function getQueryParam(key) {
@@ -75,29 +74,58 @@
   }
 
   function updateSaveStatus(status) {
-    if (!saveStatus || !saveStatusIcon || !saveStatusText) return;
+    if (!btnSaveDoc) return;
+    const icon = btnSaveIcon || btnSaveDoc.querySelector("i");
+    const text = btnSaveText || btnSaveDoc.querySelector("span");
+
+    btnSaveDoc.classList.remove("state-saved", "state-unsaved", "state-saving", "state-error");
 
     if (status === "saving") {
-      saveStatus.className = "editor-save-status status-saving";
-      saveStatus.style.color = "";
-      saveStatusIcon.className = "fi fi-rr-spinner";
-      saveStatusText.textContent = "Saving...";
+      btnSaveDoc.classList.add("state-saving");
+      btnSaveDoc.title = "Saving changes...";
+      if (icon) icon.className = "fi fi-rr-spinner editor-spin-icon";
+      if (text) text.textContent = "Saving...";
     } else if (status === "saved") {
-      saveStatus.className = "editor-save-status status-saved";
-      saveStatus.style.color = "";
-      saveStatusIcon.className = "fi fi-rr-check";
-      saveStatusText.textContent = "Saved";
+      btnSaveDoc.classList.add("state-saved");
+      btnSaveDoc.title = "All changes saved (Ctrl+S)";
+      if (icon) icon.className = "fi fi-rr-check";
+      if (text) text.textContent = "Saved";
     } else if (status === "unsaved") {
-      saveStatus.className = "editor-save-status";
-      saveStatus.style.color = "";
-      saveStatusIcon.className = "fi fi-rr-pencil";
-      saveStatusText.textContent = "Unsaved changes";
+      btnSaveDoc.classList.add("state-unsaved");
+      btnSaveDoc.title = "Unsaved changes (Click or Ctrl+S to save)";
+      if (icon) icon.className = "fi fi-rr-disk";
+      if (text) text.textContent = "Unsaved";
     } else if (status === "error") {
-      saveStatus.className = "editor-save-status";
-      saveStatus.style.color = "#c92a2a";
-      saveStatusIcon.className = "fi fi-rr-cross";
-      saveStatusText.textContent = "Save failed";
+      btnSaveDoc.classList.add("state-error");
+      btnSaveDoc.title = "Save failed. Click to retry.";
+      if (icon) icon.className = "fi fi-rr-cross";
+      if (text) text.textContent = "Save Failed";
     }
+  }
+
+  function syncTopBarSpacer() {
+    const topBar = document.querySelector(".editor-top-bar");
+    const spacer = document.querySelector(".editor-top-bar-spacer");
+    if (topBar && spacer) {
+      const h = topBar.offsetHeight;
+      if (h > 0) {
+        spacer.style.height = `${h}px`;
+        document.documentElement.style.setProperty("--editor-topbar-height", `${h}px`);
+      }
+    }
+  }
+
+  function initTopBarObserver() {
+    const topBar = document.querySelector(".editor-top-bar");
+    if (!topBar) return;
+    syncTopBarSpacer();
+
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(() => syncTopBarSpacer());
+      ro.observe(topBar);
+    }
+    window.addEventListener("resize", syncTopBarSpacer);
+    window.addEventListener("orientationchange", syncTopBarSpacer);
   }
 
   function triggerAutosaveDebounced() {
@@ -364,14 +392,8 @@
 
   function applyEditingPermissions(canEdit, authorName = "") {
     if (!canEdit) {
-      // Viewer Mode: Hide manual save button and save status indicator
+      // Viewer Mode: Hide manual save button
       if (btnSaveDoc) btnSaveDoc.style.display = "none";
-      if (saveStatus) {
-        saveStatus.className = "editor-save-status";
-        saveStatus.style.color = "#7d756d";
-        if (saveStatusIcon) saveStatusIcon.className = "fi fi-rr-eye";
-        if (saveStatusText) saveStatusText.textContent = authorName ? `By ${authorName}` : "Read only";
-      }
 
       // Title input is read-only for viewer
       if (titleInput) {
@@ -393,6 +415,7 @@
     const avatarsContainer = document.getElementById("editor-author-avatars");
     const authorBy = document.getElementById("editor-author-by");
     const authorEdited = document.getElementById("editor-author-edited");
+    const authorEditedWrap = document.getElementById("editor-author-edited-wrap");
 
     if (!chip || !data) return;
 
@@ -404,26 +427,31 @@
 
     if (avatarsContainer) {
       avatarsContainer.innerHTML = `
-        <img src="${escapeHtml(authorAvatar)}" alt="${escapeHtml(authorName)}" class="editor-author-avatar-img" title="Author: ${escapeHtml(authorName)}" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
+        <img src="${escapeHtml(authorAvatar)}" alt="${escapeHtml(authorName)}" class="editor-author-avatar-img" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
         ${isEditedByOther ? `
-          <img src="${escapeHtml(lastEditorAvatar)}" alt="${escapeHtml(lastEditorName)}" class="editor-author-avatar-img is-editor" title="Edited by: ${escapeHtml(lastEditorName)}" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
+          <img src="${escapeHtml(lastEditorAvatar)}" alt="${escapeHtml(lastEditorName)}" class="editor-author-avatar-img is-editor" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
         ` : ""}
       `;
     }
 
     if (authorBy) {
-      authorBy.textContent = `By ${authorName}`;
+      authorBy.textContent = authorName;
     }
 
     if (authorEdited) {
       if (isEditedByOther) {
-        authorEdited.textContent = `• Edited by ${lastEditorName}`;
-        authorEdited.style.display = "inline";
+        authorEdited.textContent = lastEditorName;
+        if (authorEditedWrap) authorEditedWrap.style.display = "flex";
       } else {
         authorEdited.textContent = "";
-        authorEdited.style.display = "none";
+        if (authorEditedWrap) authorEditedWrap.style.display = "none";
       }
     }
+
+    const ariaText = isEditedByOther 
+      ? `Written by: ${authorName}, Edited by: ${lastEditorName}`
+      : `Written by: ${authorName}`;
+    chip.setAttribute("aria-label", ariaText);
 
     chip.classList.remove("view-hidden");
   }
@@ -1412,6 +1440,7 @@
 
   // Initialization
   document.addEventListener("DOMContentLoaded", () => {
+    initTopBarObserver();
     currentDocId = getQueryParam("docId");
     setupSubjectContext();
     setupExportHandlers();

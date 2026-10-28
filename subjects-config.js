@@ -53,12 +53,12 @@ const SUBJECTS_REGISTRY = {
     code: "LIT-201",
     prof: "بن شهيدة مريم",
     secondaryProfs: ["غمامي سناء", "كلثوم بالوافي"],
-    room: "Lab 3 / Salle 15",
+    room: "Lab 3 / Salle 15 / Salle 16",
     color: "#e0835f",
     bgClass: "card-peach",
     icon: "theater",
     description: "Exploration of classical and modern drama, poetic forms, and foundational English novels.",
-    schedule: "Mon 13:30 (Lab 3) • Wed 08:30 (Salle 15) • Wed 14:30 (Salle 16)"
+    schedule: "Tue 14:30 (Poetry, Lab 3) • Wed 08:30 (Drama, Salle 15) • Wed 15:00 (Novel, Salle 16)"
   },
   "writing": {
     id: "writing",
@@ -100,21 +100,21 @@ const SUBJECTS_REGISTRY = {
     bgClass: "card-purple",
     icon: "finance",
     description: "Financial terminology, corporate accounting narratives, banking communication, and fiscal analysis.",
-    schedule: "Mon 12:30 (Amphi 6) • Wed 13:00 (Salle 15)"
+    schedule: "Mon 13:30 (Amphi 6) • Wed 13:30 (Salle 15)"
   },
   "entrepreneurial-skills": {
     id: "entrepreneurial-skills",
     name: "Entrepreneurial Skills (Droit)",
     shortName: "Entrepreneurship",
     code: "LAW-205",
-    prof: "شنيس علي صلاح",
+    prof: "شابي علي صلاح",
     secondaryProfs: ["الغندري أحلام"],
     room: "Salle 14 / Salle 12",
     color: "#e8987a",
     bgClass: "card-peach",
     icon: "law",
     description: "Legal foundations of business creation, contracts, IP, and venture development.",
-    schedule: "Mon 08:30 (Salle 14) • Fri 13:30 (Salle 12)"
+    schedule: "Mon 08:30 (Salle 14) • Fri 14:00 (Salle 12)"
   },
   "commercial-english-1": {
     id: "commercial-english-1",
@@ -135,7 +135,7 @@ const SUBJECTS_REGISTRY = {
     name: "Introduction to Linguistics",
     shortName: "Linguistics",
     code: "LIN-207",
-    prof: "رانية الإدريس",
+    prof: "رانية الدريسي",
     secondaryProfs: [],
     room: "Amphi 3 / Salle 10",
     color: "#f6cf7c",
@@ -149,7 +149,7 @@ const SUBJECTS_REGISTRY = {
     name: "Literary Trends",
     shortName: "Literary Trends",
     code: "LIT-208",
-    prof: "عنيف حافظ",
+    prof: "منيف حافظ",
     secondaryProfs: [],
     room: "Amphi 1",
     color: "#ba90e8",
@@ -184,28 +184,28 @@ const SUBJECTS_REGISTRY = {
     bgClass: "card-blue",
     icon: "grammar",
     description: "Advanced structural analysis, syntactic cohesion, complex sentence crafting, and discourse syntax.",
-    schedule: "Tue 12:30 (Amphi 4) • Tue 14:00 (Salle 18)"
+    schedule: "Tue 11:30 (Amphi 4) • Tue 13:00 (Salle 18)"
   },
   "other-languages": {
     id: "other-languages",
     name: "Other Languages (French & Arabic)",
     shortName: "Other Languages",
     code: "LANG-211",
-    prof: "بن علي حافظ / مريم الهماصي",
+    prof: "بن علي حافظ / جهاد معلى",
     secondaryProfs: [],
-    room: "Salle 14 / Salle 02",
+    room: "Salle 14 / Lab 3",
     color: "#f6cf7c",
     bgClass: "card-green",
     icon: "language",
     description: "Comparative translation, cross-linguistic semantics, and advanced bilingual expression.",
-    schedule: "Tue 08:30 (French, Salle 14) • Tue 10:00 (Arabic, Salle 02)"
+    schedule: "Tue 08:30 (French, Salle 14) • Tue 10:00 (Arabic, Lab 3)"
   },
   "activites-pratiques-tefl": {
     id: "activites-pratiques-tefl",
     name: "Activités pratiques (TEFL)",
     shortName: "TEFL Practicum",
     code: "TEFL-212",
-    prof: "رانية الإدريس",
+    prof: "رانية الدريسي",
     secondaryProfs: [],
     room: "Salle 11",
     color: "#e8987a",
