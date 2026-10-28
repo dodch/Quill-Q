@@ -155,6 +155,9 @@
       const authorName = doc.authorName || "Student";
       const authorRole = doc.authorRole || "Student";
       const authorAvatar = doc.authorAvatar || doc.authorPhotoURL || "assets/avatar.jpg";
+      const lastEditorName = doc.lastEditorName || null;
+      const lastEditorAvatar = doc.lastEditorAvatar || "assets/avatar.jpg";
+      const isEditedByOther = Boolean(lastEditorName && doc.lastEditorId !== doc.authorId && lastEditorName !== authorName);
       const timeAgo = formatTimeAgo(doc.updatedAt || doc.createdAt);
       const canDelete = isSuperAdmin || (currentUser && doc.authorId === currentUser.uid);
 
@@ -182,9 +185,19 @@
 
         <div class="doc-card-footer">
           <div class="doc-card-author">
-            <img src="${escapeHtml(authorAvatar)}" alt="${escapeHtml(authorName)}" class="doc-card-avatar" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
+            <div class="doc-card-avatars-wrap">
+              <img src="${escapeHtml(authorAvatar)}" alt="${escapeHtml(authorName)}" class="doc-card-avatar doc-avatar-author" title="Author: ${escapeHtml(authorName)}" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
+              ${isEditedByOther ? `
+                <img src="${escapeHtml(lastEditorAvatar)}" alt="${escapeHtml(lastEditorName)}" class="doc-card-avatar doc-avatar-editor" title="Edited by: ${escapeHtml(lastEditorName)}" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
+              ` : ""}
+            </div>
             <div class="doc-card-meta">
-              <span class="doc-card-author-name">${escapeHtml(authorName)}</span>
+              <div class="doc-card-author-row">
+                <span class="doc-card-author-name">${escapeHtml(authorName)}</span>
+                ${isEditedByOther ? `
+                  <span class="doc-card-editor-badge" title="Edited by ${escapeHtml(lastEditorName)}"><i class="fi fi-rr-edit"></i> Edited by ${escapeHtml(lastEditorName)}</span>
+                ` : ""}
+              </div>
               <span class="doc-card-time">${timeAgo}</span>
             </div>
           </div>

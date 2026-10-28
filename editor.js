@@ -11,10 +11,21 @@
   let currentProfile = null;
   let currentSubject = null;
   let currentDocId = null;
+  let loadedDocumentData = null;
   let reactEditorBridge = null;
   let isSaving = false;
   let hasPendingChanges = false;
   let autosaveTimer = null;
+
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 
   const SUPER_ADMIN_EMAILS = ["dodchadam@gmail.com", "dotchadam@gmail.com"];
 
@@ -128,19 +139,24 @@
         excerpt: excerpt,
         pageCount: pageCount,
         pinnedNotes: pinnedNotesCache || [],
-        authorId: currentUser.uid,
-        authorName: currentProfile?.displayName || currentUser.displayName || "Student",
-        authorRole: currentProfile?.role || "student",
-        authorAvatar: currentProfile?.photoURL || currentProfile?.avatarUrl || currentUser?.photoURL || "assets/avatar.jpg",
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
+      const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
+
       if (!currentDocId) {
-        // Create new Firestore document
+        // Create new Firestore document: Record Original Author
+        docPayload.authorId = currentUser.uid;
+        docPayload.authorName = currentProfile?.displayName || currentUser.displayName || "Student";
+        docPayload.authorRole = currentProfile?.role || "student";
+        docPayload.authorAvatar = currentProfile?.photoURL || currentProfile?.avatarUrl || currentUser?.photoURL || "assets/avatar.jpg";
         docPayload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+
         const newDocRef = await collectionRef.add(docPayload);
         const prevDraftKey = getPinnedNotesStorageKey();
         currentDocId = newDocRef.id;
+        loadedDocumentData = { id: currentDocId, ...docPayload };
+        renderAuthorBadge(loadedDocumentData);
 
         // Migrate local storage key from draft to new docId
         savePinnedNotes();
@@ -154,8 +170,34 @@
 
         if (manual) showToast("Document created and saved!");
       } else {
-        // Update existing document
+        // Update existing document: NEVER OVERWRITE ORIGINAL AUTHOR!
+        const origAuthorId = loadedDocumentData ? loadedDocumentData.authorId : null;
+        const currentUserId = currentUser.uid;
+
+        if (origAuthorId && origAuthorId !== currentUserId) {
+          // Document edited by someone else (Admin, Teacher, or Contributor)
+          docPayload.lastEditorId = currentUserId;
+          docPayload.lastEditorName = currentProfile?.displayName || currentUser.displayName || (isSuperAdmin ? "Admin" : "Editor");
+          docPayload.lastEditorRole = currentProfile?.role || (isSuperAdmin ? "admin" : "editor");
+          docPayload.lastEditorAvatar = currentProfile?.photoURL || currentProfile?.avatarUrl || currentUser?.photoURL || "assets/avatar.jpg";
+          docPayload.lastEditedAt = firebase.firestore.FieldValue.serverTimestamp();
+
+          if (loadedDocumentData) {
+            loadedDocumentData.lastEditorId = docPayload.lastEditorId;
+            loadedDocumentData.lastEditorName = docPayload.lastEditorName;
+            loadedDocumentData.lastEditorRole = docPayload.lastEditorRole;
+            loadedDocumentData.lastEditorAvatar = docPayload.lastEditorAvatar;
+          }
+        } else if (origAuthorId && origAuthorId === currentUserId) {
+          // Author editing their own document: update profile changes if any
+          if (currentProfile?.displayName) docPayload.authorName = currentProfile.displayName;
+          if (currentProfile?.photoURL) docPayload.authorAvatar = currentProfile.photoURL;
+        }
+
         await collectionRef.doc(currentDocId).update(docPayload);
+        if (loadedDocumentData) {
+          renderAuthorBadge(loadedDocumentData);
+        }
         if (manual) showToast("Document saved successfully!");
       }
 
@@ -186,9 +228,11 @@
       }
 
       const data = snapshot.data();
+      loadedDocumentData = { id: snapshot.id, ...data };
       const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
       canEditDocument = isSuperAdmin || (currentUser && data.authorId === currentUser.uid);
 
+      renderAuthorBadge(loadedDocumentData);
       applyEditingPermissions(canEditDocument, data.authorName);
 
       if (titleInput && data.title) {
@@ -243,6 +287,96 @@
         titleInput.style.cursor = "text";
       }
     }
+  }
+
+  function renderAuthorBadge(data) {
+    const chip = document.getElementById("editor-author-chip");
+    const avatarsContainer = document.getElementById("editor-author-avatars");
+    const authorBy = document.getElementById("editor-author-by");
+    const authorEdited = document.getElementById("editor-author-edited");
+    const btnEditAuthor = document.getElementById("btn-edit-author");
+
+    const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
+    if (btnEditAuthor) {
+      if (isSuperAdmin && currentDocId) {
+        btnEditAuthor.classList.remove("view-hidden");
+      } else {
+        btnEditAuthor.classList.add("view-hidden");
+      }
+    }
+
+    if (!chip || !data) return;
+
+    const authorName = data.authorName || "Student";
+    const authorAvatar = data.authorAvatar || data.authorPhotoURL || "assets/avatar.jpg";
+    const lastEditorName = data.lastEditorName || null;
+    const lastEditorAvatar = data.lastEditorAvatar || "assets/avatar.jpg";
+    const isEditedByOther = Boolean(lastEditorName && data.lastEditorId !== data.authorId && lastEditorName !== authorName);
+
+    if (avatarsContainer) {
+      avatarsContainer.innerHTML = `
+        <img src="${escapeHtml(authorAvatar)}" alt="${escapeHtml(authorName)}" class="editor-author-avatar-img" title="Author: ${escapeHtml(authorName)}" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
+        ${isEditedByOther ? `
+          <img src="${escapeHtml(lastEditorAvatar)}" alt="${escapeHtml(lastEditorName)}" class="editor-author-avatar-img is-editor" title="Edited by: ${escapeHtml(lastEditorName)}" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
+        ` : ""}
+      `;
+    }
+
+    if (authorBy) {
+      authorBy.textContent = `By ${authorName}`;
+    }
+
+    if (authorEdited) {
+      if (isEditedByOther) {
+        authorEdited.textContent = `• Edited by ${lastEditorName}`;
+        authorEdited.style.display = "inline";
+      } else {
+        authorEdited.textContent = "";
+        authorEdited.style.display = "none";
+      }
+    }
+
+    chip.classList.remove("view-hidden");
+  }
+
+  // Admin action: Change / Restore Author
+  const btnEditAuthor = document.getElementById("btn-edit-author");
+  if (btnEditAuthor) {
+    btnEditAuthor.addEventListener("click", async () => {
+      if (!currentDocId || !currentSubject) return;
+      const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
+      if (!isSuperAdmin) return;
+
+      const currentAuthor = loadedDocumentData ? (loadedDocumentData.authorName || "Student") : "Student";
+      const newAuthor = window.prompt("Enter the original student / author name for this document:", currentAuthor);
+      if (!newAuthor || !newAuthor.trim() || newAuthor.trim() === currentAuthor) return;
+
+      try {
+        const cleanName = newAuthor.trim();
+        const collectionRef = db.collection("subjects").doc(currentSubject.id).collection("documents");
+        await collectionRef.doc(currentDocId).update({
+          authorName: cleanName,
+          lastEditorId: currentUser.uid,
+          lastEditorName: currentProfile?.displayName || currentUser.displayName || "Admin",
+          lastEditorRole: currentProfile?.role || "admin",
+          lastEditorAvatar: currentProfile?.photoURL || currentProfile?.avatarUrl || currentUser?.photoURL || "assets/avatar.jpg",
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        if (loadedDocumentData) {
+          loadedDocumentData.authorName = cleanName;
+          loadedDocumentData.lastEditorId = currentUser.uid;
+          loadedDocumentData.lastEditorName = currentProfile?.displayName || currentUser.displayName || "Admin";
+          loadedDocumentData.lastEditorAvatar = currentProfile?.photoURL || currentProfile?.avatarUrl || currentUser?.photoURL || "assets/avatar.jpg";
+          renderAuthorBadge(loadedDocumentData);
+        }
+
+        showToast(`Author restored to "${cleanName}"!`);
+      } catch (err) {
+        console.error("Error setting author:", err);
+        showToast("Could not update author: " + err.message, "error");
+      }
+    });
   }
 
   /**

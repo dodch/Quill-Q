@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="styles.min.css?v=47" />
+  <link rel="stylesheet" href="styles.min.css?v=48" />
   <link rel="stylesheet" href="libs/blocknote-react.bundle.css?v=3" />
 
   <style>
@@ -48,6 +48,15 @@
         <span id="editor-subject-name">Subject</span>
       </span>
 
+      <!-- Document Author & Editor Badge -->
+      <div class="editor-author-chip view-hidden" id="editor-author-chip" title="Document Author & Contributor">
+        <div class="editor-author-avatars" id="editor-author-avatars"></div>
+        <div class="editor-author-details">
+          <span class="editor-author-by" id="editor-author-by">By Student</span>
+          <span class="editor-author-edited" id="editor-author-edited"></span>
+        </div>
+      </div>
+
       <div class="editor-save-status status-saved" id="editor-save-status">
         <i class="fi fi-rr-check" id="save-status-icon"></i>
         <span id="save-status-text">Saved</span>
@@ -67,6 +76,10 @@
           <i class="fi fi-rr-menu-dots-vertical"></i>
         </button>
         <div class="editor-more-menu view-hidden" id="editor-more-menu" role="menu">
+          <button type="button" class="editor-menu-item view-hidden" id="btn-edit-author" role="menuitem">
+            <i class="fi fi-rr-user-pen"></i>
+            <span>Set Author Name</span>
+          </button>
           <button type="button" class="editor-menu-item" id="btn-print-doc" role="menuitem">
             <i class="fi fi-rr-print"></i>
             <span>Print / PDF (A4)</span>
