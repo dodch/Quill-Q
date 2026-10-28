@@ -1,0 +1,12 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Media and files uploaded in Quill-Q documents
+    match /documents/{docId}/{allPaths=**} {
+      // Allow reading document uploads to all authenticated users
+      allow read: if request.auth != null;
+      // Allow uploading files up to 15MB for authenticated users
+      allow write: if request.auth != null && request.resource.size < 15 * 1024 * 1024;
+    }
+  }
+}

@@ -21,7 +21,8 @@ function initFirebase() {
   }
   return {
     auth: typeof firebase !== "undefined" ? firebase.auth() : null,
-    db: typeof firebase !== "undefined" ? firebase.firestore() : null
+    db: typeof firebase !== "undefined" ? firebase.firestore() : null,
+    storage: typeof firebase !== "undefined" && typeof firebase.storage === "function" ? firebase.storage() : null
   };
 }
 

@@ -245,6 +245,124 @@
     }
   }
 
+  /**
+   * Compresses an image file in the browser using HTML5 Canvas.
+   * Scales down to max 1280px (crisp for A4 & Retina) and encodes to WebP/JPEG (~60KB - 95KB).
+   * This completely bypasses Firebase Storage and fits safely into Firestore for free!
+   */
+  async function compressImageToDataUrl(file, maxWidth = 1280, maxHeight = 1280, quality = 0.82) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            let width = img.width;
+            let height = img.height;
+
+            // Proportional resize if larger than maximum dimensions
+            if (width > maxWidth || height > maxHeight) {
+              if (width / height > maxWidth / maxHeight) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+              } else {
+                width = Math.round((width * maxHeight) / height);
+                height = maxHeight;
+              }
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext("2d");
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Encode to modern WebP (or JPEG fallback)
+            let dataUrl = canvas.toDataURL("image/webp", quality);
+            if (!dataUrl || !dataUrl.startsWith("data:image/webp")) {
+              dataUrl = canvas.toDataURL("image/jpeg", quality);
+            }
+
+            resolve(dataUrl);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        img.onerror = () => reject(new Error("Could not decode image file."));
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(new Error("Could not read image file."));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /**
+   * Direct File Upload Handler for BlockNote (Images, Audio, PDF, etc.)
+   * Automatically compresses images in-browser to WebP (~70KB) so they save
+   * permanently in Firestore with zero Blaze plan or storage bucket needed!
+   */
+  async function handleEditorFileUpload(file) {
+    if (!file) throw new Error("No file selected.");
+
+    const isImage = file.type ? file.type.startsWith("image/") : false;
+    const isAudio = file.type ? file.type.startsWith("audio/") : false;
+
+    // 1. Handle Images with in-browser auto-compression
+    if (isImage) {
+      try {
+        if (typeof showToast === "function") {
+          showToast(`Optimizing ${file.name}...`);
+        }
+
+        const compressedDataUrl = await compressImageToDataUrl(file);
+        const approxKb = Math.round((compressedDataUrl.length * 0.75) / 1024);
+
+        if (typeof showToast === "function") {
+          showToast(`Image added successfully (~${approxKb} KB)!`);
+        }
+
+        return compressedDataUrl;
+      } catch (imgErr) {
+        console.error("Image compression error:", imgErr);
+        const failMsg = "Could not process image. Please try a different image.";
+        if (typeof showToast === "function") showToast(failMsg);
+        throw new Error(failMsg);
+      }
+    }
+
+    // 2. Handle Audio Clips (under 400KB as Data URL, larger via embed link)
+    if (isAudio) {
+      if (file.size <= 400 * 1024) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof showToast === "function") showToast("Audio note added!");
+            resolve(reader.result);
+          };
+          reader.onerror = (e) => reject(e);
+          reader.readAsDataURL(file);
+        });
+      } else {
+        const msg = "Audio file is larger than 400KB. For long recordings, please use the 'Embed' tab with a link (e.g. Google Drive or SoundCloud).";
+        if (typeof showToast === "function") showToast(msg);
+        throw new Error(msg);
+      }
+    }
+
+    // 3. Other files
+    const generalMsg = "Please use the 'Embed' tab to link external files, or select an image to upload directly.";
+    if (typeof showToast === "function") showToast(generalMsg);
+    throw new Error(generalMsg);
+  }
+
+  // Also bind to global for BlockNote bundle fallback
+  if (typeof window !== "undefined") {
+    window.handleBlockNoteUploadFile = handleEditorFileUpload;
+  }
+
   function mountReactBlockNote(initialContent, editable = true) {
     if (!editorContainer) return;
 
@@ -265,6 +383,7 @@
         docTitle: docTitle,
         subjectName: subjName,
         editable: editable,
+        uploadFile: handleEditorFileUpload,
         onChange: () => {
           if (editable) {
             triggerAutosaveDebounced();

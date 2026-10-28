@@ -20,7 +20,8 @@ function A4PageSheet({
   onPageChange,
   onDeletePage,
   onAddPageAfter,
-  editable = true
+  editable = true,
+  uploadFile
 }) {
   const [editor, setEditor] = useState(null);
   const editorRef = useRef(null);
@@ -31,9 +32,21 @@ function A4PageSheet({
       initialBlocks = page.blocks;
     }
 
-    const ed = BlockNoteEditor.create({
+    const editorOptions = {
       initialContent: initialBlocks
-    });
+    };
+
+    const activeUploadFile = typeof uploadFile === "function" 
+      ? uploadFile 
+      : (typeof window !== "undefined" && typeof window.handleBlockNoteUploadFile === "function" 
+          ? window.handleBlockNoteUploadFile 
+          : null);
+
+    if (activeUploadFile) {
+      editorOptions.uploadFile = activeUploadFile;
+    }
+
+    const ed = BlockNoteEditor.create(editorOptions);
 
     setEditor(ed);
     editorRef.current = ed;
@@ -132,7 +145,8 @@ export function MultiPageBlockNoteApp({
   subjectName = "",
   onChange,
   onBridgeReady,
-  editable = true
+  editable = true,
+  uploadFile
 }) {
   const [docTitle, setDocTitle] = useState(initialDocTitle);
 
@@ -409,6 +423,7 @@ export function MultiPageBlockNoteApp({
             onDeletePage={handleDeletePage}
             onAddPageAfter={handleAddPageAfter}
             editable={editable}
+            uploadFile={uploadFile}
           />
         ))}
       </div>
