@@ -3074,6 +3074,24 @@ function initFirebaseAuthAndProfile() {
       if (onboardingGroupAcademic) onboardingGroupAcademic.classList.add("view-hidden");
       if (onboardingGroupTeacherSubject) onboardingGroupTeacherSubject.classList.remove("view-hidden");
 
+      // Prevent hidden inputs from blocking HTML form submission
+      if (onboardingAcademicSelect) {
+        onboardingAcademicSelect.required = false;
+        onboardingAcademicSelect.disabled = true;
+      }
+      if (onboardingName) {
+        onboardingName.required = false;
+        onboardingName.disabled = true;
+      }
+      if (onboardingSurname) {
+        onboardingSurname.required = false;
+        onboardingSurname.disabled = true;
+      }
+      if (onboardingTeacherSelect) {
+        onboardingTeacherSelect.required = true;
+        onboardingTeacherSelect.disabled = false;
+      }
+
       syncTeacherDetails();
     } else {
       if (roleLabelStudent) roleLabelStudent.classList.add("selected");
@@ -3087,6 +3105,23 @@ function initFirebaseAuthAndProfile() {
       // For student: show group select (English Business Grp 1/2), hide teacher subject field
       if (onboardingGroupAcademic) onboardingGroupAcademic.classList.remove("view-hidden");
       if (onboardingGroupTeacherSubject) onboardingGroupTeacherSubject.classList.add("view-hidden");
+
+      if (onboardingAcademicSelect) {
+        onboardingAcademicSelect.required = true;
+        onboardingAcademicSelect.disabled = false;
+      }
+      if (onboardingName) {
+        onboardingName.required = true;
+        onboardingName.disabled = false;
+      }
+      if (onboardingSurname) {
+        onboardingSurname.required = false;
+        onboardingSurname.disabled = false;
+      }
+      if (onboardingTeacherSelect) {
+        onboardingTeacherSelect.required = false;
+        onboardingTeacherSelect.disabled = true;
+      }
     }
   }
 
@@ -3295,6 +3330,14 @@ function initFirebaseAuthAndProfile() {
         if (btnSubmitOnboarding) btnSubmitOnboarding.disabled = false;
       }
     });
+
+    if (btnSubmitOnboarding) {
+      btnSubmitOnboarding.addEventListener("click", () => {
+        if (typeof onboardingForm.requestSubmit === "function") {
+          onboardingForm.requestSubmit();
+        }
+      });
+    }
   }
 
   // Pending Approval page buttons (Check status & Sign out)

@@ -208,7 +208,7 @@
           <p class="auth-card-subtitle">Tell us a bit about yourself to personalize your Quill-Q workspace.</p>
         </div>
 
-        <form class="onboarding-form" id="onboarding-form">
+        <form class="onboarding-form" id="onboarding-form" novalidate>
           <!-- Role Selector: Student vs Teacher -->
           <div class="onboarding-group">
             <label class="onboarding-label">Are you a Student or Teacher? <span class="required-star">*</span></label>
@@ -286,7 +286,7 @@
               <label class="onboarding-label" id="onboarding-academic-label" for="onboarding-academic-select">
                 Department / Group <span class="required-star">*</span>
               </label>
-              <select class="modal-form-select" id="onboarding-academic-select" required>
+              <select class="modal-form-select" id="onboarding-academic-select">
                 <option value="" disabled selected>Select group</option>
                 <option value="English Business Grp 1">English Business Grp 1</option>
                 <option value="English Business Grp 2">English Business Grp 2</option>
@@ -1601,6 +1601,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-  <script src="app.min.js?v=35"></script>
+  <script src="app.min.js?v=36"></script>
 </body>
 </html>

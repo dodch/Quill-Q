@@ -38,10 +38,13 @@ service cloud.firestore {
       );
       allow update: if isAuthenticated() && (
         isSuperAdmin() ||
-        (request.auth.uid == userId && 
-         // Normal users cannot elevate their own role or approve themselves
-         request.resource.data.role == resource.data.role &&
-         request.resource.data.status == resource.data.status)
+        (request.auth.uid == userId && (
+          // Pending users can update or complete profile fields before admin approval
+          (resource.data.status == "pending" && request.resource.data.status == "pending") ||
+          // Approved users cannot elevate their own role or approve themselves
+          (request.resource.data.role == resource.data.role &&
+           request.resource.data.status == resource.data.status)
+        ))
       );
       allow delete: if isSuperAdmin();
 
