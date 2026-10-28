@@ -3981,27 +3981,22 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 
   /* Auth & Onboarding Mobile */
   .auth-page {
-    padding: 20px 16px 36px;
+    padding: 16px 12px 32px;
   }
   .auth-card {
-    padding: 24px 18px;
+    padding: 22px 14px;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-  }
-  .onboarding-row {
-    flex-direction: column;
-    gap: 0;
-  }
-  .role-selector-row {
-    flex-direction: column;
-    gap: 10px;
+    overflow: hidden;
   }
 
   /* Custom popups mobile */
   .custom-dialog-card {
-    width: 92%;
+    width: 100%;
+    max-width: 100%;
     padding: 20px 16px;
+    box-sizing: border-box;
   }
   .custom-dialog-body {
     gap: 12px;
@@ -8520,6 +8515,246 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 .swatch-yellow { background: #fcebbb; }
 .swatch-green { background: #d9f2db; }
 .swatch-purple { background: #e8daf8; }
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS: PROFILE SELECTION, ONBOARDING, MODALS & MENUS
+   ========================================================================== */
+
+@media (max-width: 600px) {
+  /* Auth & Onboarding Mobile Polish */
+  .auth-page {
+    padding: 16px 12px 32px !important;
+    min-height: 100vh !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  .auth-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .auth-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 22px 14px 26px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    border-radius: 18px !important;
+    box-shadow: 4px 6px 0px #1a1816 !important;
+  }
+
+  .auth-card-title {
+    font-size: 23px !important;
+  }
+
+  .auth-card-subtitle {
+    font-size: 13.5px !important;
+    margin-bottom: 16px !important;
+    line-height: 1.45 !important;
+  }
+
+  /* Role Selection: Stack Student & Teacher chips vertically on mobile */
+  .role-selector-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .role-chip {
+    width: 100% !important;
+    padding: 12px 14px !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    gap: 12px !important;
+  }
+
+  .role-chip-icon {
+    width: 32px !important;
+    height: 32px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .role-chip-icon i {
+    font-size: 22px !important;
+  }
+
+  .role-chip-info {
+    min-width: 0 !important;
+    flex: 1 !important;
+  }
+
+  .role-chip-title {
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+  }
+
+  .role-chip-desc {
+    font-size: 11.5px !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    line-height: 1.3 !important;
+    margin-top: 2px !important;
+  }
+
+  /* Form Row: stack student Name & Surname / Gender & Subject vertically on mobile */
+  .onboarding-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .onboarding-group {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .auth-page .modal-form-input,
+  .auth-page .modal-form-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 14.5px !important;
+    height: 44px !important;
+  }
+
+  #onboarding-teacher-select {
+    max-width: 100% !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .badge-auto {
+    font-size: 9px !important;
+    padding: 1px 6px !important;
+    margin-left: 4px !important;
+  }
+
+  .onboarding-actions {
+    margin-top: 10px !important;
+    width: 100% !important;
+  }
+
+  .btn-create-account {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 13px 16px !important;
+    font-size: 14.5px !important;
+    box-shadow: 2px 3px 0px #ef8e60 !important;
+  }
+
+  /* Modals: Ensure Add Homework, Quick Note, and Pinned Note cards fit within screen */
+  .task-modal-backdrop {
+    padding: 12px !important;
+    align-items: center !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .task-modal-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 20px 16px !important;
+    border-radius: 18px !important;
+    box-shadow: 3px 4px 0px #1a1816 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .task-modal-header {
+    margin-bottom: 14px !important;
+  }
+
+  .task-modal-title {
+    font-size: 20px !important;
+  }
+
+  .task-modal-form {
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .modal-form-input,
+  .modal-form-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .task-modal-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-top: 14px !important;
+  }
+
+  .task-modal-actions .task-btn-cancel,
+  .task-modal-actions .task-btn-save {
+    flex: 1 !important;
+    min-width: 0 !important;
+    justify-content: center !important;
+    padding: 0 10px !important;
+    font-size: 1.05rem !important;
+    box-sizing: border-box !important;
+    height: 42px !important;
+  }
+
+  /* Editor More Menu: ensure dropdown stays inside viewport */
+  .editor-more-menu {
+    max-width: calc(100vw - 20px) !important;
+    right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Quick action buttons in homeworks note */
+  .homeworks-note-inner .quick-actions-buttons {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .quick-action-btn {
+    width: 100% !important;
+    height: 42px !important;
+    font-size: 14.5px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Paperclip Header & Add note button on mobile */
+  .paperclip-header-row {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .btn-paperclip-add-note {
+    font-size: 13.5px !important;
+    padding: 4px 8px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Pinned Note Color Picker */
+  .pinned-color-picker {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+
+  /* Pending Approval Card */
+  .pending-user-summary-card {
+    flex-direction: column !important;
+    text-align: center !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+}
+
 
 
 
