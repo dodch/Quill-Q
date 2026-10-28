@@ -7328,12 +7328,10 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 
 .exercise-banner.student-banner {
   background: #fbf7ee;
-  border-left: 6px solid #f6cf7c;
 }
 
 .exercise-banner.review-banner {
   background: #f4f0ff;
-  border-left: 6px solid #845ef7;
 }
 
 .exercise-banner-left {

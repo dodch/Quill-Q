@@ -316,7 +316,14 @@
           document.title = `${data.title} (Your Worksheet) – Quill-Q`;
         }
 
-        loadPinnedNotes();
+        // Load teacher's pinned notes from the exercise document
+        if (Array.isArray(data.pinnedNotes)) {
+          pinnedNotesCache = data.pinnedNotes;
+        } else {
+          pinnedNotesCache = [];
+        }
+        renderPinnedNotes();
+
         mountReactBlockNote(initialContent, true);
         updateSaveStatus("saved");
         return;
@@ -467,6 +474,10 @@
 
     if (banner) banner.classList.remove("view-hidden");
     if (btnSubmit) btnSubmit.classList.remove("view-hidden");
+
+    // Students only read the teacher's pinned notes (cannot add or delete notes)
+    const addNoteBtn = document.getElementById("btn-create-pinned-note");
+    if (addNoteBtn) addNoteBtn.classList.add("view-hidden");
 
     const isSubmitted = status === "submitted";
     if (statusBadge) {
@@ -649,9 +660,19 @@
 
     // Load student's worksheet content
     const studentContent = student.content || masterExerciseBlocks || "{}";
-    if (reactEditorBridge && typeof reactEditorBridge.loadBlocks === "function") {
-      reactEditorBridge.loadBlocks(studentContent);
+
+    // Cleanly unmount previous BlockNote editor instance and mount student's worksheet
+    if (reactEditorBridge && reactEditorBridge.root && typeof reactEditorBridge.root.unmount === "function") {
+      try {
+        reactEditorBridge.root.unmount();
+      } catch (e) {
+        console.warn("Could not unmount root:", e);
+      }
     }
+    if (editorContainer) {
+      editorContainer.innerHTML = "";
+    }
+    mountReactBlockNote(studentContent, false);
 
     const banner = document.getElementById("exercise-review-banner");
     const nameEl = document.getElementById("exercise-review-student-name");
@@ -664,6 +685,7 @@
     if (banner) banner.classList.remove("view-hidden");
 
     if (titleInput) titleInput.readOnly = true;
+    renderPinnedNotes();
     showToast(`Viewing ${student.studentName}'s worksheet (Review Mode)`);
   }
 
@@ -672,11 +694,21 @@
     const banner = document.getElementById("exercise-review-banner");
     if (banner) banner.classList.add("view-hidden");
 
-    if (masterExerciseBlocks && reactEditorBridge && typeof reactEditorBridge.loadBlocks === "function") {
-      reactEditorBridge.loadBlocks(masterExerciseBlocks);
+    // Cleanly unmount student worksheet and restore teacher's master blocks
+    if (reactEditorBridge && reactEditorBridge.root && typeof reactEditorBridge.root.unmount === "function") {
+      try {
+        reactEditorBridge.root.unmount();
+      } catch (e) {
+        console.warn("Could not unmount review root:", e);
+      }
     }
+    if (editorContainer) {
+      editorContainer.innerHTML = "";
+    }
+    mountReactBlockNote(masterExerciseBlocks || undefined, canEditDocument);
 
     if (titleInput && canEditDocument) titleInput.readOnly = false;
+    renderPinnedNotes();
     showToast("Returned to Master Exercise");
   }
 
@@ -1129,6 +1161,13 @@
     } catch (e) {}
   }
 
+  function canCurrentUserManageNotes() {
+    if (isStudentWorksheet || reviewingStudent) return false;
+    const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
+    const isAuthor = currentUser && loadedDocumentData && loadedDocumentData.authorId === currentUser.uid;
+    return Boolean(isSuperAdmin || isAuthor);
+  }
+
   function renderPinnedNotes() {
     const listEl = document.getElementById("pinned-notes-list") || document.getElementById("pinned-notes-sidebar");
     const addBtn = document.getElementById("btn-create-pinned-note");
@@ -1137,19 +1176,25 @@
     if (!listEl) return;
 
     const count = pinnedNotesCache.length;
+    const canManageNotes = canCurrentUserManageNotes();
 
     // Update desktop Add Note button
     if (addBtn) {
-      if (count >= MAX_PINNED_NOTES) {
-        addBtn.disabled = true;
-        addBtn.title = "Maximum 3 pinned notes reached";
-        addBtn.style.opacity = "0.55";
-        addBtn.style.cursor = "not-allowed";
+      if (!canManageNotes) {
+        addBtn.classList.add("view-hidden");
       } else {
-        addBtn.disabled = false;
-        addBtn.title = `Add a pinned note (${count}/${MAX_PINNED_NOTES})`;
-        addBtn.style.opacity = "1";
-        addBtn.style.cursor = "pointer";
+        addBtn.classList.remove("view-hidden");
+        if (count >= MAX_PINNED_NOTES) {
+          addBtn.disabled = true;
+          addBtn.title = "Maximum 3 pinned notes reached";
+          addBtn.style.opacity = "0.55";
+          addBtn.style.cursor = "not-allowed";
+        } else {
+          addBtn.disabled = false;
+          addBtn.title = `Add a pinned note (${count}/${MAX_PINNED_NOTES})`;
+          addBtn.style.opacity = "1";
+          addBtn.style.cursor = "pointer";
+        }
       }
     }
 
@@ -1164,9 +1209,12 @@
     }
 
     if (count === 0) {
+      const emptyMsg = canManageNotes
+        ? `No notes pinned yet.<br/>Tap "+ Note" to pin one!`
+        : `No notes pinned by teacher.`;
       listEl.innerHTML = `
         <div style="font-family: 'Caveat', cursive; font-size: 1.3rem; color: #8e8579; text-align: center; padding: 24px 10px;">
-          No notes pinned yet.<br/>Tap "+ Add Note" to pin one!
+          ${emptyMsg}
         </div>
       `;
       closeMobilePinnedDrawer();
@@ -1190,26 +1238,32 @@
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;");
 
+        const deleteBtn = canManageNotes
+          ? `<button type="button" class="pinned-note-delete" data-del-id="${note.id}" title="Remove note" aria-label="Remove note">
+              <i class="fi fi-rr-cross"></i>
+            </button>`
+          : "";
+
         return `
           <div class="pinned-paper-note ${color}" data-note-id="${note.id}">
             ${tapeHtml}
-            <button type="button" class="pinned-note-delete" data-del-id="${note.id}" title="Remove note" aria-label="Remove note">
-              <i class="fi fi-rr-cross"></i>
-            </button>
+            ${deleteBtn}
             <p>${escapedText}</p>
           </div>
         `;
       })
       .join("");
 
-    // Bind delete buttons
-    listEl.querySelectorAll(".pinned-note-delete").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const id = btn.getAttribute("data-del-id");
-        deletePinnedNote(id);
+    // Bind delete buttons if permitted
+    if (canManageNotes) {
+      listEl.querySelectorAll(".pinned-note-delete").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute("data-del-id");
+          deletePinnedNote(id);
+        });
       });
-    });
+    }
   }
 
   function openMobilePinnedDrawer() {
