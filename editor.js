@@ -40,7 +40,6 @@
   const saveStatusIcon = document.getElementById("save-status-icon");
   const saveStatusText = document.getElementById("save-status-text");
   const btnSaveDoc = document.getElementById("btn-save-doc");
-  const btnExportMd = document.getElementById("btn-export-md");
   const btnPrintDoc = document.getElementById("btn-print-doc");
 
   function getQueryParam(key) {
@@ -294,16 +293,6 @@
     const avatarsContainer = document.getElementById("editor-author-avatars");
     const authorBy = document.getElementById("editor-author-by");
     const authorEdited = document.getElementById("editor-author-edited");
-    const btnEditAuthor = document.getElementById("btn-edit-author");
-
-    const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
-    if (btnEditAuthor) {
-      if (isSuperAdmin && currentDocId) {
-        btnEditAuthor.classList.remove("view-hidden");
-      } else {
-        btnEditAuthor.classList.add("view-hidden");
-      }
-    }
 
     if (!chip || !data) return;
 
@@ -337,46 +326,6 @@
     }
 
     chip.classList.remove("view-hidden");
-  }
-
-  // Admin action: Change / Restore Author
-  const btnEditAuthor = document.getElementById("btn-edit-author");
-  if (btnEditAuthor) {
-    btnEditAuthor.addEventListener("click", async () => {
-      if (!currentDocId || !currentSubject) return;
-      const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
-      if (!isSuperAdmin) return;
-
-      const currentAuthor = loadedDocumentData ? (loadedDocumentData.authorName || "Student") : "Student";
-      const newAuthor = window.prompt("Enter the original student / author name for this document:", currentAuthor);
-      if (!newAuthor || !newAuthor.trim() || newAuthor.trim() === currentAuthor) return;
-
-      try {
-        const cleanName = newAuthor.trim();
-        const collectionRef = db.collection("subjects").doc(currentSubject.id).collection("documents");
-        await collectionRef.doc(currentDocId).update({
-          authorName: cleanName,
-          lastEditorId: currentUser.uid,
-          lastEditorName: currentProfile?.displayName || currentUser.displayName || "Admin",
-          lastEditorRole: currentProfile?.role || "admin",
-          lastEditorAvatar: currentProfile?.photoURL || currentProfile?.avatarUrl || currentUser?.photoURL || "assets/avatar.jpg",
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        if (loadedDocumentData) {
-          loadedDocumentData.authorName = cleanName;
-          loadedDocumentData.lastEditorId = currentUser.uid;
-          loadedDocumentData.lastEditorName = currentProfile?.displayName || currentUser.displayName || "Admin";
-          loadedDocumentData.lastEditorAvatar = currentProfile?.photoURL || currentProfile?.avatarUrl || currentUser?.photoURL || "assets/avatar.jpg";
-          renderAuthorBadge(loadedDocumentData);
-        }
-
-        showToast(`Author restored to "${cleanName}"!`);
-      } catch (err) {
-        console.error("Error setting author:", err);
-        showToast("Could not update author: " + err.message, "error");
-      }
-    });
   }
 
   /**
@@ -578,22 +527,6 @@
       });
     }
 
-    // Export to Markdown
-    if (btnExportMd) {
-      btnExportMd.addEventListener("click", async () => {
-        if (moreMenu) moreMenu.classList.add("view-hidden");
-        if (!reactEditorBridge) return;
-        try {
-          const md = await reactEditorBridge.getMarkdown();
-          const docTitle = (titleInput.value || "document").trim().replace(/[^a-z0-9_-]/gi, "_");
-          downloadTextFile(`${docTitle}.md`, md, "text/markdown");
-          showToast("Exported to Markdown file!");
-        } catch (err) {
-          console.error("Markdown export error:", err);
-          showToast("Markdown export failed: " + err.message, "error");
-        }
-      });
-    }
 
     // Print / PDF
     if (btnPrintDoc) {

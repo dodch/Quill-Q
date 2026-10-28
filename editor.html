@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="styles.min.css?v=48" />
+  <link rel="stylesheet" href="styles.min.css?v=49" />
   <link rel="stylesheet" href="libs/blocknote-react.bundle.css?v=3" />
 
   <style>
@@ -32,6 +32,109 @@
       min-height: 100vh !important;
       overflow-x: hidden !important;
       overflow-y: auto !important;
+    }
+
+    @media print {
+      /* Completely hide floating pin trigger and pinned notes drawer/sidebar */
+      .mobile-pinned-notes-trigger,
+      #mobile-pinned-notes-trigger,
+      .pinned-notes-sidebar,
+      #pinned-notes-sidebar,
+      .pinned-drawer-backdrop,
+      #pinned-drawer-backdrop,
+      #pinned-note-modal,
+      .btn-create-pinned-note {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+
+      /* Hide editor navigation, rails, menus and editing helpers */
+      .editor-top-bar,
+      .editor-top-bar-spacer,
+      .editor-title-card,
+      .a4-right-page-rail,
+      .a4-page-break-divider,
+      .a4-btn-remove-page,
+      .bn-side-menu,
+      .bn-drag-handle,
+      .bn-toolbar,
+      .bn-menu,
+      .editor-more-menu,
+      .inapp-toast-container,
+      .custom-dialog-backdrop,
+      .task-modal-backdrop {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+
+      /* Clean sheet styling for paper / PDF export */
+      html, body {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        height: auto !important;
+        min-height: auto !important;
+      }
+
+      .editor-page {
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .editor-main-canvas {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .multipage-editor-root {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .a4-pages-canvas {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .a4-page-container {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      .a4-page-sheet {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-shadow: none !important;
+        border: 1.5px solid #1a1816 !important;
+        border-radius: 8px !important;
+        margin: 0 0 16px 0 !important;
+        animation: none !important;
+        transform: none !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        box-sizing: border-box !important;
+      }
+
+      .a4-page-container:last-child .a4-page-sheet,
+      .a4-page-container:last-of-type .a4-page-sheet {
+        page-break-after: auto !important;
+        break-after: auto !important;
+        margin-bottom: 0 !important;
+      }
     }
   </style>
 </head>
@@ -76,17 +179,9 @@
           <i class="fi fi-rr-menu-dots-vertical"></i>
         </button>
         <div class="editor-more-menu view-hidden" id="editor-more-menu" role="menu">
-          <button type="button" class="editor-menu-item view-hidden" id="btn-edit-author" role="menuitem">
-            <i class="fi fi-rr-user-pen"></i>
-            <span>Set Author Name</span>
-          </button>
           <button type="button" class="editor-menu-item" id="btn-print-doc" role="menuitem">
             <i class="fi fi-rr-print"></i>
             <span>Print / PDF (A4)</span>
-          </button>
-          <button type="button" class="editor-menu-item" id="btn-export-md" role="menuitem">
-            <i class="fi fi-rr-download"></i>
-            <span>Export Markdown</span>
           </button>
         </div>
       </div>
@@ -236,6 +331,6 @@
   <script src="libs/blocknote-react.bundle.js?v=6"></script>
 
   <!-- BlockNote Standalone Editor Controller -->
-  <script src="editor.js?v=16"></script>
+  <script src="editor.js?v=17"></script>
 </body>
 </html>

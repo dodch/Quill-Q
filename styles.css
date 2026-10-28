@@ -8857,6 +8857,113 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   }
 }
 
+/* ==========================================================================
+   PRINT STYLES: Multi-Page Editor & App Clean Print / PDF Export
+   ========================================================================== */
+@media print {
+  /* Completely hide floating pin trigger and pinned notes drawer/sidebar */
+  .mobile-pinned-notes-trigger,
+  #mobile-pinned-notes-trigger,
+  .pinned-notes-sidebar,
+  #pinned-notes-sidebar,
+  .pinned-drawer-backdrop,
+  #pinned-drawer-backdrop,
+  #pinned-note-modal,
+  .btn-create-pinned-note {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* Hide editor navigation, rails, menus and editing helpers */
+  .editor-top-bar,
+  .editor-top-bar-spacer,
+  .editor-title-card,
+  .a4-right-page-rail,
+  .a4-page-break-divider,
+  .a4-btn-remove-page,
+  .bn-side-menu,
+  .bn-drag-handle,
+  .bn-toolbar,
+  .bn-menu,
+  .editor-more-menu,
+  .inapp-toast-container,
+  .custom-dialog-backdrop,
+  .task-modal-backdrop {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* Clean sheet styling for paper / PDF export */
+  html, body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+  }
+
+  .editor-page {
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .editor-main-canvas {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .multipage-editor-root {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .a4-pages-canvas {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .a4-page-container {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .a4-page-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: 1.5px solid #1a1816 !important;
+    border-radius: 8px !important;
+    margin: 0 0 16px 0 !important;
+    animation: none !important;
+    transform: none !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    box-sizing: border-box !important;
+  }
+
+  .a4-page-container:last-child .a4-page-sheet,
+  .a4-page-container:last-of-type .a4-page-sheet {
+    page-break-after: auto !important;
+    break-after: auto !important;
+    margin-bottom: 0 !important;
+  }
+}
+
+
 
 
 
