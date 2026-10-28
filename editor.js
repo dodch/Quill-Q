@@ -16,6 +16,12 @@
   let isSaving = false;
   let hasPendingChanges = false;
   let autosaveTimer = null;
+  let currentDocType = "document"; // "document" | "exercise"
+  let isStudentWorksheet = false;
+  let currentStudentSubmission = null;
+  let reviewingStudent = null;
+  let masterExerciseBlocks = null;
+  let submissionsUnsubscribe = null;
 
   function escapeHtml(str) {
     if (!str) return "";
@@ -130,10 +136,38 @@
 
       const collectionRef = db.collection("subjects").doc(currentSubject.id).collection("documents");
 
+      // 1. If student is working on an exercise worksheet, save to their personal submission subcollection!
+      if (isStudentWorksheet) {
+        const subDocRef = collectionRef.doc(currentDocId).collection("submissions").doc(currentUser.uid);
+        await subDocRef.set({
+          studentId: currentUser.uid,
+          studentName: currentProfile?.displayName || currentUser.displayName || "Student",
+          studentAvatar: currentProfile?.photoURL || currentProfile?.avatarUrl || currentUser?.photoURL || "assets/avatar.jpg",
+          studentEmail: currentUser.email,
+          content: jsonString,
+          pageCount: pageCount,
+          status: currentStudentSubmission?.status || "in-progress",
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        hasPendingChanges = false;
+        updateSaveStatus("saved");
+        if (manual) showToast("Worksheet draft saved!");
+        return;
+      }
+
+      // 2. If teacher is reviewing a student submission, protect master document from overwriting
+      if (reviewingStudent) {
+        if (manual) showToast("Viewing student submission (Read-only review mode)");
+        updateSaveStatus("saved");
+        return;
+      }
+
       const docPayload = {
         subjectId: currentSubject.id,
         subjectName: currentSubject.name,
         title: docTitle,
+        docType: loadedDocumentData?.docType || currentDocType,
         content: jsonString,
         excerpt: excerpt,
         pageCount: pageCount,
@@ -228,7 +262,66 @@
 
       const data = snapshot.data();
       loadedDocumentData = { id: snapshot.id, ...data };
+      currentDocType = data.docType || "document";
+
       const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
+      const isTeacher = currentProfile && (currentProfile.role === "teacher" || isSuperAdmin);
+      const isAuthor = currentUser && data.authorId === currentUser.uid;
+
+      setupDocTypeUI();
+
+      // STUDENT EXERCISE FLOW:
+      // If document is an Exercise and current user is a Student (not author/teacher):
+      if (currentDocType === "exercise" && !isTeacher && !isAuthor) {
+        isStudentWorksheet = true;
+
+        const subDocRef = db.collection("subjects").doc(currentSubject.id).collection("documents").doc(docId).collection("submissions").doc(currentUser.uid);
+        const subSnap = await subDocRef.get();
+
+        let initialContent = data.content;
+        let subStatus = "in-progress";
+
+        if (subSnap.exists) {
+          currentStudentSubmission = subSnap.data();
+          subStatus = currentStudentSubmission.status || "in-progress";
+          if (currentStudentSubmission.content) {
+            initialContent = currentStudentSubmission.content;
+          }
+        } else {
+          // Initialize student personal worksheet with teacher's exercise blocks
+          currentStudentSubmission = {
+            studentId: currentUser.uid,
+            studentName: currentProfile?.displayName || currentUser.displayName || "Student",
+            studentAvatar: currentProfile?.photoURL || currentProfile?.avatarUrl || currentUser?.photoURL || "assets/avatar.jpg",
+            studentEmail: currentUser.email,
+            status: "in-progress",
+            content: data.content,
+            startedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          };
+          try {
+            await subDocRef.set(currentStudentSubmission);
+          } catch (e) {
+            console.warn("Could not pre-seed student submission:", e);
+          }
+        }
+
+        canEditDocument = true;
+        renderAuthorBadge(loadedDocumentData);
+        setupStudentExerciseUI(subStatus);
+
+        if (titleInput && data.title) {
+          titleInput.value = data.title;
+          titleInput.readOnly = true;
+          document.title = `${data.title} (Your Worksheet) – Quill-Q`;
+        }
+
+        loadPinnedNotes();
+        mountReactBlockNote(initialContent, true);
+        updateSaveStatus("saved");
+        return;
+      }
+
       canEditDocument = isSuperAdmin || (currentUser && data.authorId === currentUser.uid);
 
       renderAuthorBadge(loadedDocumentData);
@@ -326,6 +419,283 @@
     }
 
     chip.classList.remove("view-hidden");
+  }
+
+  /* ==========================================================================
+     INTERACTIVE EXERCISE & SUBMISSIONS SYSTEM
+     ========================================================================== */
+
+  function setupDocTypeUI() {
+    const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
+    const isTeacher = currentProfile && (currentProfile.role === "teacher" || isSuperAdmin);
+    const typeBadge = document.getElementById("editor-type-badge");
+    const btnToggleType = document.getElementById("btn-toggle-type");
+    const btnToggleTypeText = document.getElementById("btn-toggle-type-text");
+    const btnViewSubmissions = document.getElementById("btn-view-submissions");
+
+    if (currentDocType === "exercise") {
+      if (typeBadge) typeBadge.classList.remove("view-hidden");
+      if (isTeacher && currentDocId) {
+        if (btnViewSubmissions) btnViewSubmissions.classList.remove("view-hidden");
+        listenToSubmissionsCount();
+      }
+    } else {
+      if (typeBadge) typeBadge.classList.add("view-hidden");
+      if (btnViewSubmissions) btnViewSubmissions.classList.add("view-hidden");
+    }
+
+    if (btnToggleType) {
+      if (isSuperAdmin && currentDocId) {
+        btnToggleType.classList.remove("view-hidden");
+        if (btnToggleTypeText) {
+          btnToggleTypeText.textContent = currentDocType === "exercise" ? "Convert to Lesson Doc" : "Convert to Exercise";
+        }
+      } else {
+        btnToggleType.classList.add("view-hidden");
+      }
+    }
+  }
+
+  function setupStudentExerciseUI(status = "in-progress") {
+    const banner = document.getElementById("exercise-student-banner");
+    const btnSubmit = document.getElementById("btn-submit-exercise");
+    const btnBannerSubmit = document.getElementById("btn-banner-submit");
+    const statusBadge = document.getElementById("exercise-status-badge");
+    const statusDesc = document.getElementById("exercise-status-desc");
+    const btnSubmitText = document.getElementById("btn-submit-exercise-text");
+    const btnBannerSubmitText = document.getElementById("btn-banner-submit-text");
+
+    if (banner) banner.classList.remove("view-hidden");
+    if (btnSubmit) btnSubmit.classList.remove("view-hidden");
+
+    const isSubmitted = status === "submitted";
+    if (statusBadge) {
+      statusBadge.textContent = isSubmitted ? "🟢 Submitted" : "🟡 In Progress";
+      statusBadge.style.color = isSubmitted ? "#2b8a3e" : "#d9480f";
+      statusBadge.style.borderColor = isSubmitted ? "#2b8a3e" : "#d9480f";
+    }
+    if (statusDesc) {
+      statusDesc.innerHTML = isSubmitted
+        ? "Your worksheet has been turned in to your teacher. You can click <strong>Unsubmit</strong> if you need to make changes."
+        : "This is your personal worksheet. Answers auto-save as you type. When finished, click <strong>Turn In</strong>!";
+    }
+    if (btnSubmitText) btnSubmitText.textContent = isSubmitted ? "Unsubmit" : "Turn In";
+    if (btnBannerSubmitText) btnBannerSubmitText.textContent = isSubmitted ? "Unsubmit" : "Turn In";
+  }
+
+  async function toggleStudentSubmission() {
+    if (!currentDocId || !isStudentWorksheet || !currentUser) return;
+    const isCurrentlySubmitted = currentStudentSubmission?.status === "submitted";
+    const newStatus = isCurrentlySubmitted ? "in-progress" : "submitted";
+
+    try {
+      const subDocRef = db.collection("subjects").doc(currentSubject.id).collection("documents").doc(currentDocId).collection("submissions").doc(currentUser.uid);
+      
+      const jsonString = reactEditorBridge && typeof reactEditorBridge.getJSONString === "function" ? reactEditorBridge.getJSONString() : "{}";
+
+      await subDocRef.set({
+        status: newStatus,
+        content: jsonString,
+        studentName: currentProfile?.displayName || currentUser.displayName || "Student",
+        studentAvatar: currentProfile?.photoURL || currentProfile?.avatarUrl || currentUser?.photoURL || "assets/avatar.jpg",
+        submittedAt: newStatus === "submitted" ? firebase.firestore.FieldValue.serverTimestamp() : null,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      if (currentStudentSubmission) {
+        currentStudentSubmission.status = newStatus;
+        currentStudentSubmission.content = jsonString;
+      }
+
+      setupStudentExerciseUI(newStatus);
+      showToast(newStatus === "submitted" ? "🎉 Worksheet turned in to teacher!" : "Worksheet reopened for editing.");
+    } catch (e) {
+      console.error("Submission toggle error:", e);
+      showToast("Error updating submission: " + e.message, "error");
+    }
+  }
+
+  function listenToSubmissionsCount() {
+    if (!currentDocId || !db || !currentSubject) return;
+    if (submissionsUnsubscribe) {
+      try { submissionsUnsubscribe(); } catch (e) {}
+      submissionsUnsubscribe = null;
+    }
+
+    const subCol = db.collection("subjects").doc(currentSubject.id).collection("documents").doc(currentDocId).collection("submissions");
+    submissionsUnsubscribe = subCol.onSnapshot((snap) => {
+      const count = snap.size;
+      const btnText = document.getElementById("submissions-btn-text");
+      if (btnText) {
+        btnText.textContent = `Submissions (${count})`;
+      }
+    }, (err) => {
+      console.warn("Submissions count listener error:", err);
+    });
+  }
+
+  async function openSubmissionsDrawer() {
+    const drawer = document.getElementById("submissions-drawer");
+    const backdrop = document.getElementById("submissions-drawer-backdrop");
+    if (drawer) drawer.classList.remove("view-hidden");
+    if (backdrop) backdrop.classList.remove("view-hidden");
+    await loadSubmissionsList();
+  }
+
+  function closeSubmissionsDrawer() {
+    const drawer = document.getElementById("submissions-drawer");
+    const backdrop = document.getElementById("submissions-drawer-backdrop");
+    if (drawer) drawer.classList.add("view-hidden");
+    if (backdrop) backdrop.classList.add("view-hidden");
+  }
+
+  async function loadSubmissionsList() {
+    if (!currentDocId || !db || !currentSubject) return;
+    const listContainer = document.getElementById("submissions-students-list");
+    const summaryCount = document.getElementById("submissions-summary-count");
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '<div style="text-align:center; padding: 20px; color: #8c8275;">Loading submissions...</div>';
+
+    try {
+      // 1. Fetch approved students
+      const usersSnap = await db.collection("users").get();
+      const students = [];
+      usersSnap.forEach((u) => {
+        const uData = u.data();
+        if (uData.role === "student" || uData.role === "Student") {
+          students.push({ uid: u.id, ...uData });
+        }
+      });
+
+      // 2. Fetch submissions for this exercise
+      const subSnap = await db.collection("subjects").doc(currentSubject.id).collection("documents").doc(currentDocId).collection("submissions").get();
+      const submissionsMap = {};
+      subSnap.forEach((s) => {
+        submissionsMap[s.id] = s.data();
+      });
+
+      const submittedCount = Object.values(submissionsMap).filter(s => s.status === "submitted").length;
+      if (summaryCount) {
+        summaryCount.textContent = `${submittedCount} of ${students.length} students turned in`;
+      }
+
+      if (students.length === 0) {
+        listContainer.innerHTML = '<div style="text-align:center; padding: 20px; color: #8c8275;">No students registered yet.</div>';
+        return;
+      }
+
+      listContainer.innerHTML = "";
+      students.forEach((st) => {
+        const sub = submissionsMap[st.uid];
+        const status = sub ? sub.status : "not-started";
+        const hasWork = Boolean(sub && sub.content);
+
+        let statusBadge = '<span class="student-card-status-pill" style="background:#f1f3f5; color:#868e96;">⚪ Not Started</span>';
+        if (status === "submitted") {
+          statusBadge = '<span class="student-card-status-pill" style="background:#d3f9d8; color:#2b8a3e;">🟢 Submitted</span>';
+        } else if (status === "in-progress") {
+          statusBadge = '<span class="student-card-status-pill" style="background:#fff3bf; color:#d9480f;">🟡 In Progress</span>';
+        }
+
+        const card = document.createElement("div");
+        card.className = "submission-student-card";
+        const avatarUrl = st.photoURL || st.avatarUrl || "assets/avatar.jpg";
+        const studentName = st.displayName || st.name || st.email.split("@")[0];
+
+        card.innerHTML = `
+          <div class="student-card-left">
+            <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(studentName)}" class="student-card-avatar" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
+            <div>
+              <div class="student-card-name">${escapeHtml(studentName)}</div>
+              <div class="student-card-subtext">${hasWork ? (status === 'submitted' ? 'Turned in • Click to review' : 'Draft in progress') : 'Has not started yet'}</div>
+            </div>
+          </div>
+          <div class="student-card-right">
+            ${statusBadge}
+          </div>
+        `;
+
+        card.addEventListener("click", () => {
+          if (!hasWork) {
+            showToast(`${studentName} hasn't started this exercise yet.`, "info");
+            return;
+          }
+          reviewStudentSubmission({
+            id: st.uid,
+            studentName: studentName,
+            studentAvatar: avatarUrl,
+            status: status,
+            content: sub.content
+          });
+        });
+
+        listContainer.appendChild(card);
+      });
+    } catch (e) {
+      console.error("Error loading submissions:", e);
+      listContainer.innerHTML = `<div style="color: #c92a2a; padding: 16px;">Failed to load submissions: ${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  async function reviewStudentSubmission(student) {
+    closeSubmissionsDrawer();
+    reviewingStudent = student;
+
+    // Cache teacher's master blocks before loading student work
+    if (!masterExerciseBlocks && reactEditorBridge && typeof reactEditorBridge.getJSONString === "function") {
+      masterExerciseBlocks = reactEditorBridge.getJSONString();
+    }
+
+    // Load student's worksheet content
+    const studentContent = student.content || masterExerciseBlocks || "{}";
+    if (reactEditorBridge && typeof reactEditorBridge.loadBlocks === "function") {
+      reactEditorBridge.loadBlocks(studentContent);
+    }
+
+    const banner = document.getElementById("exercise-review-banner");
+    const nameEl = document.getElementById("exercise-review-student-name");
+    const statusEl = document.getElementById("exercise-review-status");
+    const avatarEl = document.getElementById("exercise-review-avatar");
+
+    if (nameEl) nameEl.textContent = student.studentName || "Student";
+    if (statusEl) statusEl.textContent = student.status === "submitted" ? "🟢 Submitted" : (student.status === "in-progress" ? "🟡 In Progress" : "⚪ Not Started");
+    if (avatarEl && student.studentAvatar) avatarEl.src = student.studentAvatar;
+    if (banner) banner.classList.remove("view-hidden");
+
+    if (titleInput) titleInput.readOnly = true;
+    showToast(`Viewing ${student.studentName}'s worksheet (Review Mode)`);
+  }
+
+  function exitStudentReview() {
+    reviewingStudent = null;
+    const banner = document.getElementById("exercise-review-banner");
+    if (banner) banner.classList.add("view-hidden");
+
+    if (masterExerciseBlocks && reactEditorBridge && typeof reactEditorBridge.loadBlocks === "function") {
+      reactEditorBridge.loadBlocks(masterExerciseBlocks);
+    }
+
+    if (titleInput && canEditDocument) titleInput.readOnly = false;
+    showToast("Returned to Master Exercise");
+  }
+
+  async function toggleDocumentType() {
+    if (!currentDocId || !isSuperAdminUser(currentProfile, currentUser) || !currentSubject) return;
+    const newType = currentDocType === "exercise" ? "document" : "exercise";
+    try {
+      await db.collection("subjects").doc(currentSubject.id).collection("documents").doc(currentDocId).update({
+        docType: newType,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      currentDocType = newType;
+      if (loadedDocumentData) loadedDocumentData.docType = newType;
+      setupDocTypeUI();
+      showToast(`Converted document to ${newType === "exercise" ? "Exercise" : "Lesson Doc"}!`);
+    } catch (e) {
+      console.error("Error converting doc type:", e);
+      showToast("Conversion failed: " + e.message, "error");
+    }
   }
 
   /**
@@ -542,6 +912,36 @@
         saveDocumentToFirestore(true);
       });
     }
+
+    // Toggle Document Type (SuperAdmin only)
+    const btnToggleType = document.getElementById("btn-toggle-type");
+    if (btnToggleType) {
+      btnToggleType.addEventListener("click", () => {
+        if (moreMenu) moreMenu.classList.add("view-hidden");
+        toggleDocumentType();
+      });
+    }
+
+    // View Submissions (Teacher / Admin)
+    const btnViewSubmissions = document.getElementById("btn-view-submissions");
+    if (btnViewSubmissions) {
+      btnViewSubmissions.addEventListener("click", openSubmissionsDrawer);
+    }
+
+    const btnCloseSubDrawer = document.getElementById("btn-close-submissions-drawer");
+    const subBackdrop = document.getElementById("submissions-drawer-backdrop");
+    if (btnCloseSubDrawer) btnCloseSubDrawer.addEventListener("click", closeSubmissionsDrawer);
+    if (subBackdrop) subBackdrop.addEventListener("click", closeSubmissionsDrawer);
+
+    // Student Submit Buttons
+    const btnSubmitExercise = document.getElementById("btn-submit-exercise");
+    const btnBannerSubmit = document.getElementById("btn-banner-submit");
+    if (btnSubmitExercise) btnSubmitExercise.addEventListener("click", toggleStudentSubmission);
+    if (btnBannerSubmit) btnBannerSubmit.addEventListener("click", toggleStudentSubmission);
+
+    // Exit Review Mode
+    const btnExitReview = document.getElementById("btn-exit-review");
+    if (btnExitReview) btnExitReview.addEventListener("click", exitStudentReview);
 
     // Title input changes trigger autosave and update running headers live
     if (titleInput) {
@@ -1005,8 +1405,14 @@
         if (currentDocId) {
           await loadExistingDocument(currentDocId);
         } else {
+          const typeParam = getQueryParam("type");
+          currentDocType = typeParam === "exercise" ? "exercise" : "document";
+          setupDocTypeUI();
           mountReactBlockNote();
-          if (titleInput) titleInput.focus();
+          if (titleInput) {
+            titleInput.placeholder = currentDocType === "exercise" ? "Exercise Title (e.g. Punctuation Practice)..." : "Untitled Document...";
+            titleInput.focus();
+          }
         }
       });
     }

@@ -6600,6 +6600,117 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   background: #fffdf5;
 }
 
+/* Subject Hub Section Tabs (Docs vs Exercises) */
+.subject-section-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #fdfbf7;
+  border: 2px solid #1a1816;
+  border-radius: 16px;
+  padding: 5px 6px;
+  box-shadow: 3px 4px 0 #1a1816;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  animation: docsActionBarBouncyEntrance 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+}
+
+.subject-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 11px;
+  padding: 8px 16px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #635b54;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  outline: none;
+}
+
+.subject-tab-btn i {
+  font-size: 1.05rem;
+  transition: transform 0.2s ease;
+}
+
+.subject-tab-btn:hover {
+  color: #1a1816;
+  background: #f7f2e7;
+  transform: translateY(-1px);
+}
+
+.subject-tab-btn.active {
+  background: #ffffff;
+  border-color: #1a1816;
+  color: #1a1816;
+  box-shadow: 2px 2px 0 #1a1816;
+  transform: translateY(-1px);
+}
+
+.subject-tab-btn.active i {
+  transform: scale(1.15);
+}
+
+.subject-tab-count {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #f1ebd8;
+  color: #4a423a;
+  border: 1px solid #1a1816;
+  border-radius: 10px;
+  padding: 1px 7px;
+  line-height: 1.2;
+}
+
+.subject-tab-btn.active .subject-tab-count {
+  background: #f6cf7c;
+  color: #1a1816;
+}
+
+/* Badge on Exercise Cards */
+.doc-card-badge.doc-badge-exercise {
+  background: #f0e6ff;
+  color: #5c2799;
+  border-color: #5c2799;
+}
+
+.doc-card-badge.doc-badge-exercise i {
+  color: #7934c9;
+}
+
+/* Submission Pill for Teacher & Student */
+.doc-card-submission-pill {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1.2px solid #1a1816;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.doc-card-submission-pill.status-submitted {
+  background: #d3f9d8;
+  color: #2b8a3e;
+}
+
+.doc-card-submission-pill.status-in-progress {
+  background: #fff3bf;
+  color: #d9480f;
+}
+
+.doc-card-submission-pill.status-not-started {
+  background: #f1f3f5;
+  color: #868e96;
+}
+
 /* Document Hub Action Bar with Bouncy Reveal */
 .docs-action-bar {
   display: flex;
@@ -7166,6 +7277,266 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 .editor-subject-badge.card-green { background: #dcf2e3; }
 .editor-subject-badge.card-purple { background: #e8dcf8; }
 .editor-subject-badge.card-yellow { background: #fdf0cd; }
+
+/* Exercise Type Badge in Editor Top Bar */
+.editor-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: 1.5px solid #5c2799;
+  border-radius: 8px;
+  padding: 3px 10px;
+  background: #f3ebff;
+  color: #5c2799;
+  flex-shrink: 0;
+}
+
+.editor-type-badge i {
+  font-size: 0.95rem;
+  color: #7934c9;
+}
+
+.btn-submit-exercise {
+  background: #20c997 !important;
+  border-color: #1a1816 !important;
+}
+
+.btn-submit-exercise:hover {
+  background: #12b886 !important;
+}
+
+/* Exercise Banners (Student & Teacher Review) */
+.exercise-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #ffffff;
+  border: 2px solid #1a1816;
+  border-radius: 14px;
+  padding: 12px 20px;
+  box-shadow: 3px 4px 0 #1a1816;
+  margin: 0 auto 20px;
+  max-width: 816px;
+  width: 100%;
+  box-sizing: border-box;
+  animation: editorCardReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.exercise-banner.student-banner {
+  background: #fbf7ee;
+  border-left: 6px solid #f6cf7c;
+}
+
+.exercise-banner.review-banner {
+  background: #f4f0ff;
+  border-left: 6px solid #845ef7;
+}
+
+.exercise-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 auto;
+}
+
+.exercise-banner-status {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1.5px solid #1a1816;
+  box-shadow: 1px 1px 0 #1a1816;
+  white-space: nowrap;
+}
+
+.exercise-banner-desc {
+  font-size: 0.92rem;
+  color: #534c44;
+  line-height: 1.35;
+}
+
+.exercise-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.exercise-review-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid #1a1816;
+  object-fit: cover;
+  box-shadow: 1.5px 1.5px 0 #1a1816;
+}
+
+.exercise-review-title {
+  display: block;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.15rem;
+  color: #1a1816;
+  line-height: 1.1;
+}
+
+.exercise-review-status {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #5c2799;
+}
+
+/* Submissions Drawer (Teacher Only) */
+.submissions-drawer {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 360px;
+  max-width: 90vw;
+  height: 100vh;
+  background: #ffffff;
+  border-left: 2.5px solid #1a1816;
+  box-shadow: -6px 0 28px rgba(26, 24, 22, 0.16);
+  z-index: 99996;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px;
+  box-sizing: border-box;
+  transform: translateX(0);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.submissions-drawer.view-hidden {
+  display: flex !important;
+  transform: translateX(105%) !important;
+  pointer-events: none !important;
+}
+
+.submissions-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 2px dashed #ded7c8;
+}
+
+.submissions-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #1a1816;
+}
+
+.btn-close-submissions-drawer {
+  background: transparent;
+  border: none;
+  font-size: 1.8rem;
+  line-height: 1;
+  color: #8c8275;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.btn-close-submissions-drawer:hover {
+  color: #c92a2a;
+  transform: scale(1.15);
+}
+
+.submissions-summary-bar {
+  padding: 12px 14px;
+  background: #fdf8eb;
+  border: 1.5px solid #1a1816;
+  border-radius: 10px;
+  margin: 16px 0 14px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #635b54;
+  box-shadow: 2px 2px 0 #1a1816;
+}
+
+.submissions-students-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.submission-student-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #faf8f5;
+  border: 1.5px solid #1a1816;
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 2px 2px 0 #1a1816;
+  transition: transform 0.15s ease, background 0.15s ease;
+  cursor: pointer;
+}
+
+.submission-student-card:hover {
+  background: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 3px 3px 0 #1a1816;
+}
+
+.student-card-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.student-card-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.2px solid #1a1816;
+  object-fit: cover;
+}
+
+.student-card-name {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1816;
+  line-height: 1.1;
+}
+
+.student-card-subtext {
+  font-size: 0.75rem;
+  color: #7d756d;
+}
+
+.student-card-status-pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid #1a1816;
+  white-space: nowrap;
+}
+
+.submissions-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 24, 22, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 99995;
+}
 
 .editor-save-status {
   display: inline-flex;
@@ -8880,6 +9251,11 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   .editor-top-bar,
   .editor-top-bar-spacer,
   .editor-title-card,
+  .editor-type-badge,
+  .btn-submit-exercise,
+  .exercise-banner,
+  .submissions-drawer,
+  .submissions-drawer-backdrop,
   .a4-right-page-rail,
   .a4-page-break-divider,
   .a4-btn-remove-page,

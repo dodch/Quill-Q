@@ -26,11 +26,18 @@
   const heroSchedule = document.getElementById("subject-schedule-name");
   const subjectSelect = document.getElementById("subject-select");
   const btnCreateDoc = document.getElementById("btn-create-document");
+  const btnCreateLabel = document.getElementById("btn-create-label");
+  const tabBtnDocs = document.getElementById("tab-btn-docs");
+  const tabBtnExercises = document.getElementById("tab-btn-exercises");
+  const tabCountDocs = document.getElementById("tab-count-docs");
+  const tabCountExercises = document.getElementById("tab-count-exercises");
   const docsGrid = document.getElementById("docs-grid");
   const searchInput = document.getElementById("docs-search-input");
   const navAvatar = document.getElementById("nav-user-avatar");
   const navName = document.getElementById("nav-user-name");
   const navRole = document.getElementById("nav-user-role");
+
+  let activeTab = "docs"; // "docs" | "exercises"
 
   function isSuperAdminUser(profile, user) {
     if (user && user.email && SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase().trim())) return true;
@@ -95,13 +102,40 @@
       heroIcon.innerHTML = getSubjectIconSvg(subject.icon);
     }
 
-    if (btnCreateDoc) {
-      btnCreateDoc.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}&action=new`;
-    }
+    updateCreateBtn();
 
     if (subjectSelect) {
       subjectSelect.value = currentSubjectId;
     }
+  }
+
+  function updateCreateBtn() {
+    if (!btnCreateDoc) return;
+    const isExercise = activeTab === "exercises";
+    btnCreateDoc.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}&action=new&type=${isExercise ? "exercise" : "doc"}`;
+    if (btnCreateLabel) {
+      btnCreateLabel.textContent = isExercise ? "Create Exercise" : "Create Document";
+    }
+    if (searchInput) {
+      searchInput.placeholder = isExercise 
+        ? "Search exercises, practice worksheets, tasks..." 
+        : "Search lesson notes, summaries, topics...";
+    }
+  }
+
+  function switchTab(newTab) {
+    if (activeTab === newTab) return;
+    activeTab = newTab;
+    if (tabBtnDocs) {
+      tabBtnDocs.classList.toggle("active", activeTab === "docs");
+      tabBtnDocs.setAttribute("aria-selected", activeTab === "docs");
+    }
+    if (tabBtnExercises) {
+      tabBtnExercises.classList.toggle("active", activeTab === "exercises");
+      tabBtnExercises.setAttribute("aria-selected", activeTab === "exercises");
+    }
+    updateCreateBtn();
+    filterAndRenderDocs();
   }
 
   function switchSubject(newSubjectId) {
@@ -122,19 +156,22 @@
 
     if (!docs || docs.length === 0) {
       const isSearch = searchInput && searchInput.value.trim().length > 0;
+      const isExerciseTab = activeTab === "exercises";
       docsGrid.innerHTML = `
         <div class="docs-empty-state">
-          <div class="docs-empty-icon">
-            <i class="fi fi-rr-document"></i>
+          <div class="docs-empty-icon" style="${isExerciseTab ? 'background: #f0e6ff;' : ''}">
+            <i class="fi ${isExerciseTab ? 'fi-rr-edit' : 'fi-rr-document'}" style="${isExerciseTab ? 'color: #7934c9;' : ''}"></i>
           </div>
-          <h2 class="docs-empty-title">${isSearch ? "No matching documents found" : "No documents yet for this subject"}</h2>
+          <h2 class="docs-empty-title">
+            ${isSearch ? "No matching results found" : (isExerciseTab ? "No exercises yet for this subject" : "No lesson documents yet")}
+          </h2>
           <p class="docs-empty-desc">
-            ${isSearch ? "Try searching with different keywords." : "Be the first to capture lecture notes, study guides, or collaborative exercises!"}
+            ${isSearch ? "Try searching with different keywords." : (isExerciseTab ? "Create interactive worksheets and practice tasks for students to answer!" : "Be the first to capture lecture notes, study guides, and summaries!")}
           </p>
           ${!isSearch ? `
-            <a href="editor.html?subject=${encodeURIComponent(currentSubjectId)}&action=new" class="btn-create-doc" style="margin-top: 8px;">
+            <a href="editor.html?subject=${encodeURIComponent(currentSubjectId)}&action=new&type=${isExerciseTab ? 'exercise' : 'doc'}" class="btn-create-doc" style="margin-top: 8px;">
               <i class="fi fi-sr-add"></i>
-              <span>Create First Document</span>
+              <span>${isExerciseTab ? 'Create First Exercise' : 'Create First Document'}</span>
             </a>
           ` : ""}
         </div>
@@ -152,6 +189,7 @@
 
       const title = doc.title || "Untitled Document";
       const excerpt = doc.excerpt || "Empty document...";
+      const isExercise = doc.docType === "exercise";
       const authorName = doc.authorName || "Student";
       const authorRole = doc.authorRole || "Student";
       const authorAvatar = doc.authorAvatar || doc.authorPhotoURL || "assets/avatar.jpg";
@@ -163,9 +201,9 @@
 
       card.innerHTML = `
         <div class="doc-card-top">
-          <span class="doc-card-badge">
-            <i class="fi fi-rr-file-edit"></i>
-            <span>Notes</span>
+          <span class="doc-card-badge ${isExercise ? 'doc-badge-exercise' : ''}">
+            <i class="fi ${isExercise ? 'fi-rr-edit' : 'fi-rr-file-edit'}"></i>
+            <span>${isExercise ? 'Exercise' : 'Notes'}</span>
           </span>
           <div class="doc-card-actions">
             <a href="editor.html?subject=${encodeURIComponent(currentSubjectId)}&docId=${encodeURIComponent(doc.id)}" 
@@ -338,13 +376,24 @@
   }
 
   function filterAndRenderDocs() {
+    // 1. Update live counters for both tabs
+    const docsList = allDocumentsCache.filter((d) => (d.docType || "document") !== "exercise");
+    const exercisesList = allDocumentsCache.filter((d) => (d.docType || "document") === "exercise");
+
+    if (tabCountDocs) tabCountDocs.textContent = docsList.length;
+    if (tabCountExercises) tabCountExercises.textContent = exercisesList.length;
+
+    // 2. Select target list based on active tab
+    const targetList = activeTab === "exercises" ? exercisesList : docsList;
+
+    // 3. Search query filtering
     const q = searchInput ? searchInput.value.toLowerCase().trim() : "";
     if (!q) {
-      renderDocumentCards(allDocumentsCache);
+      renderDocumentCards(targetList);
       return;
     }
 
-    const filtered = allDocumentsCache.filter((doc) => {
+    const filtered = targetList.filter((doc) => {
       const titleMatch = (doc.title || "").toLowerCase().includes(q);
       const excerptMatch = (doc.excerpt || "").toLowerCase().includes(q);
       const authorMatch = (doc.authorName || "").toLowerCase().includes(q);
@@ -377,6 +426,14 @@
 
   // Initialization lifecycle
   document.addEventListener("DOMContentLoaded", () => {
+    // Bind Tab Switching Events
+    if (tabBtnDocs) {
+      tabBtnDocs.addEventListener("click", () => switchTab("docs"));
+    }
+    if (tabBtnExercises) {
+      tabBtnExercises.addEventListener("click", () => switchTab("exercises"));
+    }
+
     // 1. Determine subject from query parameter
     const querySub = getQueryParam("id") || getQueryParam("subject");
     if (querySub && typeof getSubjectById === "function" && getSubjectById(querySub)) {

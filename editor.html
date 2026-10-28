@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="styles.min.css?v=49" />
+  <link rel="stylesheet" href="styles.min.css?v=50" />
   <link rel="stylesheet" href="libs/blocknote-react.bundle.css?v=3" />
 
   <style>
@@ -54,6 +54,11 @@
       .editor-top-bar,
       .editor-top-bar-spacer,
       .editor-title-card,
+      .editor-type-badge,
+      .btn-submit-exercise,
+      .exercise-banner,
+      .submissions-drawer,
+      .submissions-drawer-backdrop,
       .a4-right-page-rail,
       .a4-page-break-divider,
       .a4-btn-remove-page,
@@ -151,6 +156,12 @@
         <span id="editor-subject-name">Subject</span>
       </span>
 
+      <!-- Document / Exercise Type Badge -->
+      <span class="editor-type-badge view-hidden" id="editor-type-badge" title="Document Type">
+        <i class="fi fi-rr-edit" id="editor-type-icon"></i>
+        <span id="editor-type-label">Exercise</span>
+      </span>
+
       <!-- Document Author & Editor Badge -->
       <div class="editor-author-chip view-hidden" id="editor-author-chip" title="Document Author & Contributor">
         <div class="editor-author-avatars" id="editor-author-avatars"></div>
@@ -167,18 +178,34 @@
     </div>
 
     <div class="editor-bar-right">
+      <!-- Teacher Submissions Button -->
+      <button type="button" class="editor-btn-secondary view-hidden" id="btn-view-submissions" title="View student submissions">
+        <i class="fi fi-rr-users"></i>
+        <span id="submissions-btn-text">Submissions (0)</span>
+      </button>
+
+      <!-- Student Submit Exercise Button -->
+      <button type="button" class="editor-btn-primary btn-submit-exercise view-hidden" id="btn-submit-exercise" title="Turn in your worksheet">
+        <i class="fi fi-rr-paper-plane"></i>
+        <span id="btn-submit-exercise-text">Turn In</span>
+      </button>
+
       <!-- Add Pinned Note Button -->
       <button type="button" class="editor-btn-secondary btn-create-pinned-note" id="btn-create-pinned-note" title="Pin a note to side (up to 3)">
         <i class="fi fi-rr-plus"></i>
         <span>Note</span>
       </button>
 
-      <!-- More Actions Dropdown (Export MD, Print A4) -->
+      <!-- More Actions Dropdown -->
       <div class="editor-more-dropdown-wrap" id="editor-more-dropdown-wrap">
         <button type="button" class="editor-btn-secondary btn-editor-more" id="btn-editor-more" title="More options" aria-label="More options">
           <i class="fi fi-rr-menu-dots-vertical"></i>
         </button>
         <div class="editor-more-menu view-hidden" id="editor-more-menu" role="menu">
+          <button type="button" class="editor-menu-item view-hidden" id="btn-toggle-type" role="menuitem">
+            <i class="fi fi-rr-exchange"></i>
+            <span id="btn-toggle-type-text">Convert to Exercise</span>
+          </button>
           <button type="button" class="editor-menu-item" id="btn-print-doc" role="menuitem">
             <i class="fi fi-rr-print"></i>
             <span>Print / PDF (A4)</span>
@@ -199,6 +226,37 @@
 
   <!-- Multi-Page Document Canvas -->
   <main class="editor-main-canvas">
+    <!-- Student Exercise Banner -->
+    <div class="exercise-banner student-banner view-hidden" id="exercise-student-banner">
+      <div class="exercise-banner-left">
+        <span class="exercise-banner-status" id="exercise-status-badge">🟡 In Progress</span>
+        <span class="exercise-banner-desc" id="exercise-status-desc">This is your personal worksheet. Answers auto-save as you type. When finished, click <strong>Turn In</strong>!</span>
+      </div>
+      <div class="exercise-banner-actions">
+        <button type="button" class="editor-btn-primary btn-banner-submit" id="btn-banner-submit">
+          <i class="fi fi-rr-paper-plane"></i>
+          <span id="btn-banner-submit-text">Turn In</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Teacher Review Banner (when inspecting student work) -->
+    <div class="exercise-banner review-banner view-hidden" id="exercise-review-banner">
+      <div class="exercise-banner-left">
+        <img src="assets/avatar.jpg" alt="Student" class="exercise-review-avatar" id="exercise-review-avatar" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
+        <div>
+          <span class="exercise-review-title">Reviewing Submission: <strong id="exercise-review-student-name">Student</strong></span>
+          <span class="exercise-review-status" id="exercise-review-status">Submitted</span>
+        </div>
+      </div>
+      <div class="exercise-banner-actions">
+        <button type="button" class="editor-btn-secondary" id="btn-exit-review">
+          <i class="fi fi-rr-arrow-left"></i>
+          <span>Back to Master</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Editable Title Card -->
     <div class="editor-title-card">
       <input 
@@ -217,6 +275,24 @@
       <!-- MultiPageBlockNoteApp mounts here -->
     </div>
   </main>
+
+  <!-- Submissions Drawer (Teacher Only) -->
+  <aside class="submissions-drawer view-hidden" id="submissions-drawer" aria-label="Student Submissions">
+    <div class="submissions-drawer-header">
+      <div class="submissions-header-left">
+        <i class="fi fi-rr-users"></i>
+        <span class="submissions-drawer-title">Student Submissions</span>
+      </div>
+      <button type="button" class="btn-close-submissions-drawer" id="btn-close-submissions-drawer" aria-label="Close submissions">&times;</button>
+    </div>
+    <div class="submissions-summary-bar" id="submissions-summary-bar">
+      <span id="submissions-summary-count">Loading submissions...</span>
+    </div>
+    <div class="submissions-students-list" id="submissions-students-list">
+      <!-- Populated dynamically -->
+    </div>
+  </aside>
+  <div class="submissions-drawer-backdrop view-hidden" id="submissions-drawer-backdrop"></div>
 
   <!-- Mobile Floating Pin Trigger Button -->
   <button type="button" class="mobile-pinned-notes-trigger view-hidden" id="mobile-pinned-notes-trigger" aria-label="View pinned notes" title="View pinned notes">
@@ -331,6 +407,6 @@
   <script src="libs/blocknote-react.bundle.js?v=6"></script>
 
   <!-- BlockNote Standalone Editor Controller -->
-  <script src="editor.js?v=17"></script>
+  <script src="editor.js?v=18"></script>
 </body>
 </html>

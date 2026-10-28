@@ -22,7 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
-  <link rel="stylesheet" href="styles.min.css?v=49" />
+  <link rel="stylesheet" href="styles.min.css?v=50" />
 
   <style>
     html, body {
@@ -81,6 +81,20 @@
       </div>
     </section>
 
+    <!-- Subject Section Tabs (Lesson Docs vs Exercises & Practice) -->
+    <div class="subject-section-tabs" id="subject-section-tabs" role="tablist">
+      <button type="button" class="subject-tab-btn active" id="tab-btn-docs" role="tab" aria-selected="true" data-tab="docs">
+        <i class="fi fi-rr-document"></i>
+        <span>Lesson Docs</span>
+        <span class="subject-tab-count" id="tab-count-docs">0</span>
+      </button>
+      <button type="button" class="subject-tab-btn" id="tab-btn-exercises" role="tab" aria-selected="false" data-tab="exercises">
+        <i class="fi fi-rr-edit"></i>
+        <span>Exercises & Practice</span>
+        <span class="subject-tab-count" id="tab-count-exercises">0</span>
+      </button>
+    </div>
+
     <!-- Document Library Toolbar & Actions -->
     <div class="docs-action-bar">
       <div class="docs-search-wrap">
@@ -89,10 +103,10 @@
       </div>
 
       <div class="docs-action-right">
-        <!-- Prominent Create Document CTA -->
+        <!-- Prominent Create CTA (Switches between Doc and Exercise based on tab) -->
         <a href="editor.html" class="btn-create-doc" id="btn-create-document">
           <i class="fi fi-sr-add"></i>
-          <span>Create Document</span>
+          <span id="btn-create-label">Create Document</span>
         </a>
       </div>
     </div>
@@ -141,6 +155,6 @@
   <script src="firebase-config.js"></script>
   <script src="subjects-config.js"></script>
   <script src="custom-dialog.js"></script>
-  <script src="subject.js?v=3"></script>
+  <script src="subject.js?v=4"></script>
 </body>
 </html>
