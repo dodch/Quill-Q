@@ -22,7 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
-  <link rel="stylesheet" href="styles.min.css?v=56" />
+  <link rel="stylesheet" href="styles.min.css?v=60" />
 
   <style>
     html, body {
@@ -31,55 +31,114 @@
       overflow-x: hidden !important;
       overflow-y: auto !important;
     }
+
+    @media (max-width: 768px) {
+      .docs-action-bar {
+        display: block !important;
+        position: static !important;
+        transform: none !important;
+        animation: none !important;
+        filter: none !important;
+        perspective: none !important;
+        contain: none !important;
+        margin-bottom: 20px !important;
+      }
+
+      .docs-search-wrap {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      .docs-action-right {
+        display: contents !important;
+      }
+
+      /* Floating Action Button (FAB) at bottom-right of viewport */
+      #btn-create-document {
+        position: fixed !important;
+        right: 20px !important;
+        bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+        left: auto !important;
+        top: auto !important;
+        width: 60px !important;
+        height: 60px !important;
+        min-width: 60px !important;
+        min-height: 60px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 50% !important;
+        border: 2.5px solid #1a1816 !important;
+        background: #f6cf7c !important;
+        box-shadow: 4px 6px 0px #1a1816 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 999999 !important;
+        cursor: pointer !important;
+        transform: none !important;
+        will-change: transform !important;
+      }
+
+      #btn-create-document #btn-create-label {
+        display: none !important;
+      }
+
+      #btn-create-document i {
+        font-size: 1.7rem !important;
+        line-height: 1 !important;
+        top: 0 !important;
+        margin: 0 !important;
+      }
+
+      #btn-create-document:hover {
+        transform: translateY(-3px) scale(1.08) !important;
+        box-shadow: 5px 8px 0px #1a1816 !important;
+        background: #ffd978 !important;
+      }
+
+      #btn-create-document:active {
+        transform: translateY(2px) scale(0.95) !important;
+        box-shadow: 1px 2px 0px #1a1816 !important;
+      }
+
+      /* Keep empty state button normal */
+      .docs-empty-state .btn-create-doc {
+        position: static !important;
+        width: auto !important;
+        height: auto !important;
+        border-radius: 14px !important;
+        padding: 10px 22px !important;
+        display: inline-flex !important;
+        box-shadow: 3px 4px 0 #1a1816 !important;
+      }
+
+      .docs-empty-state .btn-create-doc span {
+        display: inline !important;
+      }
+    }
   </style>
 </head>
 <body class="subject-hub-page">
 
   <div class="subject-hub-container">
-    <!-- Top Navigation Bar -->
-    <header class="subject-top-nav">
+    <!-- Streamlined Header: Back button + Subject Title + Subject Switcher -->
+    <header class="subject-top-nav subject-top-nav-compact">
       <div class="subject-nav-left">
         <a href="index.html" class="subject-back-btn" id="btn-back-dashboard" title="Return to Dashboard" aria-label="Return to Dashboard">
           <i class="fi fi-rr-arrow-left"></i>
         </a>
         <div class="subject-nav-brand">
-          <span>Quill-Q</span>
+          <span id="subject-header-title">Subject</span>
         </div>
       </div>
 
-      <div class="subject-nav-user" id="subject-nav-user">
-        <img src="assets/avatar.jpg" alt="User Avatar" class="subject-user-avatar" id="nav-user-avatar" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
-        <div class="subject-user-meta">
-          <span class="subject-user-name" id="nav-user-name">Loading...</span>
-          <span class="subject-user-role" id="nav-user-role">Student</span>
-        </div>
+      <!-- Compact Subject Switcher Dropdown on Right -->
+      <div class="subject-switcher-compact-wrap">
+        <select id="subject-select" class="subject-switcher-select" aria-label="Select subject">
+          <!-- Dynamically populated from registry -->
+        </select>
       </div>
     </header>
-
-    <!-- Unified Subject Hero Banner -->
-    <section class="subject-hero-card card-peach" id="subject-hero-card">
-      <div class="subject-hero-header">
-        <div class="subject-hero-left">
-          <div class="subject-hero-icon-box" id="subject-hero-icon">
-            <!-- Populated from subject config -->
-          </div>
-          <div class="subject-hero-title-wrap">
-            <h1 class="subject-hero-title" id="subject-hero-title">Writing</h1>
-            <p class="subject-hero-desc" id="subject-hero-desc">
-              Academic and professional essay construction, thesis formulation, and rhetoric.
-            </p>
-          </div>
-        </div>
-
-        <!-- Subject Switcher -->
-        <div class="subject-switcher-wrap">
-          <label for="subject-select" class="subject-switcher-label">Switch Subject:</label>
-          <select id="subject-select" class="subject-switcher-select" aria-label="Select subject">
-            <!-- Dynamically populated from registry -->
-          </select>
-        </div>
-      </div>
-    </section>
 
     <!-- Subject Section Tabs (Lesson Docs vs Exercises & Practice) -->
     <div class="subject-section-tabs" id="subject-section-tabs" role="tablist">

@@ -6292,18 +6292,18 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   margin: 0 auto;
 }
 
-/* Top Navigation Bar with Bouncy Slide-Down Reveal */
+/* Top Navigation Bar - Clean, streamlined header */
 .subject-top-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
-  padding: 12px 18px;
+  margin-bottom: 20px;
+  padding: 8px 14px;
   background: #ffffff;
-  border: 2.5px solid #1a1816;
-  border-radius: 18px 16px 20px 18px;
-  box-shadow: 4px 5px 0 #1a1816;
+  border: 1.5px solid #dcd5c7;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(26, 24, 22, 0.05);
   animation: subjectNavBouncyEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
@@ -6328,15 +6328,15 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  background: #fdf6e2;
-  border: 2px solid #1a1816;
+  width: 36px;
+  height: 36px;
+  background: #fdfaf2;
+  border: 1.5px solid #1a1816;
   border-radius: 10px;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   color: #1a1816;
   text-decoration: none;
-  box-shadow: 2px 2px 0 #1a1816;
+  box-shadow: 1.5px 2px 0 #1a1816;
   transition: all 0.16s ease;
   cursor: pointer;
   flex-shrink: 0;
@@ -6344,7 +6344,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 
 .subject-back-btn:hover {
   transform: translate(-1px, -1px);
-  box-shadow: 3px 3px 0 #1a1816;
+  box-shadow: 2.5px 3px 0 #1a1816;
   background: #faeac2;
 }
 
@@ -6544,27 +6544,27 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 
 .subject-switcher-select {
   background: #ffffff;
-  border: 2px solid #1a1816;
+  border: 1.5px solid #dcd5c7;
   border-radius: 12px;
-  padding: 8px 14px;
+  padding: 6px 12px;
   font-family: 'Patrick Hand', cursive;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #1a1816;
-  box-shadow: 2px 3px 0 #1a1816;
+  box-shadow: 0 1px 3px rgba(26, 24, 22, 0.06);
   cursor: pointer;
   outline: none;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.2s ease;
 }
 
 .subject-switcher-select:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 4px 5px 0 #1a1816;
+  border-color: #1a1816;
+  box-shadow: 1.5px 2px 0 #1a1816;
 }
 
 .subject-switcher-select:focus {
-  transform: translate(-1px, -1px);
-  box-shadow: 3px 4px 0 #1a1816;
+  border-color: #1a1816;
+  box-shadow: 1.5px 2px 0 #1a1816;
 }
 
 /* Meta Pills in Hero */
@@ -6600,16 +6600,16 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   background: #fffdf5;
 }
 
-/* Subject Hub Section Tabs (Docs vs Exercises) */
+/* Subject Hub Section Tabs (Docs vs Exercises) - Subtle segmented control */
 .subject-section-tabs {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  background: #fdfbf7;
-  border: 2px solid #1a1816;
-  border-radius: 16px;
-  padding: 5px 6px;
-  box-shadow: 3px 4px 0 #1a1816;
+  gap: 6px;
+  background: #eee9dc;
+  border: 1px solid #ddd5c3;
+  border-radius: 14px;
+  padding: 4px;
+  box-shadow: inset 0 1px 2px rgba(26, 24, 22, 0.05);
   margin-bottom: 20px;
   flex-wrap: wrap;
   animation: docsActionBarBouncyEntrance 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
@@ -6620,11 +6620,11 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   align-items: center;
   gap: 8px;
   background: transparent;
-  border: 1.5px solid transparent;
-  border-radius: 11px;
-  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 7px 14px;
   font-family: 'Patrick Hand', cursive;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #635b54;
   cursor: pointer;
@@ -6639,8 +6639,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 
 .subject-tab-btn:hover {
   color: #1a1816;
-  background: #f7f2e7;
-  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .subject-tab-btn.active {
@@ -6758,20 +6757,19 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 .docs-search-input {
   width: 100%;
   background: #ffffff;
-  border: 2.5px solid #1a1816;
+  border: 1.5px solid #dcd5c7;
   border-radius: 14px;
   padding: 10px 14px 10px 40px;
   font-family: 'Outfit', sans-serif;
   font-size: 1rem;
-  box-shadow: 3px 4px 0 #1a1816;
+  box-shadow: 0 2px 6px rgba(26, 24, 22, 0.04);
   outline: none;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.18s ease;
+  transition: all 0.2s ease;
 }
 
 .docs-search-input:focus {
-  transform: translateY(-2px);
-  box-shadow: 5px 6px 0 #1a1816;
   border-color: #1a1816;
+  box-shadow: 2px 3px 0 #1a1816;
 }
 
 .docs-action-right {
@@ -6836,15 +6834,15 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 
 .doc-card {
   background: #ffffff;
-  border: 2.5px solid #1a1816;
-  border-radius: 20px 18px 22px 16px / 18px 22px 16px 20px;
-  padding: 22px 24px;
-  box-shadow: 4px 5px 0 #1a1816;
+  border: 1.8px solid #1a1816;
+  border-radius: 18px;
+  padding: 20px 22px;
+  box-shadow: 2.5px 3.5px 0 #1a1816;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 200px;
-  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-height: 190px;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
   position: relative;
   text-decoration: none;
   color: #1a1816;
@@ -6865,14 +6863,14 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 }
 
 .doc-card:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: 7px 10px 0 #1a1816;
+  transform: translateY(-3px);
+  box-shadow: 4px 6px 0 #1a1816;
   z-index: 2;
 }
 
 .doc-card:active {
-  transform: translateY(2px) scale(0.98);
-  box-shadow: 2px 3px 0 #1a1816;
+  transform: translateY(1px);
+  box-shadow: 1px 2px 0 #1a1816;
   transition-duration: 0.1s;
 }
 
@@ -7158,27 +7156,29 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 
 .doc-btn-icon {
   background: #f7f3ec;
-  border: 1.5px solid #1a1816;
+  border: 1px solid #d5cec5;
   border-radius: 8px;
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #1a1816;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease, box-shadow 0.2s ease;
+  color: #554e47;
+  transition: all 0.18s ease;
   cursor: pointer;
   text-decoration: none;
 }
 
 .doc-btn-icon:hover {
-  transform: translateY(-2px) rotate(8deg) scale(1.1);
+  transform: translateY(-1px);
   background: #ffffff;
-  box-shadow: 2px 2px 0 #1a1816;
+  border-color: #1a1816;
+  color: #1a1816;
+  box-shadow: 1.5px 2px 0 #1a1816;
 }
 
 .doc-btn-icon:active {
-  transform: translateY(1px) scale(0.95);
+  transform: translateY(1px);
   box-shadow: none;
 }
 
@@ -8538,27 +8538,84 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 
   /* Action Bar (Search & Create CTA) */
   .docs-action-bar {
-    flex-direction: column;
     align-items: stretch;
-    gap: 12px;
     margin-bottom: 20px;
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+    contain: none !important;
   }
 
   .docs-search-wrap {
     width: 100%;
     max-width: 100%;
-    flex: none;
+    flex: 1 1 100%;
   }
 
   .docs-action-right {
-    width: 100%;
+    display: contents;
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
   }
 
-  .btn-create-doc {
-    width: 100%;
-    justify-content: center;
-    padding: 11px 18px;
-    font-size: 1.2rem;
+  /* Floating + Action Button (FAB) at bottom-right for Mobile */
+  #btn-create-document {
+    position: fixed !important;
+    right: 20px !important;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+    left: auto !important;
+    top: auto !important;
+    width: 60px !important;
+    height: 60px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    border: 2.5px solid #1a1816 !important;
+    background: #f6cf7c !important;
+    box-shadow: 4px 5px 0 #1a1816 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 99999 !important;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease !important;
+  }
+
+  #btn-create-document #btn-create-label {
+    display: none;
+  }
+
+  #btn-create-document i {
+    font-size: 1.65rem;
+    line-height: 1;
+    top: 0;
+    margin: 0;
+  }
+
+  #btn-create-document:hover {
+    transform: translateY(-3px) scale(1.08) rotate(-2deg);
+    box-shadow: 5px 8px 0 #1a1816;
+    background: #ffd978;
+  }
+
+  #btn-create-document:active {
+    transform: translateY(2px) scale(0.94);
+    box-shadow: 1px 2px 0 #1a1816;
+  }
+
+  /* Empty state create button on mobile stays a normal button */
+  .docs-empty-state .btn-create-doc {
+    position: static;
+    width: auto;
+    height: auto;
+    border-radius: 14px;
+    padding: 10px 22px;
+    display: inline-flex;
+    box-shadow: 3px 4px 0 #1a1816;
+  }
+
+  .docs-empty-state .btn-create-doc span {
+    display: inline !important;
   }
 
   /* Documents Grid */

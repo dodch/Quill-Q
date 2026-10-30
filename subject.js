@@ -90,7 +90,10 @@
     currentSubjectId = subject.id;
     document.title = `${subject.name} – Quill-Q Document Library`;
 
-    // Apply color class
+    const headerTitle = document.getElementById("subject-header-title");
+    if (headerTitle) headerTitle.textContent = subject.name;
+
+    // Apply color class if present
     if (heroCard) {
       heroCard.className = `subject-hero-card ${subject.bgClass || "card-peach"}`;
     }
