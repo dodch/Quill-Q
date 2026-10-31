@@ -734,11 +734,11 @@ a { color: inherit; text-decoration: none; }
 .bento-subject-card {
   border: 2.5px solid #1a1816;
   border-radius: 26px 24px 28px 22px / 24px 28px 22px 26px;
-  padding: 22px 24px 20px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 146px;
+  justify-content: center;
+  min-height: 120px;
   box-shadow: 4px 6px 0px #1a1816;
   transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
@@ -755,7 +755,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .bento-subject-card:hover .bento-card-art {
-  transform: scale(1.12) rotate(5deg);
+  transform: scale(1.15) rotate(6deg);
 }
 
 .bento-subject-card:active {
@@ -790,27 +790,28 @@ a { color: inherit; text-decoration: none; }
   border-radius: 25px 24px 27px 23px / 24px 27px 23px 26px;
 }
 
-/* Card Header */
+/* Card Header - Clean centered & prominent layout */
 .bento-card-top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
+  width: 100%;
 }
 
 .bento-card-title {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 700;
   color: #1a1816;
-  margin: 0 0 4px;
+  margin: 0;
   letter-spacing: -0.3px;
-  line-height: 1.25;
+  line-height: 1.2;
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
 }
 
 .bento-card-art {
-  width: 44px;
-  height: 44px;
+  width: 54px;
+  height: 54px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -820,8 +821,8 @@ a { color: inherit; text-decoration: none; }
 
 .bento-card-art svg,
 .bento-icon-svg {
-  width: 38px;
-  height: 38px;
+  width: 48px;
+  height: 48px;
 }
 
 /* Professor Attribution Row */
@@ -952,6 +953,13 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 1px 1px 0 #1a1816;
 }
 
+/* Mobile Quick Notes Trigger & Drawer defaults (Hidden on Desktop) */
+.mobile-quick-notes-edge-btn,
+.mobile-notes-backdrop,
+.mobile-notes-close-btn {
+  display: none;
+}
+
 .paperclip-notes-list {
   position: absolute;
   top: 154px;
@@ -964,16 +972,14 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   flex-direction: column;
   gap: 14px;
-  scrollbar-width: thin;
-  scrollbar-color: #d4cdbf transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .paperclip-notes-list::-webkit-scrollbar {
-  width: 4px;
-}
-.paperclip-notes-list::-webkit-scrollbar-thumb {
-  background: #d4cdbf;
-  border-radius: 4px;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .paperclip-empty-msg {
@@ -3338,10 +3344,10 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     right: 0;
     bottom: 0;
     background: #fdfaf3;
-    padding: 8px 16px;
+    padding: 6px 14px;
     display: flex;
     align-items: center;
-    z-index: 96;
+    z-index: 120;
     opacity: 0;
     pointer-events: none;
     transform: translateY(-8px);
@@ -3376,21 +3382,30 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     border: none;
     outline: none;
     font-family: "Outfit", sans-serif;
-    font-size: 14.5px;
+    font-size: 16px; /* 16px prevents iOS auto-zoom on input focus */
     color: #1a1816;
     background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
   }
 
   .mobile-search-close-btn {
     background: transparent;
     border: none;
-    font-size: 18px;
+    font-size: 20px;
     color: #666;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2px;
+    padding: 6px;
+    border-radius: 50%;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .mobile-search-close-btn:active {
+    background: #ece5d8;
+    color: #1a1816;
   }
 
   /* Slide-in Mobile Drawer Sidebar */
@@ -3484,39 +3499,34 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   }
 
   .bento-subject-card {
-    padding: 14px 14px 12px !important;
-    min-height: 124px !important;
+    padding: 16px 14px !important;
+    min-height: 84px !important;
     border-width: 2px !important;
     border-radius: 18px !important;
     box-shadow: 2.5px 3.5px 0px #1a1816 !important;
+    flex-direction: column !important;
+    justify-content: center !important;
   }
 
   .bento-card-top {
-    gap: 6px !important;
+    gap: 10px !important;
+    align-items: center !important;
   }
 
   .bento-card-title {
-    font-size: 15.5px !important;
-    line-height: 1.2 !important;
+    font-size: 17.5px !important;
+    line-height: 1.15 !important;
   }
 
   .bento-card-art {
-    width: 28px !important;
-    height: 28px !important;
+    width: 38px !important;
+    height: 38px !important;
   }
 
   .bento-card-art svg,
   .bento-icon-svg {
-    width: 26px !important;
-    height: 26px !important;
-  }
-
-  .bento-prof-row {
-    margin: 10px 0 0 !important;
-  }
-
-  .bento-prof-name {
-    font-size: 12.5px !important;
+    width: 36px !important;
+    height: 36px !important;
   }
 
   /* Schedule Detailed Cards & Weekly Day Selector for Mobile */
@@ -3852,12 +3862,11 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   }
 
   /* 2. Quick Actions on Homeworks View -> Clean Compact Card with Standard Buttons */
-  .homeworks-side-wrap,
-  .subjects-side-wrap {
+  .homeworks-side-wrap {
     width: 100% !important;
     margin-bottom: 0 !important;
   }
-  .sticky-paperclip-card {
+  .homeworks-side-wrap .sticky-paperclip-card {
     height: auto !important;
     background: #fdfaf3 !important;
     border: 2px solid #1a1816 !important;
@@ -3894,32 +3903,233 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     box-shadow: 2px 2px 0px #1a1816 !important;
   }
 
-  /* Subjects Quick Notes Card on mobile */
+  /* ========== Subjects Quick Notes on Mobile: Floating Half-Circle Edge Trigger & Modal ========== */
+  /* Only show the edge trigger when on the Subjects view */
+  .main[data-current-page="subjects"] .mobile-quick-notes-edge-btn {
+    display: flex !important;
+    position: fixed !important;
+    right: -25px !important;
+    top: 45% !important;
+    transform: translateY(-50%) !important;
+    z-index: 9999 !important;
+    width: 50px !important;
+    height: 50px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #dcd5c7 !important;
+    border-radius: 50% !important;
+    box-shadow: -2px 3px 10px rgba(26, 24, 22, 0.1) !important;
+    cursor: pointer !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding-left: 7px !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    outline: none !important;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease, box-shadow 0.2s ease !important;
+    box-sizing: border-box !important;
+  }
+
+  .main[data-current-page="subjects"] .mobile-quick-notes-edge-btn:hover {
+    transform: translateY(-50%) translateX(-6px) !important;
+    background: #fdfaf3 !important;
+    box-shadow: -4px 4px 14px rgba(26, 24, 22, 0.14) !important;
+  }
+
+  .main[data-current-page="subjects"] .mobile-quick-notes-edge-btn:active {
+    transform: translateY(-50%) translateX(-2px) !important;
+  }
+
+  .main[data-current-page="subjects"] .mobile-quick-notes-edge-btn.has-notes {
+    background: #ffffff !important;
+  }
+
+  /* When notes are dismissed: guarantee badge is hidden and note icon is visible */
+  .mobile-quick-notes-edge-btn.notes-dismissed .mobile-notes-badge {
+    display: none !important;
+  }
+  .mobile-quick-notes-edge-btn.notes-dismissed #mobile-notes-icon-note {
+    display: inline-flex !important;
+  }
+  .mobile-quick-notes-edge-btn.notes-dismissed #mobile-notes-icon-empty {
+    display: none !important;
+  }
+
+  .main[data-current-page="subjects"] .mobile-quick-notes-edge-btn.is-drawer-open {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .edge-btn-icon-wrap {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    width: 24px !important;
+    height: 24px !important;
+    flex-shrink: 0 !important;
+  }
+
+  #mobile-notes-icon-empty {
+    font-size: 1.15rem !important;
+    color: #4a423a !important;
+    line-height: 1 !important;
+  }
+
+  /* Document Note Icon (shown once opened/dismissed) */
+  #mobile-notes-icon-note {
+    font-size: 1.2rem !important;
+    color: #4a423a !important;
+    line-height: 1 !important;
+    transition: transform 0.2s ease !important;
+  }
+
+  .mobile-quick-notes-edge-btn:hover #mobile-notes-icon-note {
+    transform: scale(1.1) !important;
+    color: #1a1816 !important;
+  }
+
+  /* Red notification badge when there are unread notes */
+  .mobile-notes-badge {
+    background: #e03131 !important;
+    color: #ffffff !important;
+    font-family: 'Outfit', sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    width: 20px !important;
+    height: 20px !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: none !important;
+    box-shadow: 0 1px 4px rgba(224, 49, 49, 0.4) !important;
+    animation: quickNotePulse 2.2s infinite ease-in-out !important;
+  }
+
+  @keyframes quickNotePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+  }
+
+  /* Mobile Backdrop */
+  .mobile-notes-backdrop {
+    display: none;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(26, 24, 22, 0.45) !important;
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
+    z-index: 10000 !important;
+    opacity: 0 !important;
+    transition: opacity 0.25s ease !important;
+    pointer-events: none !important;
+  }
+
+  .mobile-notes-backdrop.active {
+    display: block !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  /* When on mobile: hide the inline subjects-side-wrap from taking page space */
+  .subjects-side-wrap {
+    display: none !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(0.92) !important;
+    width: 90% !important;
+    max-width: 380px !important;
+    z-index: 10001 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.24s ease !important;
+    margin: 0 !important;
+  }
+
+  .subjects-side-wrap.mobile-drawer-open {
+    display: flex !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+  }
+
+  .subjects-side-wrap .sticky-paperclip-card {
+    height: auto !important;
+    max-height: 82vh !important;
+    background: #fdfaf3 !important;
+    border: 2.5px solid #1a1816 !important;
+    border-radius: 22px !important;
+    box-shadow: 6px 8px 0px #1a1816 !important;
+    padding: 18px 18px 20px !important;
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .mobile-notes-close-btn {
+    display: flex !important;
+    position: absolute !important;
+    top: 10px !important;
+    right: 12px !important;
+    background: transparent !important;
+    border: none !important;
+    font-size: 24px !important;
+    color: #635b54 !important;
+    cursor: pointer !important;
+    line-height: 1 !important;
+    padding: 4px !important;
+    z-index: 5 !important;
+  }
+
+  .mobile-notes-close-btn:hover {
+    color: #1a1816 !important;
+  }
+
   .paperclip-inner {
     position: static !important;
     width: 100% !important;
     height: auto !important;
     transform: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
   }
+
   .paperclip-header-row {
     position: static !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    margin-bottom: 12px !important;
+    margin-bottom: 14px !important;
+    padding-right: 28px !important;
   }
+
   .paperclip-title {
     position: static !important;
-    font-size: 22px !important;
+    font-size: 23px !important;
     margin: 0 !important;
   }
+
   .paperclip-notes-list {
     position: static !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 8px !important;
+    gap: 10px !important;
     height: auto !important;
-    max-height: 280px !important;
+    max-height: 52vh !important;
+    overflow-y: auto !important;
+    padding-right: 4px !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  .paperclip-notes-list::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 
   /* Landing page mobile adaptations */
@@ -6611,29 +6821,45 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   padding: 4px;
   box-shadow: inset 0 1px 2px rgba(26, 24, 22, 0.05);
   margin-bottom: 20px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  max-width: 100%;
   animation: docsActionBarBouncyEntrance 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
 }
 
 .subject-tab-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 10px;
   padding: 7px 14px;
   font-family: 'Patrick Hand', cursive;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
+  line-height: 1;
   color: #635b54;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
   outline: none;
 }
 
+.subject-tab-btn span {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
 .subject-tab-btn i {
-  font-size: 1.05rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  position: relative;
+  top: 1px;
   transition: transform 0.2s ease;
 }
 
@@ -6651,7 +6877,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 }
 
 .subject-tab-btn.active i {
-  transform: scale(1.15);
+  transform: none;
 }
 
 .subject-tab-count {
@@ -6662,8 +6888,11 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   color: #4a423a;
   border: 1px solid #1a1816;
   border-radius: 10px;
-  padding: 1px 7px;
-  line-height: 1.2;
+  padding: 2px 7px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .subject-tab-btn.active .subject-tab-count {

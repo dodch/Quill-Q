@@ -1096,6 +1096,11 @@ function switchView(page) {
     updateTodayStatus();
     renderSchedule();
   }
+
+  // Re-apply any active search filter to freshly displayed view
+  if (typeof reapplySearchFilter === "function") {
+    reapplySearchFilter();
+  }
 }
 
 function initSubjectFilters() {
@@ -1170,6 +1175,9 @@ function initNav() {
       card.classList.add("active-day");
       currentSelectedDay = card.dataset.day || "Mon";
       renderDetailedSchedule(currentSelectedDay);
+      if (typeof reapplySearchFilter === "function") {
+        reapplySearchFilter();
+      }
     });
   });
 
@@ -2431,11 +2439,50 @@ function formatExpirationDate(expStr) {
   return expStr;
 }
 
+let quickNotesSeen = localStorage.getItem("quill_q_notes_dismissed") === "true";
+
+function updateMobileQuickNotesTrigger(validNotes) {
+  const triggerBtn = document.getElementById("mobile-quick-notes-trigger");
+  const iconEmpty = document.getElementById("mobile-notes-icon-empty");
+  const iconNote = document.getElementById("mobile-notes-icon-note");
+  const badge = document.getElementById("mobile-notes-badge");
+  if (!triggerBtn) return;
+
+  const count = validNotes ? validNotes.length : 0;
+  if (count > 0) {
+    if (iconEmpty) iconEmpty.style.display = "none";
+
+    if (!quickNotesSeen) {
+      // Unread: show red dot, hide note icon
+      if (iconNote) iconNote.style.display = "none";
+      if (badge) {
+        badge.style.display = "inline-flex";
+        badge.textContent = count > 9 ? "9+" : count;
+        badge.title = `${count} quick note${count > 1 ? "s" : ""}`;
+      }
+      triggerBtn.classList.remove("notes-dismissed");
+    } else {
+      // Dismissed: hide red dot, show document note icon
+      if (badge) badge.style.display = "none";
+      if (iconNote) iconNote.style.display = "inline-flex";
+      triggerBtn.classList.add("notes-dismissed");
+    }
+    triggerBtn.classList.add("has-notes");
+  } else {
+    if (iconEmpty) iconEmpty.style.display = "inline-flex";
+    if (iconNote) iconNote.style.display = "none";
+    if (badge) badge.style.display = "none";
+    triggerBtn.classList.remove("has-notes", "notes-dismissed");
+  }
+}
+
 function renderQuickNotes() {
   const container = document.getElementById("paperclip-notes-list");
-  if (!container) return;
-
   const validNotes = currentQuickNotes.filter((n) => !isNoteExpired(n));
+
+  updateMobileQuickNotesTrigger(validNotes);
+
+  if (!container) return;
 
   if (validNotes.length === 0) {
     container.innerHTML = `<div class="paperclip-empty-msg">No quick notes yet. Click "+ Add Note" to post one!</div>`;
@@ -2512,6 +2559,51 @@ function initQuickNotesManager() {
   const form = document.getElementById("quick-note-modal-form");
   const inputContent = document.getElementById("quick-note-text");
   const inputExpires = document.getElementById("quick-note-expires");
+
+  // Mobile drawer elements
+  const mobileTrigger = document.getElementById("mobile-quick-notes-trigger");
+  const mobileClose = document.getElementById("mobile-notes-close-btn");
+  const mobileBackdrop = document.getElementById("mobile-notes-backdrop");
+  const subjectsSideWrap = document.getElementById("subjects-side-wrap");
+
+  function openMobileQuickNotesModal() {
+    if (subjectsSideWrap) subjectsSideWrap.classList.add("mobile-drawer-open");
+    if (mobileBackdrop) mobileBackdrop.classList.add("active");
+    if (mobileTrigger) mobileTrigger.classList.add("is-drawer-open");
+    document.body.style.overflow = "hidden";
+
+    // Mark notes as seen/read so red notification dot dismisses and note icon shows permanently
+    quickNotesSeen = true;
+    try {
+      localStorage.setItem("quill_q_notes_dismissed", "true");
+    } catch (e) {}
+
+    const validNotes = currentQuickNotes.filter((n) => !isNoteExpired(n));
+    updateMobileQuickNotesTrigger(validNotes);
+  }
+
+  function closeMobileQuickNotesModal() {
+    if (subjectsSideWrap) subjectsSideWrap.classList.remove("mobile-drawer-open");
+    if (mobileBackdrop) mobileBackdrop.classList.remove("active");
+    if (mobileTrigger) mobileTrigger.classList.remove("is-drawer-open");
+    document.body.style.overflow = "";
+
+    const validNotes = currentQuickNotes.filter((n) => !isNoteExpired(n));
+    updateMobileQuickNotesTrigger(validNotes);
+  }
+
+  if (mobileTrigger) {
+    mobileTrigger.addEventListener("click", () => {
+      if (subjectsSideWrap && subjectsSideWrap.classList.contains("mobile-drawer-open")) {
+        closeMobileQuickNotesModal();
+      } else {
+        openMobileQuickNotesModal();
+      }
+    });
+  }
+
+  if (mobileClose) mobileClose.addEventListener("click", closeMobileQuickNotesModal);
+  if (mobileBackdrop) mobileBackdrop.addEventListener("click", closeMobileQuickNotesModal);
 
   function openQuickNoteModal() {
     if (!modal) return;
@@ -2664,86 +2756,171 @@ function bindQuickNotesListener(user) {
   }
 }
 
-// --- Course search filters timelines and homework tasks ---
+// --- Course search filters timelines, subjects, homework, and status cards ---
+let currentSearchQuery = "";
+
+function reapplySearchFilter() {
+  if (typeof window.executeSearchFilter === "function") {
+    window.executeSearchFilter(currentSearchQuery);
+  }
+}
+
 function initSearch() {
   const desktopInput = document.getElementById("search-input");
   const mobileInput = document.getElementById("mobile-search-input");
   const mobileSearchToggleBtn = document.getElementById("mobile-search-toggle-btn");
   const mobileSearchCloseBtn = document.getElementById("mobile-search-close-btn");
   const mobileSearchWrap = document.getElementById("mobile-search-expand-wrap");
+  const mobileTopBar = document.getElementById("mobile-top-bar");
+
+  const openMobileSearch = () => {
+    if (!mobileSearchWrap) return;
+    mobileSearchWrap.classList.add("open");
+    if (mobileTopBar) {
+      mobileTopBar.classList.remove("nav-hidden");
+    }
+    if (mobileInput) {
+      setTimeout(() => {
+        mobileInput.focus();
+      }, 50);
+    }
+  };
+
+  const closeMobileSearch = () => {
+    if (!mobileSearchWrap) return;
+    mobileSearchWrap.classList.remove("open");
+    if (mobileInput) {
+      mobileInput.value = "";
+    }
+    if (desktopInput) {
+      desktopInput.value = "";
+    }
+    executeFilter("");
+  };
 
   if (mobileSearchToggleBtn && mobileSearchWrap) {
     mobileSearchToggleBtn.addEventListener("click", () => {
-      mobileSearchWrap.classList.add("open");
-      if (mobileInput) {
-        mobileInput.focus();
+      if (mobileSearchWrap.classList.contains("open")) {
+        closeMobileSearch();
+      } else {
+        openMobileSearch();
       }
     });
   }
 
   if (mobileSearchCloseBtn && mobileSearchWrap) {
-    mobileSearchCloseBtn.addEventListener("click", () => {
-      mobileSearchWrap.classList.remove("open");
-      if (mobileInput) {
-        mobileInput.value = "";
-        executeFilter("");
-      }
-      if (desktopInput) {
-        desktopInput.value = "";
-      }
+    mobileSearchCloseBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeMobileSearch();
     });
   }
 
-  const executeFilter = (q) => {
-    // Quick timeline on Home page
+  // Close search with Esc key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && mobileSearchWrap && mobileSearchWrap.classList.contains("open")) {
+      closeMobileSearch();
+    }
+  });
+
+  const executeFilter = (rawQ) => {
+    const q = (rawQ || "").trim().toLowerCase();
+    currentSearchQuery = q;
+
+    // 1. Quick timeline on Home page
     const items = document.querySelectorAll(".timeline .tl-item");
     items.forEach((item) => {
       const text = item.textContent.toLowerCase();
-      item.style.display = q && !text.includes(q) ? "none" : "";
-    });
-    // Detailed timeline in Schedule View
-    const dtlRows = document.querySelectorAll(".detailed-timeline .dtl-row");
-    dtlRows.forEach((row) => {
-      if (row.classList.contains("dtl-row-break")) {
-        row.style.display = q && !("break".includes(q) || "recess".includes(q) || "free".includes(q)) ? "none" : "";
+      if (q && !text.includes(q)) {
+        item.style.setProperty("display", "none", "important");
       } else {
-        const text = row.textContent.toLowerCase();
-        row.style.display = q && !text.includes(q) ? "none" : "";
+        item.style.removeProperty("display");
       }
     });
 
-    // Bento cards in Subjects View
+    // 2. Status card on Home page (Happening Now & Up Next)
+    const statusCard = document.getElementById("status-card");
+    if (statusCard) {
+      const statusText = statusCard.textContent.toLowerCase();
+      if (q && !statusText.includes(q)) {
+        statusCard.style.setProperty("display", "none", "important");
+      } else {
+        statusCard.style.removeProperty("display");
+      }
+    }
+
+    // 3. Detailed timeline in Schedule View
+    const dtlRows = document.querySelectorAll(".detailed-timeline .dtl-row");
+    dtlRows.forEach((row) => {
+      let match = false;
+      if (row.classList.contains("dtl-row-break")) {
+        match = "break".includes(q) || "recess".includes(q) || "free".includes(q);
+      } else {
+        const text = row.textContent.toLowerCase();
+        match = text.includes(q);
+      }
+      if (q && !match) {
+        row.style.setProperty("display", "none", "important");
+      } else {
+        row.style.removeProperty("display");
+      }
+    });
+
+    // 4. Bento cards in Subjects View
     const bentoCards = document.querySelectorAll(".bento-subject-card");
     bentoCards.forEach((card) => {
       const text = card.textContent.toLowerCase();
-      card.style.display = q && !text.includes(q) ? "none" : "";
+      if (q && !text.includes(q)) {
+        card.style.setProperty("display", "none", "important");
+      } else {
+        card.style.removeProperty("display");
+      }
     });
 
-    // Homework cards in Homework View
+    // 5. Homework cards in Homework View
     const hwItems = document.querySelectorAll(".hw-paper-item");
     hwItems.forEach((item) => {
       const text = item.textContent.toLowerCase();
-      item.style.display = q && !text.includes(q) ? "none" : "";
+      if (q && !text.includes(q)) {
+        item.style.setProperty("display", "none", "important");
+      } else {
+        item.style.removeProperty("display");
+      }
+    });
+
+    // 6. Pinned Homework Note items (on Home & Side wrap)
+    const hwListItems = document.querySelectorAll("#hw-list li");
+    hwListItems.forEach((item) => {
+      const text = item.textContent.toLowerCase();
+      if (q && !text.includes(q)) {
+        item.style.setProperty("display", "none", "important");
+      } else {
+        item.style.removeProperty("display");
+      }
     });
   };
 
+  window.executeSearchFilter = executeFilter;
+
+  const handleInput = (sourceInput, targetInput) => {
+    const val = sourceInput.value;
+    if (targetInput && targetInput.value !== val) {
+      targetInput.value = val;
+    }
+    executeFilter(val);
+  };
+
   if (desktopInput) {
-    desktopInput.addEventListener("input", () => {
-      const q = desktopInput.value.trim().toLowerCase();
-      if (mobileInput && mobileInput.value !== desktopInput.value) {
-        mobileInput.value = desktopInput.value;
-      }
-      executeFilter(q);
-    });
+    desktopInput.addEventListener("input", () => handleInput(desktopInput, mobileInput));
+    desktopInput.addEventListener("search", () => handleInput(desktopInput, mobileInput));
   }
 
   if (mobileInput) {
-    mobileInput.addEventListener("input", () => {
-      const q = mobileInput.value.trim().toLowerCase();
-      if (desktopInput && desktopInput.value !== mobileInput.value) {
-        desktopInput.value = mobileInput.value;
+    mobileInput.addEventListener("input", () => handleInput(mobileInput, desktopInput));
+    mobileInput.addEventListener("search", () => handleInput(mobileInput, desktopInput));
+    mobileInput.addEventListener("keyup", (e) => {
+      if (e.key === "Enter") {
+        mobileInput.blur();
       }
-      executeFilter(q);
     });
   }
 }
