@@ -37,9 +37,8 @@
   <noscript>
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css" />
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
-    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
   </noscript>
-  <link rel="stylesheet" href="styles.min.css?v=72" />
+  <link rel="stylesheet" href="styles.min.css?v=75" />
   <script>
     try {
       var p = JSON.parse(localStorage.getItem("quill_q_profile") || "null");
@@ -246,31 +245,7 @@
             </div>
           </div>
 
-          <!-- Teacher: Select Name from Schedule Dropdown -->
-          <div class="onboarding-group view-hidden" id="group-teacher-name">
-            <label class="onboarding-label" for="onboarding-teacher-select">Select Your Teacher Name <span class="required-star">*</span></label>
-            <select class="modal-form-select" id="onboarding-teacher-select">
-              <option value="" disabled selected>Select your name from the schedule</option>
-              <option value="نسرين بن الصادق">نسرين بن الصادق (Writing)</option>
-              <option value="عيادي روضة">عيادي روضة (British History)</option>
-              <option value="غربي إيمان">غربي إيمان (Financial English 1)</option>
-              <option value="بن شهيدة مريم">بن شهيدة مريم (Drama / Poetry / Novel)</option>
-              <option value="شنيس علي صلاح">شنيس علي صلاح (Entrepreneurial Skills - Droit)</option>
-              <option value="الشرقي سهلة">الشرقي سهلة (Commercial English 1)</option>
-              <option value="رانية الإدريس">رانية الإدريس (Introduction to Linguistics)</option>
-              <option value="عنيف حافظ">عنيف حافظ (Literary Trends)</option>
-              <option value="كعمون وسيم">كعمون وسيم (US History)</option>
-              <option value="العفاس نجلاء">العفاس نجلاء (Grammar in Context)</option>
-              <option value="بن علي حافظ">بن علي حافظ (Other Languages - French)</option>
-              <option value="مريم الهماصي">مريم الهماصي (Other Languages - Arabic)</option>
-              <option value="غمامي سناء">غمامي سناء (Drama / Poetry / Novel)</option>
-              <option value="كلثوم بالوافي">كلثوم بالوافي (Drama / Poetry / Novel)</option>
-              <option value="غربي أحمد عبد العزيز">غربي أحمد عبد العزيز (Financial English 1)</option>
-              <option value="الغندري أحلام">الغندري أحلام (Entrepreneurial Skills)</option>
-            </select>
-          </div>
-
-          <!-- Gender & Department / Subject Row -->
+          <!-- Gender & Department / Group Row -->
           <div class="onboarding-row">
             <div class="onboarding-group flex-1">
               <label class="onboarding-label" for="onboarding-gender">Gender <span class="required-star">*</span></label>
@@ -284,21 +259,21 @@
             <!-- Student: Group 1 / 2 Dropdown -->
             <div class="onboarding-group flex-1" id="onboarding-group-academic">
               <label class="onboarding-label" id="onboarding-academic-label" for="onboarding-academic-select">
-                Department / Group <span class="required-star">*</span>
+                Class / Group <span class="required-star">*</span>
               </label>
               <select class="modal-form-select" id="onboarding-academic-select">
-                <option value="" disabled selected>Select group</option>
-                <option value="English Business Grp 1">English Business Grp 1</option>
-                <option value="English Business Grp 2">English Business Grp 2</option>
+                <option value="" disabled selected>Select your group</option>
+                <option value="2ANG-AFF 1" selected>Groupe 1 (2ANG-AFF 1)</option>
+                <option value="2ANG-AFF 2">Groupe 2 (2ANG-AFF 2)</option>
               </select>
             </div>
 
-            <!-- Teacher: Subject is automatically known from name, displayed cleanly without needing manual re-selection -->
+            <!-- Teacher: Course / Subject Text Input -->
             <div class="onboarding-group flex-1 view-hidden" id="onboarding-group-teacher-subject">
               <label class="onboarding-label" for="onboarding-teacher-subject-val">
-                Course / Subject <span class="badge-auto">Auto-assigned</span>
+                Course / Subject <span style="font-weight: 400; color: #8c8275;">(Optional)</span>
               </label>
-              <input type="text" class="modal-form-input readonly-input" id="onboarding-teacher-subject-val" readonly placeholder="Auto-filled from teacher name" />
+              <input type="text" class="modal-form-input" id="onboarding-teacher-subject-val" placeholder="e.g. British History, Writing..." />
             </div>
           </div>
 
@@ -545,6 +520,21 @@
             </div>
           </section>
 
+          <!-- Group Preview Switcher for Teachers & Admins -->
+          <div class="home-schedule-preview-header" id="home-schedule-preview-header" style="display: none;">
+            <div class="home-preview-meta">
+              <span class="home-preview-icon"><i class="fi fi-sr-chalkboard-user"></i></span>
+              <div class="home-preview-texts">
+                <span class="home-preview-label">Previewing Group Schedule & Tasks</span>
+                <span class="home-preview-badge" id="home-schedule-active-badge">Group 1 (2ANG-AFF 1)</span>
+              </div>
+            </div>
+            <div class="schedule-group-switcher home-group-switcher" id="home-group-switcher" role="tablist">
+              <button type="button" class="group-tab-btn active" data-group="grp1" id="btn-home-sched-grp1">Group 1</button>
+              <button type="button" class="group-tab-btn" data-group="grp2" id="btn-home-sched-grp2">Group 2</button>
+            </div>
+          </div>
+
           <section class="quick-glance" aria-label="Today's Status">
             <article class="card status-card" id="status-card">
               <span class="status-card-tag" id="status-card-tag">STATUS</span>
@@ -595,7 +585,14 @@
         <!-- DEDICATED SCHEDULE VIEW (Matches Reference Photo Exactly) -->
         <div class="view-panel view-hidden" id="view-schedule">
           <div class="schedule-view-header">
-            <h2 class="schedule-view-title">Schedule</h2>
+            <div class="schedule-title-wrap">
+              <h2 class="schedule-view-title">Schedule</h2>
+              <span class="schedule-group-badge" id="schedule-active-group-badge">Groupe 1 (2ANG-AFF 1)</span>
+            </div>
+            <div class="schedule-group-switcher" id="schedule-group-switcher" role="tablist">
+              <button type="button" class="group-tab-btn active" data-group="grp1" id="btn-sched-grp1">Group 1</button>
+              <button type="button" class="group-tab-btn" data-group="grp2" id="btn-sched-grp2">Group 2</button>
+            </div>
           </div>
 
           <!-- Weekly Schedule Section -->
@@ -1163,8 +1160,13 @@
         <!-- DEDICATED HOMEWORK & REMINDERS VIEW -->
         <div class="view-panel view-hidden" id="view-homeworks">
           <div class="homeworks-view-header">
-            <div class="homeworks-view-title-wrap">
+            <div class="homeworks-view-title-wrap" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
               <h2 class="homeworks-view-title">Homework &amp; Reminders</h2>
+              <span class="schedule-group-badge" id="hw-active-group-badge">Group 1 (2ANG-AFF 1)</span>
+            </div>
+            <div class="schedule-group-switcher hw-group-switcher" id="hw-group-switcher" role="tablist" style="display: none;">
+              <button type="button" class="group-tab-btn active" data-group="grp1" id="btn-hw-sched-grp1">Group 1</button>
+              <button type="button" class="group-tab-btn" data-group="grp2" id="btn-hw-sched-grp2">Group 2</button>
             </div>
           </div>
 
@@ -1265,12 +1267,16 @@
                 </div>
                 <div>
                   <div class="chat-header-title-row">
-                    <h2 class="chat-header-title">Class Discussion</h2>
+                    <h2 class="chat-header-title" id="chat-header-title-text">Class Discussion</h2>
                   </div>
-                  <p class="chat-header-subtitle">Chat with classmates &amp; teachers in real-time</p>
+                  <p class="chat-header-subtitle" id="chat-header-subtitle-text">Chat with classmates &amp; teachers in real-time</p>
                 </div>
               </div>
               <div class="chat-header-actions">
+                <div class="chat-group-switcher" id="chat-group-switcher" role="tablist">
+                  <button type="button" class="chat-group-chip active" data-channel="grp1" id="btn-chat-grp1">Group 1</button>
+                  <button type="button" class="chat-group-chip" data-channel="grp2" id="btn-chat-grp2">Group 2</button>
+                </div>
                 <button type="button" class="chat-action-btn" id="btn-chat-toggle-sound" title="Toggle Chat Sound" aria-label="Toggle chat sound">
                   <i class="fi fi-rr-bell" id="chat-sound-icon"></i>
                   <span class="chat-action-text" id="chat-sound-text">Mute</span>
@@ -1445,6 +1451,14 @@
           </select>
         </div>
 
+        <div class="modal-form-group" id="modal-group-target-wrap" style="display: none;">
+          <label class="modal-form-label" for="modal-task-group">Assign To Group</label>
+          <select class="modal-form-select" id="modal-task-group">
+            <option value="grp1">Group 1 (2ANG-AFF 1)</option>
+            <option value="grp2">Group 2 (2ANG-AFF 2)</option>
+          </select>
+        </div>
+
         <div class="modal-form-group">
           <label class="modal-form-label" for="modal-task-desc">Task / Description</label>
           <input type="text" class="modal-form-input" id="modal-task-desc" placeholder="e.g. Read chapters 1 &amp; 2" required autocomplete="off" />
@@ -1584,6 +1598,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js"></script>
 
-  <script src="app.min.js?v=51"></script>
+  <script src="app.min.js?v=61"></script>
 </body>
 </html>

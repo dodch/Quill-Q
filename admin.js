@@ -71,6 +71,68 @@
     Sun: { dayName: "Sunday", dateLabel: "Sunday, Oct 25", activeClassIndex: -1, items: [] }
   };
 
+  const DEFAULT_SEED_SCHEDULE_GRP2 = {
+    Mon: {
+      dayName: "Monday",
+      dateLabel: "Monday, Oct 19",
+      activeClassIndex: 1,
+      items: [
+        { time: "08:30 AM – 10:00 AM", subject: "Writing", prof: "نسرين بن الصادق", room: "Salle 15", type: "C", color: "#f6cf7c", icon: "writing" },
+        { time: "10:00 AM – 11:30 AM", subject: "Entrepreneurial Skills (Droit)", prof: "سابي علي صلاح", room: "Salle 14", type: "TD", color: "#e8987a", current: true, icon: "law" },
+        { time: "11:30 AM – 12:30 PM", subject: "British History", prof: "عيادي روضة", room: "Amphi 6", type: "C", color: "#a9c6ec", icon: "history" },
+        { time: "12:30 PM – 01:30 PM", subject: "Financial English 1", prof: "غريس إيمان", room: "Amphi 6", type: "C", color: "#5bae86", icon: "finance" }
+      ]
+    },
+    Tue: {
+      dayName: "Tuesday",
+      dateLabel: "Tuesday, Oct 20",
+      activeClassIndex: 1,
+      items: [
+        { time: "08:30 AM – 10:00 AM", subject: "Grammar in Context", prof: "العفاس نجلاء", room: "Amphi 4", type: "C", color: "#a9c6ec", icon: "grammar" },
+        { time: "10:00 AM – 11:30 AM", subject: "Other Languages (French)", prof: "بن علي حافظ", room: "Salle 14", type: "TD", color: "#e8987a", current: true, icon: "language" },
+        { time: "11:30 AM – 01:00 PM", subject: "Other Languages (Arabic for specific purposes)", prof: "مريم الهماصي", room: "lab 3", type: "TD", color: "#f6cf7c", icon: "language" },
+        { time: "01:00 PM – 02:30 PM", subject: "Drama/Poetry/Novel (Poetry)", prof: "بن شهيدة مريم", room: "lab 3", type: "CI", color: "#e0835f", icon: "theater" },
+        { time: "02:30 PM – 04:00 PM", subject: "Grammar in Context", prof: "العفاس نجلاء", room: "Salle 18", type: "TD", color: "#5bae86", icon: "grammar" }
+      ]
+    },
+    Wed: {
+      dayName: "Wednesday",
+      dateLabel: "Wednesday, Oct 21",
+      activeClassIndex: 1,
+      items: [
+        { time: "08:30 AM – 10:00 AM", subject: "Financial English 1", prof: "غريس إيمان", room: "Salle 15", type: "TD", color: "#5bae86", icon: "finance" },
+        { time: "10:00 AM – 11:30 AM", subject: "Literary Trends", prof: "عنيف حافظ", room: "Amphi 1", type: "C", color: "#f6cf7c", current: true, icon: "literature" },
+        { time: "11:30 AM – 01:00 PM", subject: "Drama/Poetry/Novel (Novel)", prof: "كلثوم بالوافي", room: "Salle 16", type: "CI", color: "#a9c6ec", icon: "theater" },
+        { time: "01:00 PM – 02:30 PM", subject: "Drama/Poetry/Novel (Drama)", prof: "غمامي سناء", room: "Salle 15", type: "CI", color: "#e8987a", icon: "theater" }
+      ]
+    },
+    Thu: {
+      dayName: "Thursday",
+      dateLabel: "Thursday, Oct 22",
+      activeClassIndex: 0,
+      items: [
+        { time: "09:30 AM – 11:00 AM", subject: "Introduction to Linguistics", prof: "رانية الإدريسي", room: "Amphi 3", type: "C", color: "#f6cf7c", current: true, icon: "linguistics" },
+        { time: "11:00 AM – 12:30 PM", subject: "US History", prof: "كعمون وسيم", room: "Amphi 4", type: "C", color: "#a9c6ec", icon: "history" },
+        { time: "12:30 PM – 02:00 PM", subject: "US History", prof: "كعمون وسيم", room: "Salle 12", type: "TD", color: "#5bae86", icon: "history" },
+        { time: "02:00 PM – 03:30 PM", subject: "Introduction to Linguistics", prof: "رانية الإدريسي", room: "Salle 10", type: "TD", color: "#e0835f", icon: "linguistics" }
+      ]
+    },
+    Fri: {
+      dayName: "Friday",
+      dateLabel: "Friday, Oct 23",
+      activeClassIndex: 0,
+      items: [
+        { time: "08:30 AM – 10:00 AM", subject: "Commercial English 1", prof: "الشرقي سهلة", room: "Salle 10", type: "TD", color: "#a9c6ec", icon: "business" },
+        { time: "10:00 AM – 11:30 AM", subject: "Commercial English 1", prof: "الشرقي سهلة", room: "Amphi 4", type: "C", color: "#f6cf7c", current: true, icon: "business" },
+        { time: "11:30 AM – 01:00 PM", subject: "Entrepreneurial Skills (Droit)", prof: "الغندري أحلام", room: "Salle 12", type: "TD", color: "#5bae86", icon: "law" },
+        { time: "01:00 PM – 02:30 PM", subject: "British History", prof: "عيادي روضة", room: "Salle 13", type: "TD", color: "#e8987a", icon: "history" },
+        { time: "02:30 PM – 04:00 PM", subject: "Activités pratiques (TEFL)", prof: "رانية الإدريسي", room: "Salle 11", type: "TD", color: "#e0835f", icon: "tefl" }
+      ]
+    },
+    Sat: { dayName: "Saturday", dateLabel: "Saturday, Oct 24", activeClassIndex: -1, items: [] },
+    Sun: { dayName: "Sunday", dateLabel: "Sunday, Oct 25", activeClassIndex: -1, items: [] }
+  };
+
   // Official Subject Presets
   const UNIVERSITY_SUBJECTS = [
     { name: "Writing", icon: "writing", color: "#f6cf7c" },
@@ -94,20 +156,25 @@
   const FACULTY_TEACHERS = [
     "نسرين بن الصادق",
     "شابي علي صلاح",
+    "سابي علي صلاح",
     "عيادي روضة",
     "غربي إيمان",
+    "غريس إيمان",
     "بن علي حافظ",
     "جهاد معلى",
     "العفاس نجلاء",
     "بن شهيدة مريم",
     "غمامي سناء",
     "منيف حافظ",
+    "عنيف حافظ",
     "غربي أحمد عبد العزيز",
     "كلثوم بالوافي",
     "رانية الدريسي",
+    "رانية الإدريسي",
     "كعمون وسيم",
     "الشرقي سهلة",
-    "الغندري أحلام"
+    "الغندري أحلام",
+    "مريم الهماصي"
   ];
 
   let auth = null;
@@ -116,8 +183,13 @@
   let currentProfile = null;
 
   // Schedule Editor State
+  let currentAdminGroup = "grp1";
+  let adminTimetables = {
+    grp1: JSON.parse(JSON.stringify(DEFAULT_SEED_SCHEDULE)),
+    grp2: JSON.parse(JSON.stringify(DEFAULT_SEED_SCHEDULE_GRP2))
+  };
   let currentScheduleDay = "Mon";
-  let workingTimetable = JSON.parse(JSON.stringify(DEFAULT_SEED_SCHEDULE));
+  let workingTimetable = adminTimetables.grp1;
   let hasUnsavedScheduleChanges = false;
 
   // Member Management State
@@ -327,6 +399,7 @@
     populateModalPresets();
     bindScheduleActionButtons();
     bindDayTabs();
+    bindGroupSelector();
     bindModalForm();
 
     // Fetch existing live schedule from Firestore or local cache
@@ -334,18 +407,26 @@
     renderScheduleDayView();
   }
 
+  function bindGroupSelector() {
+    const sel = document.getElementById("admin-select-schedule-group");
+    if (!sel) return;
+    sel.addEventListener("change", (e) => {
+      currentAdminGroup = e.target.value;
+      workingTimetable = adminTimetables[currentAdminGroup];
+      renderScheduleDayView();
+    });
+  }
+
   async function loadScheduleFromServer() {
     // 1. Immediately restore local storage cache so there is zero reset flicker on refresh
-    const localSched = localStorage.getItem("quill_q_server_schedule");
-    if (localSched) {
-      try {
-        const parsed = JSON.parse(localSched);
-        if (parsed && (parsed.Mon || parsed.Tue)) {
-          workingTimetable = parsed;
-          renderScheduleDayView();
-        }
-      } catch (e) {}
-    }
+    try {
+      const localGrp1 = localStorage.getItem("quill_q_server_schedule_grp1") || localStorage.getItem("quill_q_server_schedule");
+      if (localGrp1) adminTimetables.grp1 = JSON.parse(localGrp1);
+      const localGrp2 = localStorage.getItem("quill_q_server_schedule_grp2");
+      if (localGrp2) adminTimetables.grp2 = JSON.parse(localGrp2);
+      workingTimetable = adminTimetables[currentAdminGroup];
+      renderScheduleDayView();
+    } catch (e) {}
 
     if (!db) return;
 
@@ -355,21 +436,35 @@
       if (!snapshot.empty) {
         snapshot.forEach((doc) => {
           if (doc.exists) {
+            const docId = doc.id;
             const data = doc.data();
-            workingTimetable[doc.id] = {
-              dayName: data.dayName || DEFAULT_SEED_SCHEDULE[doc.id]?.dayName || doc.id,
-              dateLabel: data.dateLabel || DEFAULT_SEED_SCHEDULE[doc.id]?.dateLabel || "",
-              activeClassIndex: data.activeClassIndex ?? -1,
-              scheduleVersion: data.scheduleVersion || Date.now(),
-              items: data.items || []
-            };
+            if (docId.startsWith("grp2_")) {
+              const dayKey = docId.replace("grp2_", "");
+              adminTimetables.grp2[dayKey] = {
+                dayName: data.dayName || DEFAULT_SEED_SCHEDULE_GRP2[dayKey]?.dayName || dayKey,
+                dateLabel: data.dateLabel || DEFAULT_SEED_SCHEDULE_GRP2[dayKey]?.dateLabel || "",
+                activeClassIndex: data.activeClassIndex ?? -1,
+                scheduleVersion: data.scheduleVersion || Date.now(),
+                items: data.items || []
+              };
+            } else {
+              const dayKey = docId.replace("grp1_", "");
+              adminTimetables.grp1[dayKey] = {
+                dayName: data.dayName || DEFAULT_SEED_SCHEDULE[dayKey]?.dayName || dayKey,
+                dateLabel: data.dateLabel || DEFAULT_SEED_SCHEDULE[dayKey]?.dateLabel || "",
+                activeClassIndex: data.activeClassIndex ?? -1,
+                scheduleVersion: data.scheduleVersion || Date.now(),
+                items: data.items || []
+              };
+            }
           }
         });
-        localStorage.setItem("quill_q_server_schedule", JSON.stringify(workingTimetable));
+        try {
+          localStorage.setItem("quill_q_server_schedule_grp1", JSON.stringify(adminTimetables.grp1));
+          localStorage.setItem("quill_q_server_schedule_grp2", JSON.stringify(adminTimetables.grp2));
+        } catch (e) {}
+        workingTimetable = adminTimetables[currentAdminGroup];
         renderScheduleDayView();
-      } else {
-        // If empty on server, push seed
-        await saveScheduleToServer(false);
       }
     } catch (err) {
       console.warn("Could not fetch schedules from Firestore, using local/seed:", err);
@@ -595,10 +690,11 @@
         );
 
         if (confirmed) {
-          workingTimetable = JSON.parse(JSON.stringify(DEFAULT_SEED_SCHEDULE));
+          adminTimetables[currentAdminGroup] = JSON.parse(JSON.stringify(currentAdminGroup === "grp2" ? DEFAULT_SEED_SCHEDULE_GRP2 : DEFAULT_SEED_SCHEDULE));
+          workingTimetable = adminTimetables[currentAdminGroup];
           markScheduleChanged();
           renderScheduleDayView();
-          showToast("Schedule reset to official seed. Click 'Save Changes' to push to live server.", "info");
+          showToast(`Schedule reset to official ${currentAdminGroup === 'grp2' ? 'Group 2' : 'Group 1'} seed. Click 'Save Changes' to push to live server.`, "info");
         }
       });
     }
@@ -607,7 +703,10 @@
   async function saveScheduleToServer(showFeedback = true) {
     // 1. Always immediately persist to localStorage so it can never be lost on refresh
     try {
-      localStorage.setItem("quill_q_server_schedule", JSON.stringify(workingTimetable));
+      localStorage.setItem("quill_q_server_schedule_" + currentAdminGroup, JSON.stringify(workingTimetable));
+      if (currentAdminGroup === "grp1") {
+        localStorage.setItem("quill_q_server_schedule", JSON.stringify(workingTimetable));
+      }
     } catch (e) {}
 
     if (!db) {
@@ -623,25 +722,32 @@
     try {
       const batch = db.batch();
       const currentVersion = Date.now();
+      const isGrp2 = currentAdminGroup === "grp2";
 
       Object.keys(workingTimetable).forEach((dayKey) => {
-        const ref = db.collection("schedules").doc(dayKey);
+        const docName = isGrp2 ? `grp2_${dayKey}` : `grp1_${dayKey}`;
+        const ref = db.collection("schedules").doc(docName);
         const dayData = workingTimetable[dayKey];
-        batch.set(ref, {
+        const payload = {
           dayName: dayData.dayName || dayKey,
           dateLabel: dayData.dateLabel || "",
           activeClassIndex: dayData.activeClassIndex ?? -1,
           scheduleVersion: currentVersion,
           items: dayData.items || []
-        });
+        };
+        batch.set(ref, payload);
+        if (!isGrp2) {
+          // Backward compatibility: also sync to legacy docId for Group 1
+          batch.set(db.collection("schedules").doc(dayKey), payload);
+        }
       });
 
       await batch.commit();
 
-      localStorage.setItem("quill_q_server_schedule", JSON.stringify(workingTimetable));
+      localStorage.setItem("quill_q_server_schedule_" + currentAdminGroup, JSON.stringify(workingTimetable));
       markScheduleSaved();
       if (showFeedback) {
-        showToast("Weekly schedule synced and saved to server!", "success");
+        showToast(`Weekly schedule for ${isGrp2 ? 'Group 2 (2ANG-AFF 2)' : 'Group 1 (2ANG-AFF 1)'} saved and synced!`, "success");
       }
     } catch (err) {
       console.error("Save schedule error:", err);

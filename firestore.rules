@@ -24,14 +24,33 @@ service cloud.firestore {
       );
     }
 
+    function isTeacherOrAdmin() {
+      return isSuperAdmin() || (
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "teacher"
+      );
+    }
+
+    function getUserGroup() {
+      return (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+              "group" in get(/databases/$(database)/documents/users/$(request.auth.uid)).data)
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.group
+        : ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+            "academicDetail" in get(/databases/$(database)/documents/users/$(request.auth.uid)).data &&
+            (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.academicDetail.matches('.*Grp 2.*') ||
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.academicDetail.matches('.*2ANG-AFF 2.*')))
+            ? "grp2" : "grp1");
+    }
+
+    function canAccessGroup(targetGroup) {
+      return isTeacherOrAdmin() || getUserGroup() == targetGroup;
+    }
+
     // User profile document:
-    // - SuperAdmin can read and write/update/delete any user (to approve, reject, manage role)
-    // - Authenticated users can read their own profile, create their initial profile, and update non-security fields
     match /users/{userId} {
-      allow read: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin());
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin() || isTeacherOrAdmin());
       allow create: if isAuthenticated() && (
         request.auth.uid == userId && (
-          // Admin automatically approved, others start as pending
           ((request.auth.token.email == "dodchadam@gmail.com" || request.auth.token.email == "dotchadam@gmail.com") && request.resource.data.status == "approved" && request.resource.data.role == "admin") ||
           (request.resource.data.status == "pending")
         )
@@ -39,85 +58,69 @@ service cloud.firestore {
       allow update: if isAuthenticated() && (
         isSuperAdmin() ||
         (request.auth.uid == userId && (
-          // Pending users can update or complete profile fields before admin approval
           (resource.data.status == "pending" && request.resource.data.status == "pending") ||
-          // Approved users cannot elevate their own role or approve themselves
           (request.resource.data.role == resource.data.role &&
            request.resource.data.status == resource.data.status)
         ))
       );
       allow delete: if isSuperAdmin();
 
-      // Personal user subcollections
       match /tasks/{taskId} {
         allow read, write: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin());
       }
 
-      // Device push notification tokens
       match /fcmTokens/{tokenId} {
         allow read, write: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin());
       }
     }
 
-    // Shared server-wide homeworks and reminders:
-    // - Only approved students, teachers, and admin can read & create
-    // - Only creator or super admin can delete
+    // Shared Homeworks (Group-separated):
     match /homeworks/{hwId} {
-      allow read: if isApprovedUser();
-      allow create: if isApprovedUser() && request.resource.data.userId == request.auth.uid;
-      allow update: if isApprovedUser();
-      allow delete: if isApprovedUser() && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow read: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1'));
+      allow create: if isApprovedUser() && canAccessGroup(request.resource.data.get('group', 'grp1')) && request.resource.data.userId == request.auth.uid;
+      allow update: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1'));
+      allow delete: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1')) && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
 
     match /tasks/{taskId} {
-      allow read: if isApprovedUser();
-      allow create: if isApprovedUser() && request.resource.data.userId == request.auth.uid;
-      allow update: if isApprovedUser();
-      allow delete: if isApprovedUser() && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow read: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1'));
+      allow create: if isApprovedUser() && canAccessGroup(request.resource.data.get('group', 'grp1')) && request.resource.data.userId == request.auth.uid;
+      allow update: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1'));
+      allow delete: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1')) && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
 
-    // Shared server-wide Quick Notes on Subjects view:
-    // - Only approved students, teachers, and admin can read & create
-    // - Author or Super Admin can delete
+    // Shared Quick Notes (Group-separated):
     match /quickNotes/{noteId} {
-      allow read: if isApprovedUser();
-      allow create: if isApprovedUser() && request.resource.data.userId == request.auth.uid;
-      allow update: if isApprovedUser() && (resource.data.userId == request.auth.uid || isSuperAdmin());
-      allow delete: if isApprovedUser() && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow read: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1'));
+      allow create: if isApprovedUser() && canAccessGroup(request.resource.data.get('group', 'grp1')) && request.resource.data.userId == request.auth.uid;
+      allow update: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1')) && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow delete: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1')) && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
 
-    // Server-wide Timetables & Schedules:
-    // - ONLY approved users can read/download the schedule
-    // - ONLY Super Admin can create, modify, or delete schedules
+    // Server-wide Timetables & Schedules (Group-separated):
     match /schedules/{dayId} {
-      allow read: if isApprovedUser();
+      allow read: if isApprovedUser() && (
+        isTeacherOrAdmin() ||
+        (dayId.matches('grp2_.*') ? getUserGroup() == "grp2" : getUserGroup() == "grp1")
+      );
       allow write: if isSuperAdmin();
     }
 
-    // Server-wide Class Chat
-    // - Approved users can read and write chat messages
-    // - Approved users can update seen status on messages
-    // - Creator or super admin can delete messages
+    // Class Chat (Group-separated channels):
     match /chats/{channelId}/messages/{messageId} {
-      allow read: if isApprovedUser();
-      allow create: if isApprovedUser() && request.resource.data.userId == request.auth.uid;
-      allow update: if isApprovedUser();
-      allow delete: if isApprovedUser() && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow read: if isApprovedUser() && canAccessGroup(channelId == "grp2" ? "grp2" : "grp1");
+      allow create: if isApprovedUser() && canAccessGroup(channelId == "grp2" ? "grp2" : "grp1") && request.resource.data.userId == request.auth.uid;
+      allow update: if isApprovedUser() && canAccessGroup(channelId == "grp2" ? "grp2" : "grp1");
+      allow delete: if isApprovedUser() && canAccessGroup(channelId == "grp2" ? "grp2" : "grp1") && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
 
-    // Subject Documents & Lesson Notes
-    // - Only approved students, teachers, and admins can view subject documents
-    // - Approved users can create documents
-    // - Author or SuperAdmin can update or delete documents
+    // Unified Subject Documents & Lesson Notes (Unified across all groups):
     match /subjects/{subjectId}/documents/{docId} {
       allow read: if isApprovedUser();
       allow create: if isApprovedUser() && request.resource.data.authorId == request.auth.uid;
       allow update: if isApprovedUser() && (resource.data.authorId == request.auth.uid || isSuperAdmin());
       allow delete: if isApprovedUser() && (resource.data.authorId == request.auth.uid || isSuperAdmin());
 
-      // Student Submissions for Exercises
-      // - Students can read and update their own submission
-      // - Teachers and SuperAdmins can read all submissions and update feedback/grades
       match /submissions/{studentId} {
         allow read: if isApprovedUser() && (request.auth.uid == studentId || isSuperAdmin() || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "teacher"));
         allow create: if isApprovedUser() && request.auth.uid == studentId;
@@ -133,5 +136,3 @@ service cloud.firestore {
     }
   }
 }
-
-

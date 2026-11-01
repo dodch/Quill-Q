@@ -9877,6 +9877,155 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   background: #f0a345;
 }
 
+/* Multi-Group Timetable & Chat Switcher Styles */
+.schedule-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.schedule-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.schedule-group-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: #fdf2da;
+  border: 1.5px solid #1a1816;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1816;
+  box-shadow: 1.5px 1.5px 0px #1a1816;
+}
+
+.schedule-group-switcher,
+.chat-group-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: #f4eee2;
+  border: 2px solid #1a1816;
+  border-radius: 12px;
+  padding: 3px;
+  gap: 4px;
+  box-shadow: 2px 2px 0px #1a1816;
+}
+
+.group-tab-btn,
+.chat-group-chip {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border: 1.5px solid transparent;
+  background: transparent;
+  color: #5a5247;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.group-tab-btn:hover,
+.chat-group-chip:hover {
+  color: #1a1816;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.group-tab-btn.active,
+.chat-group-chip.active {
+  background: #fff;
+  color: #1a1816;
+  box-shadow: 1.5px 1.5px 0px #1a1816;
+  border-color: #1a1816;
+}
+
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.home-schedule-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fffdf8;
+  border: 2px solid #1a1816;
+  border-radius: 16px;
+  padding: 12px 18px;
+  margin-bottom: 22px;
+  box-shadow: 2.5px 2.5px 0px #1a1816;
+  gap: 12px;
+  animation: fadeIn 0.3s ease;
+}
+
+.home-preview-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.home-preview-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #fdf2da;
+  border: 1.5px solid #1a1816;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  color: #1a1816;
+  box-shadow: 1.5px 1.5px 0px #1a1816;
+  flex-shrink: 0;
+}
+
+.home-preview-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-preview-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #7d756c;
+}
+
+.home-preview-badge {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #1a1816;
+}
+
+@media (max-width: 640px) {
+  .home-schedule-preview-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .home-group-switcher {
+    width: 100%;
+    justify-content: center;
+  }
+  .home-group-switcher .group-tab-btn {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+
+
 
 
 

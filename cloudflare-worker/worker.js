@@ -37,7 +37,7 @@ export default {
 
     try {
       const payload = await request.json();
-      const { title, body, url, targetView, tag, senderId } = payload;
+      const { title, body, url, targetView, tag, senderId, targetGroup } = payload;
 
       if (!title) {
         return new Response(JSON.stringify({ error: "Missing notification title" }), {
@@ -65,8 +65,8 @@ export default {
       // 1. Get or reuse OAuth2 Google Access Token
       const accessToken = await getGoogleOAuth2Token(clientEmail, rawPrivateKey);
 
-      // 2. Fetch all registered subscriber device tokens from Firestore
-      const tokens = await fetchSubscriberTokens(projectId, accessToken, senderId);
+      // 2. Fetch all registered subscriber device tokens from Firestore matching group isolation
+      const tokens = await fetchSubscriberTokens(projectId, accessToken, senderId, targetGroup);
 
       if (tokens.length === 0) {
         return new Response(JSON.stringify({ success: true, message: "No registered device tokens found.", delivered: 0 }), {
@@ -166,9 +166,12 @@ async function getGoogleOAuth2Token(clientEmail, privateKeyPem) {
 }
 
 /**
- * Queries Firestore REST API for all user device tokens in /users/{uid}/fcmTokens
+ * Queries Firestore REST API for user device tokens in /users/{uid}/fcmTokens
+ * Applies group isolation:
+ * - If targetGroup is specified, students from other groups are filtered out.
+ * - Teachers and Admins receive all group notifications.
  */
-async function fetchSubscriberTokens(projectId, accessToken, excludeUserId) {
+async function fetchSubscriberTokens(projectId, accessToken, excludeUserId, targetGroup) {
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
   const query = {
     structuredQuery: {
@@ -198,9 +201,18 @@ async function fetchSubscriberTokens(projectId, accessToken, excludeUserId) {
     
     const tokenVal = doc.fields.token?.stringValue;
     const userIdVal = doc.fields.userId?.stringValue;
+    const userRole = doc.fields.userRole?.stringValue || "student";
+    const tokenGroup = doc.fields.group?.stringValue || "grp1";
 
-    // Don't send push notification to the user that created the item
+    // Don't send push notification to the author that created the item
     if (excludeUserId && userIdVal === excludeUserId) continue;
+
+    // Group isolation filter:
+    // If targetGroup is provided and recipient is a student whose group differs, skip!
+    // Teachers and Admins always receive notifications across both groups.
+    if (targetGroup && userRole === "student" && tokenGroup !== targetGroup) {
+      continue;
+    }
 
     if (tokenVal) {
       tokenSet.add(tokenVal);

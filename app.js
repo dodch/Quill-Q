@@ -72,9 +72,155 @@ const DEFAULT_TIMETABLE_SEED = {
   Sun: { dayName: "Sunday", dateLabel: "Sunday, Oct 25", activeClassIndex: -1, scheduleVersion: OFFICIAL_SCHEDULE_VERSION, items: [] }
 };
 
-let TIMETABLE = JSON.parse(JSON.stringify(DEFAULT_TIMETABLE_SEED));
+const DEFAULT_TIMETABLE_SEED_GRP2 = {
+  Mon: {
+    dayName: "Monday",
+    dateLabel: "Monday, Oct 19",
+    activeClassIndex: 1,
+    scheduleVersion: OFFICIAL_SCHEDULE_VERSION,
+    items: [
+      { time: "08:30 AM – 10:00 AM", subject: "Writing", prof: "نسرين بن الصادق", room: "Salle 15", type: "C", color: "#f6cf7c", icon: "writing" },
+      { time: "10:00 AM – 11:30 AM", subject: "Entrepreneurial Skills (Droit)", prof: "سابي علي صلاح", room: "Salle 14", type: "TD", color: "#e8987a", current: true, icon: "law" },
+      { time: "11:30 AM – 12:30 PM", subject: "British History", prof: "عيادي روضة", room: "Amphi 6", type: "C", color: "#a9c6ec", icon: "history" },
+      { time: "12:30 PM – 01:30 PM", subject: "Financial English 1", prof: "غريس إيمان", room: "Amphi 6", type: "C", color: "#5bae86", icon: "finance" }
+    ]
+  },
+  Tue: {
+    dayName: "Tuesday",
+    dateLabel: "Tuesday, Oct 20",
+    activeClassIndex: 1,
+    scheduleVersion: OFFICIAL_SCHEDULE_VERSION,
+    items: [
+      { time: "08:30 AM – 10:00 AM", subject: "Grammar in Context", prof: "العفاس نجلاء", room: "Amphi 4", type: "C", color: "#a9c6ec", icon: "grammar" },
+      { time: "10:00 AM – 11:30 AM", subject: "Other Languages (French)", prof: "بن علي حافظ", room: "Salle 14", type: "TD", color: "#e8987a", current: true, icon: "language" },
+      { time: "11:30 AM – 01:00 PM", subject: "Other Languages (Arabic for specific purposes)", prof: "مريم الهماصي", room: "lab 3", type: "TD", color: "#f6cf7c", icon: "language" },
+      { time: "01:00 PM – 02:30 PM", subject: "Drama/Poetry/Novel (Poetry)", prof: "بن شهيدة مريم", room: "lab 3", type: "CI", color: "#e0835f", icon: "theater" },
+      { time: "02:30 PM – 04:00 PM", subject: "Grammar in Context", prof: "العفاس نجلاء", room: "Salle 18", type: "TD", color: "#5bae86", icon: "grammar" }
+    ]
+  },
+  Wed: {
+    dayName: "Wednesday",
+    dateLabel: "Wednesday, Oct 21",
+    activeClassIndex: 1,
+    scheduleVersion: OFFICIAL_SCHEDULE_VERSION,
+    items: [
+      { time: "08:30 AM – 10:00 AM", subject: "Financial English 1", prof: "غريس إيمان", room: "Salle 15", type: "TD", color: "#5bae86", icon: "finance" },
+      { time: "10:00 AM – 11:30 AM", subject: "Literary Trends", prof: "عنيف حافظ", room: "Amphi 1", type: "C", color: "#f6cf7c", current: true, icon: "literature" },
+      { time: "11:30 AM – 01:00 PM", subject: "Drama/Poetry/Novel (Novel)", prof: "كلثوم بالوافي", room: "Salle 16", type: "CI", color: "#a9c6ec", icon: "theater" },
+      { time: "01:00 PM – 02:30 PM", subject: "Drama/Poetry/Novel (Drama)", prof: "غمامي سناء", room: "Salle 15", type: "CI", color: "#e8987a", icon: "theater" }
+    ]
+  },
+  Thu: {
+    dayName: "Thursday",
+    dateLabel: "Thursday, Oct 22",
+    activeClassIndex: 0,
+    scheduleVersion: OFFICIAL_SCHEDULE_VERSION,
+    items: [
+      { time: "09:30 AM – 11:00 AM", subject: "Introduction to Linguistics", prof: "رانية الإدريسي", room: "Amphi 3", type: "C", color: "#f6cf7c", current: true, icon: "linguistics" },
+      { time: "11:00 AM – 12:30 PM", subject: "US History", prof: "كعمون وسيم", room: "Amphi 4", type: "C", color: "#a9c6ec", icon: "history" },
+      { time: "12:30 PM – 02:00 PM", subject: "US History", prof: "كعمون وسيم", room: "Salle 12", type: "TD", color: "#5bae86", icon: "history" },
+      { time: "02:00 PM – 03:30 PM", subject: "Introduction to Linguistics", prof: "رانية الإدريسي", room: "Salle 10", type: "TD", color: "#e0835f", icon: "linguistics" }
+    ]
+  },
+  Fri: {
+    dayName: "Friday",
+    dateLabel: "Friday, Oct 23",
+    activeClassIndex: 0,
+    scheduleVersion: OFFICIAL_SCHEDULE_VERSION,
+    items: [
+      { time: "08:30 AM – 10:00 AM", subject: "Commercial English 1", prof: "الشرقي سهلة", room: "Salle 10", type: "TD", color: "#a9c6ec", icon: "business" },
+      { time: "10:00 AM – 11:30 AM", subject: "Commercial English 1", prof: "الشرقي سهلة", room: "Amphi 4", type: "C", color: "#f6cf7c", current: true, icon: "business" },
+      { time: "11:30 AM – 01:00 PM", subject: "Entrepreneurial Skills (Droit)", prof: "الغندري أحلام", room: "Salle 12", type: "TD", color: "#5bae86", icon: "law" },
+      { time: "01:00 PM – 02:30 PM", subject: "British History", prof: "عيادي روضة", room: "Salle 13", type: "TD", color: "#e8987a", icon: "history" },
+      { time: "02:30 PM – 04:00 PM", subject: "Activités pratiques (TEFL)", prof: "رانية الإدريسي", room: "Salle 11", type: "TD", color: "#e0835f", icon: "tefl" }
+    ]
+  },
+  Sat: { dayName: "Saturday", dateLabel: "Saturday, Oct 24", activeClassIndex: -1, scheduleVersion: OFFICIAL_SCHEDULE_VERSION, items: [] },
+  Sun: { dayName: "Sunday", dateLabel: "Sunday, Oct 25", activeClassIndex: -1, scheduleVersion: OFFICIAL_SCHEDULE_VERSION, items: [] }
+};
 
+function getUserGroup(profile) {
+  if (!profile) return "grp1";
+  if (profile.group) return profile.group;
+  const detail = String(profile.academicDetail || "").toLowerCase();
+  if (detail.includes("grp 2") || detail.includes("grp2") || detail.includes("group 2") || detail.includes("2ang-aff 2")) {
+    return "grp2";
+  }
+  return "grp1";
+}
+
+let allSchedulesCache = {
+  grp1: JSON.parse(JSON.stringify(DEFAULT_TIMETABLE_SEED)),
+  grp2: JSON.parse(JSON.stringify(DEFAULT_TIMETABLE_SEED_GRP2))
+};
+
+let currentActiveScheduleGroup = "grp1";
+let TIMETABLE = JSON.parse(JSON.stringify(DEFAULT_TIMETABLE_SEED));
 let scheduleUnsubscribe = null;
+
+function setScheduleGroup(group) {
+  currentActiveScheduleGroup = group === "grp2" ? "grp2" : "grp1";
+  if (allSchedulesCache[currentActiveScheduleGroup]) {
+    TIMETABLE = allSchedulesCache[currentActiveScheduleGroup];
+  } else {
+    TIMETABLE = currentActiveScheduleGroup === "grp2" ? DEFAULT_TIMETABLE_SEED_GRP2 : DEFAULT_TIMETABLE_SEED;
+  }
+  updateScheduleGroupUIState();
+  updateTodayStatus();
+  renderDetailedSchedule(currentSelectedDay);
+  renderSchedule();
+  renderHomeworksView();
+  syncHomeHomeworkNote();
+}
+
+function updateScheduleGroupUIState() {
+  const btnGrp1 = document.getElementById("btn-sched-grp1");
+  const btnGrp2 = document.getElementById("btn-sched-grp2");
+  const btnHomeGrp1 = document.getElementById("btn-home-sched-grp1");
+  const btnHomeGrp2 = document.getElementById("btn-home-sched-grp2");
+  const btnHwGrp1 = document.getElementById("btn-hw-sched-grp1");
+  const btnHwGrp2 = document.getElementById("btn-hw-sched-grp2");
+  const badge = document.getElementById("schedule-group-badge");
+  const homeBadge = document.getElementById("home-schedule-active-badge");
+  const hwBadge = document.getElementById("hw-active-group-badge");
+  const switcher = document.querySelector(".schedule-group-switcher");
+  const homeHeader = document.getElementById("home-schedule-preview-header");
+  const hwSwitcher = document.getElementById("hw-group-switcher");
+
+  const profile = currentProfile;
+  const canSwitch = isSuperAdminUser(profile) || (profile && profile.role === "teacher");
+
+  if (switcher) {
+    switcher.style.display = canSwitch ? "inline-flex" : "none";
+  }
+  if (homeHeader) {
+    homeHeader.style.display = canSwitch ? "flex" : "none";
+  }
+  if (hwSwitcher) {
+    hwSwitcher.style.display = canSwitch ? "inline-flex" : "none";
+  }
+
+  const isGrp1 = currentActiveScheduleGroup === "grp1";
+  const isGrp2 = currentActiveScheduleGroup === "grp2";
+
+  if (btnGrp1) btnGrp1.classList.toggle("active", isGrp1);
+  if (btnGrp2) btnGrp2.classList.toggle("active", isGrp2);
+  if (btnHomeGrp1) btnHomeGrp1.classList.toggle("active", isGrp1);
+  if (btnHomeGrp2) btnHomeGrp2.classList.toggle("active", isGrp2);
+  if (btnHwGrp1) btnHwGrp1.classList.toggle("active", isGrp1);
+  if (btnHwGrp2) btnHwGrp2.classList.toggle("active", isGrp2);
+
+  const groupLabel = isGrp2 ? "Group 2 (2ANG-AFF 2)" : "Group 1 (2ANG-AFF 1)";
+  if (badge) {
+    badge.textContent = groupLabel;
+  }
+  if (homeBadge) {
+    homeBadge.textContent = groupLabel;
+  }
+  if (hwBadge) {
+    hwBadge.textContent = groupLabel;
+  }
+}
 
 function bindServerSchedule(user) {
   if (scheduleUnsubscribe) {
@@ -85,6 +231,50 @@ function bindServerSchedule(user) {
   const profile = currentProfile;
   const isSuperAdmin = isSuperAdminUser(profile);
   const isApproved = profile && (profile.status === "approved" || isSuperAdmin);
+  const userGrp = getUserGroup(profile);
+
+  // If regular student, strictly lock their active group to their assigned group
+  if (!isSuperAdmin && (!profile || profile.role !== "teacher")) {
+    currentActiveScheduleGroup = userGrp;
+  }
+
+  // Bind Schedule View Switcher Buttons
+  const btnGrp1 = document.getElementById("btn-sched-grp1");
+  const btnGrp2 = document.getElementById("btn-sched-grp2");
+  if (btnGrp1 && !btnGrp1.dataset.bound) {
+    btnGrp1.dataset.bound = "true";
+    btnGrp1.addEventListener("click", () => setScheduleGroup("grp1"));
+  }
+  if (btnGrp2 && !btnGrp2.dataset.bound) {
+    btnGrp2.dataset.bound = "true";
+    btnGrp2.addEventListener("click", () => setScheduleGroup("grp2"));
+  }
+
+  // Bind Home View Switcher Buttons
+  const btnHomeGrp1 = document.getElementById("btn-home-sched-grp1");
+  const btnHomeGrp2 = document.getElementById("btn-home-sched-grp2");
+  if (btnHomeGrp1 && !btnHomeGrp1.dataset.bound) {
+    btnHomeGrp1.dataset.bound = "true";
+    btnHomeGrp1.addEventListener("click", () => setScheduleGroup("grp1"));
+  }
+  if (btnHomeGrp2 && !btnHomeGrp2.dataset.bound) {
+    btnHomeGrp2.dataset.bound = "true";
+    btnHomeGrp2.addEventListener("click", () => setScheduleGroup("grp2"));
+  }
+
+  // Bind Homework View Switcher Buttons
+  const btnHwGrp1 = document.getElementById("btn-hw-sched-grp1");
+  const btnHwGrp2 = document.getElementById("btn-hw-sched-grp2");
+  if (btnHwGrp1 && !btnHwGrp1.dataset.bound) {
+    btnHwGrp1.dataset.bound = "true";
+    btnHwGrp1.addEventListener("click", () => setScheduleGroup("grp1"));
+  }
+  if (btnHwGrp2 && !btnHwGrp2.dataset.bound) {
+    btnHwGrp2.dataset.bound = "true";
+    btnHwGrp2.addEventListener("click", () => setScheduleGroup("grp2"));
+  }
+
+  updateScheduleGroupUIState();
 
   // Unapproved users cannot fetch schedule
   if (!user || !isApproved) {
@@ -97,78 +287,61 @@ function bindServerSchedule(user) {
       Sat: { dayName: "Saturday", dateLabel: "Saturday, Oct 24", activeClassIndex: -1, items: [] },
       Sun: { dayName: "Sunday", dateLabel: "Sunday, Oct 25", activeClassIndex: -1, items: [] }
     };
+    updateScheduleGroupUIState();
     updateTodayStatus();
     renderDetailedSchedule(currentSelectedDay);
     renderSchedule();
     return;
   }
 
-  // Load cached schedule if present
-  const localSched = localStorage.getItem("quill_q_server_schedule");
-  if (localSched) {
-    try {
-      const parsed = JSON.parse(localSched);
-      if (parsed && (parsed.Mon || parsed.Tue)) {
-        TIMETABLE = parsed;
-        updateTodayStatus();
-        renderDetailedSchedule(currentSelectedDay);
-        renderSchedule();
-      } else {
-        TIMETABLE = JSON.parse(JSON.stringify(DEFAULT_TIMETABLE_SEED));
-        localStorage.setItem("quill_q_server_schedule", JSON.stringify(TIMETABLE));
-      }
-    } catch (e) {}
-  } else {
-    TIMETABLE = JSON.parse(JSON.stringify(DEFAULT_TIMETABLE_SEED));
-  }
+  // Load cached multi-group schedule if present
+  try {
+    const localGrp1 = localStorage.getItem("quill_q_server_schedule_grp1") || localStorage.getItem("quill_q_server_schedule");
+    if (localGrp1) allSchedulesCache.grp1 = JSON.parse(localGrp1);
+    const localGrp2 = localStorage.getItem("quill_q_server_schedule_grp2");
+    if (localGrp2) allSchedulesCache.grp2 = JSON.parse(localGrp2);
+  } catch (e) {}
+
+  TIMETABLE = allSchedulesCache[currentActiveScheduleGroup] || (currentActiveScheduleGroup === "grp2" ? DEFAULT_TIMETABLE_SEED_GRP2 : DEFAULT_TIMETABLE_SEED);
+  updateScheduleGroupUIState();
+  updateTodayStatus();
+  renderDetailedSchedule(currentSelectedDay);
+  renderSchedule();
 
   if (db) {
     try {
       scheduleUnsubscribe = db.collection("schedules").onSnapshot(async (snapshot) => {
-        let serverVersion = 0;
-        const serverDocs = {};
-
-        snapshot.forEach((doc) => {
-          if (doc.exists) {
-            const d = doc.data();
-            serverDocs[doc.id] = d;
-            if (d && d.scheduleVersion && d.scheduleVersion > serverVersion) {
-              serverVersion = d.scheduleVersion;
-            }
-          }
-        });
-
-        // If collection is completely empty, Super Admin seeds initial schedule
-        if (isSuperAdmin && snapshot.empty) {
-          console.log(`[Schedule Sync] Initializing empty /schedules on Firestore...`);
-          const batch = db.batch();
-          Object.keys(DEFAULT_TIMETABLE_SEED).forEach((dayKey) => {
-            const ref = db.collection("schedules").doc(dayKey);
-            batch.set(ref, DEFAULT_TIMETABLE_SEED[dayKey]);
-          });
-          try {
-            await batch.commit();
-            console.log("[Schedule Sync] Firestore /schedules successfully initialized!");
-          } catch (seedErr) {
-            console.warn("Schedule server sync error:", seedErr);
-          }
-          return;
-        }
-
         if (!snapshot.empty) {
           snapshot.forEach((doc) => {
             if (doc.exists) {
-              TIMETABLE[doc.id] = doc.data();
+              const docId = doc.id;
+              const data = doc.data();
+              if (docId.startsWith("grp2_")) {
+                const dayKey = docId.replace("grp2_", "");
+                if (allSchedulesCache.grp2) allSchedulesCache.grp2[dayKey] = data;
+              } else if (docId.startsWith("grp1_")) {
+                const dayKey = docId.replace("grp1_", "");
+                if (allSchedulesCache.grp1) allSchedulesCache.grp1[dayKey] = data;
+              } else {
+                // legacy docId (Mon, Tue, etc.) defaults to grp1
+                if (allSchedulesCache.grp1) allSchedulesCache.grp1[docId] = data;
+              }
             }
           });
-        }
 
-        localStorage.setItem("quill_q_server_schedule", JSON.stringify(TIMETABLE));
-        updateTodayStatus();
-        renderDetailedSchedule(currentSelectedDay);
-        renderSchedule();
+          try {
+            localStorage.setItem("quill_q_server_schedule_grp1", JSON.stringify(allSchedulesCache.grp1));
+            localStorage.setItem("quill_q_server_schedule_grp2", JSON.stringify(allSchedulesCache.grp2));
+          } catch (e) {}
+
+          TIMETABLE = allSchedulesCache[currentActiveScheduleGroup] || (currentActiveScheduleGroup === "grp2" ? DEFAULT_TIMETABLE_SEED_GRP2 : DEFAULT_TIMETABLE_SEED);
+          updateScheduleGroupUIState();
+          updateTodayStatus();
+          renderDetailedSchedule(currentSelectedDay);
+          renderSchedule();
+        }
       }, (err) => {
-        console.warn("Firestore schedule listener warning (Access denied if unapproved):", err);
+        console.warn("Firestore schedule listener warning:", err);
       });
     } catch (err) {
       console.warn("Could not bind server schedule:", err);
@@ -753,7 +926,8 @@ function renderDetailedSchedule(dayKey = currentSelectedDay) {
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
   if (subheadingEl) {
-    subheadingEl.innerHTML = `${dayData.dayName}'s Schedule (${dayData.dateLabel}) — <span style="font-weight: 500; font-size: 14.5px; color: #786e63;">Groupe: 2ANG-AFF 1</span>`;
+    const grpName = currentActiveScheduleGroup === "grp2" ? "2ANG-AFF 2" : "2ANG-AFF 1";
+    subheadingEl.innerHTML = `${dayData.dayName}'s Schedule (${dayData.dateLabel}) — <span style="font-weight: 500; font-size: 14.5px; color: #786e63;">Groupe: ${grpName}</span>`;
   }
 
   if (!detailedEl) return;
@@ -1730,7 +1904,7 @@ async function requestNotificationAccess() {
 }
 
 // Universal background push notification dispatcher
-async function broadcastPushNotification({ title, body, url, targetView, tag }) {
+async function broadcastPushNotification({ title, body, url, targetView, tag, targetGroup }) {
   const endpoint = (typeof firebaseConfig !== "undefined" && firebaseConfig.pushEndpoint)
     ? firebaseConfig.pushEndpoint
     : "https://quill-push-dispatcher.dodchadam.workers.dev";
@@ -1739,11 +1913,14 @@ async function broadcastPushNotification({ title, body, url, targetView, tag }) 
 
   try {
     const user = currentUser || (typeof firebase !== "undefined" && firebase.auth && firebase.auth().currentUser);
+    const profile = currentProfile;
+    const defaultGroup = targetGroup || (profile ? getUserGroup(profile) : "grp1");
     const payload = {
       title: title || "Quill-Q Notification",
       body: body || "",
       url: url || "./index.html",
       targetView: targetView || "home",
+      targetGroup: defaultGroup,
       tag: tag || ("quill-" + Date.now()),
       senderId: user ? user.uid : null,
       senderName: user ? (user.displayName || null) : null
@@ -1786,9 +1963,13 @@ async function registerDeviceFCMToken() {
     if (currentToken && user && db) {
       console.log("FCM Device Token acquired successfully:", currentToken);
       const tokenDocId = btoa(currentToken.slice(-32)).replace(/[/+=]/g, "_");
+      const userGroup = getUserGroup(currentProfile);
+      const userRole = currentProfile ? currentProfile.role : "student";
       await db.collection("users").doc(user.uid).collection("fcmTokens").doc(tokenDocId).set({
         token: currentToken,
         userId: user.uid,
+        userRole: userRole,
+        group: userGroup,
         platform: isIOSDevice() ? "ios" : (navigator.userAgent.includes("Android") ? "android" : "desktop"),
         userAgent: navigator.userAgent,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1843,11 +2024,23 @@ function bindUserTasks(user) {
   isFirstHomeworkSnapshot = true;
 
   if (user) {
+    const profile = currentProfile;
+    const isSuperAdmin = isSuperAdminUser(profile);
+    const isTeacher = profile && profile.role === "teacher";
+    const myGroup = getUserGroup(profile);
+
     // 1. Instant local read for snappy UI
     const local = localStorage.getItem("quill_q_shared_tasks");
     if (local) {
       try {
-        currentTasks = JSON.parse(local).filter((t) => !isTaskDueReached(t));
+        currentTasks = JSON.parse(local).filter((t) => {
+          if (isTaskDueReached(t)) return false;
+          if (!isSuperAdmin && !isTeacher) {
+            const taskGroup = t.group || "grp1";
+            return taskGroup === myGroup;
+          }
+          return true;
+        });
       } catch (e) {
         currentTasks = [];
       }
@@ -1860,49 +2053,54 @@ function bindUserTasks(user) {
     // 2. Server-side real-time listener from Firestore shared collection
     if (db) {
       try {
-        tasksUnsubscribe = db.collection("homeworks")
-          .onSnapshot((snapshot) => {
-            // Check for new additions added by other users or across tabs
-            if (!isFirstHomeworkSnapshot) {
-              snapshot.docChanges().forEach((change) => {
-                if (change.type === "added") {
-                  const docData = change.doc.data();
-                  // Trigger alert if task wasn't initiated in this exact tab session
-                  if (!locallyCreatedTaskIds.has(change.doc.id) && !isTaskDueReached(docData)) {
-                    triggerNewTaskNotification({ id: change.doc.id, ...docData });
-                  }
-                }
-              });
-            }
-            isFirstHomeworkSnapshot = false;
+        let query = db.collection("homeworks");
+        // For students, filter strictly by their assigned group to comply with security rules and isolate data
+        if (!isSuperAdmin && !isTeacher) {
+          query = query.where("group", "==", myGroup);
+        }
 
-            const list = [];
-            snapshot.forEach((doc) => {
-              list.push({ id: doc.id, ...doc.data() });
-            });
-            list.sort((a, b) => (a.due || "").localeCompare(b.due || ""));
-
-            const active = [];
-            list.forEach((t) => {
-              if (isTaskDueReached(t)) {
-                // Auto-cleanup: only delete on server if this user is the author
-                if (isMyTask(t) && db) {
-                  db.collection("homeworks").doc(t.id).delete().catch(console.warn);
+        tasksUnsubscribe = query.onSnapshot((snapshot) => {
+          // Check for new additions added by other users or across tabs
+          if (!isFirstHomeworkSnapshot) {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === "added") {
+                const docData = change.doc.data();
+                // Trigger alert if task wasn't initiated in this exact tab session
+                if (!locallyCreatedTaskIds.has(change.doc.id) && !isTaskDueReached(docData)) {
+                  triggerNewTaskNotification({ id: change.doc.id, ...docData });
                 }
-              } else {
-                active.push(t);
               }
             });
+          }
+          isFirstHomeworkSnapshot = false;
 
-            currentTasks = active;
-            try {
-              localStorage.setItem("quill_q_shared_tasks", JSON.stringify(active));
-            } catch (e) {}
-            renderHomeworksView();
-            syncHomeHomeworkNote();
-          }, (err) => {
-            console.warn("Firestore homeworks real-time sync warning:", err);
+          const list = [];
+          snapshot.forEach((doc) => {
+            list.push({ id: doc.id, ...doc.data() });
           });
+          list.sort((a, b) => (a.due || "").localeCompare(b.due || ""));
+
+          const active = [];
+          list.forEach((t) => {
+            if (isTaskDueReached(t)) {
+              // Auto-cleanup: only delete on server if this user is the author
+              if (isMyTask(t) && db) {
+                db.collection("homeworks").doc(t.id).delete().catch(console.warn);
+              }
+            } else {
+              active.push(t);
+            }
+          });
+
+          currentTasks = active;
+          try {
+            localStorage.setItem("quill_q_shared_tasks", JSON.stringify(active));
+          } catch (e) {}
+          renderHomeworksView();
+          syncHomeHomeworkNote();
+        }, (err) => {
+          console.warn("Firestore homeworks real-time sync warning:", err);
+        });
       } catch (subErr) {
         console.warn("Could not attach homeworks listener:", subErr);
       }
@@ -2092,14 +2290,23 @@ function renderHomeworksView() {
     return;
   }
 
-  const tasks = getStoredTasks();
+  const profile = currentProfile;
+  const isTeacherOrAdmin = isSuperAdminUser(profile) || (profile && profile.role === "teacher");
+  let tasks = getStoredTasks();
+  if (isTeacherOrAdmin && currentActiveScheduleGroup) {
+    tasks = tasks.filter((t) => (t.group || "grp1") === currentActiveScheduleGroup);
+  }
 
   if (!tasks.length) {
+    const grpName = currentActiveScheduleGroup === "grp2" ? "Group 2" : "Group 1";
+    const emptyMsg = isTeacherOrAdmin
+      ? `No active homework or reminders for ${grpName}. Click Add Task on the side to post one.`
+      : "No active homework or reminders. Use Quick Actions on the side to add one.";
     container.innerHTML = `
       <div class="hw-empty-state" style="grid-column: 1 / -1; padding: 40px 20px; text-align: center;">
         <div class="hw-empty-icon" style="font-size:36px; margin-bottom:12px;">✨</div>
         <h4 class="hw-empty-text" style="font-size:20px; font-weight:700; color:#1a1816; margin:0 0 6px;">All clear!</h4>
-        <p class="hw-empty-hint" style="font-size:14px; color:#786e63; margin:0;">No active homework or reminders. Use Quick Actions on the side to add one.</p>
+        <p class="hw-empty-hint" style="font-size:14px; color:#786e63; margin:0;">${emptyMsg}</p>
       </div>`;
     return;
   }
@@ -2263,9 +2470,16 @@ function syncHomeHomeworkNote() {
     return;
   }
 
-  const tasks = getStoredTasks().slice(0, 5); // top 5
+  const profile = currentProfile;
+  const isTeacherOrAdmin = isSuperAdminUser(profile) || (profile && profile.role === "teacher");
+  let allTasks = getStoredTasks();
+  if (isTeacherOrAdmin && currentActiveScheduleGroup) {
+    allTasks = allTasks.filter((t) => (t.group || "grp1") === currentActiveScheduleGroup);
+  }
+  const tasks = allTasks.slice(0, 5); // top 5
   if (!tasks.length) {
-    hwList.innerHTML = `<li style="list-style:none; padding:10px 0; color:#7d756c; font-size:14px;">No upcoming homework!</li>`;
+    const grpLabel = currentActiveScheduleGroup === "grp2" ? "Group 2" : "Group 1";
+    hwList.innerHTML = `<li style="list-style:none; padding:10px 0; color:#7d756c; font-size:14px;">No upcoming homework for ${grpLabel}!</li>`;
     return;
   }
 
@@ -2371,6 +2585,16 @@ function initHomeworksManager() {
       if (modalGroupSubject) modalGroupSubject.style.display = "";
       if (modalSubject) modalSubject.setAttribute("required", "required");
     }
+    const modalGroupTargetWrap = document.getElementById("modal-group-target-wrap");
+    const modalTaskGroup = document.getElementById("modal-task-group");
+    const isTeacherOrAdmin = isSuperAdminUser(currentProfile) || (currentProfile && currentProfile.role === "teacher");
+    if (modalGroupTargetWrap) {
+      modalGroupTargetWrap.style.display = isTeacherOrAdmin ? "" : "none";
+    }
+    if (modalTaskGroup && isTeacherOrAdmin) {
+      modalTaskGroup.value = currentActiveScheduleGroup === "grp2" ? "grp2" : "grp1";
+    }
+
     modalDesc.value = "";
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -2443,9 +2667,14 @@ function initHomeworksManager() {
         : (currentUser.displayName || "Student");
       const myRole = currentProfile ? currentProfile.role : "student";
 
+      const isTeacherOrAdmin = isSuperAdminUser(currentProfile) || (currentProfile && currentProfile.role === "teacher");
+      const modalTaskGroup = document.getElementById("modal-task-group");
+      const assignedGroup = (isTeacherOrAdmin && modalTaskGroup) ? modalTaskGroup.value : getUserGroup(currentProfile);
+
       const taskId = "task-" + Date.now();
       const newTask = {
         id: taskId,
+        group: assignedGroup,
         subject,
         desc,
         due,
@@ -2477,7 +2706,8 @@ function initHomeworksManager() {
             broadcastPushNotification({
               title: `📝 New Homework: ${newTask.subject || "Assignment"}`,
               body: `${newTask.title || newTask.desc || ""}${newTask.due ? ` (Due: ${newTask.due})` : ""}`,
-              targetView: "homeworks"
+              targetView: "homeworks",
+              targetGroup: newTask.group || "grp1"
             });
           }
         } catch (dbErr) {
@@ -2767,9 +2997,11 @@ function initQuickNotesManager() {
 
       closeQuickNoteModal();
 
+      const myGroup = getUserGroup(currentProfile);
       const noteId = "note_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
       const newNote = {
         id: noteId,
+        group: myGroup,
         text: text,
         expiresAt: expiresAt,
         userId: user.uid,
@@ -2791,7 +3023,8 @@ function initQuickNotesManager() {
             broadcastPushNotification({
               title: `📌 Pinned Note from ${newNote.authorName || "Classmate"}`,
               body: newNote.text || "Check the latest pinned note",
-              targetView: "home"
+              targetView: "home",
+              targetGroup: newNote.group || "grp1"
             });
           }
         } catch (dbErr) {
@@ -2806,7 +3039,18 @@ function initQuickNotesManager() {
   const cached = localStorage.getItem("quill_q_quick_notes");
   if (cached) {
     try {
-      currentQuickNotes = JSON.parse(cached).filter((n) => !isNoteExpired(n));
+      const profile = currentProfile;
+      const isSuperAdmin = isSuperAdminUser(profile);
+      const isTeacher = profile && profile.role === "teacher";
+      const myGroup = getUserGroup(profile);
+      currentQuickNotes = JSON.parse(cached).filter((n) => {
+        if (isNoteExpired(n)) return false;
+        if (!isSuperAdmin && !isTeacher) {
+          const noteGroup = n.group || "grp1";
+          return noteGroup === myGroup;
+        }
+        return true;
+      });
       renderQuickNotes();
     } catch (e) {
       currentQuickNotes = [];
@@ -2845,9 +3089,17 @@ function bindQuickNotesListener(user) {
   isFirstQuickNotesSnapshot = true;
 
   if (user && db) {
+    const profile = currentProfile;
+    const isSuperAdmin = isSuperAdminUser(profile);
+    const isTeacher = profile && profile.role === "teacher";
+    const myGroup = getUserGroup(profile);
+
     try {
-      quickNotesUnsubscribe = db.collection("quickNotes")
-        .onSnapshot((snapshot) => {
+      let query = db.collection("quickNotes");
+      if (!isSuperAdmin && !isTeacher) {
+        query = query.where("group", "==", myGroup);
+      }
+      quickNotesUnsubscribe = query.onSnapshot((snapshot) => {
           // Detect new notes added by classmates/teachers
           if (!isFirstQuickNotesSnapshot) {
             snapshot.docChanges().forEach((change) => {
@@ -3427,43 +3679,36 @@ function initFirebaseAuthAndProfile() {
       if (roleLabelStudent) roleLabelStudent.classList.remove("selected");
       if (onboardingAvatarBadge) onboardingAvatarBadge.innerHTML = '<i class="fi fi-sr-chalkboard-user"></i>';
 
-      // Show Teacher Name dropdown, hide manual student name inputs
-      if (rowStudentName) rowStudentName.classList.add("view-hidden");
-      if (groupTeacherName) groupTeacherName.classList.remove("view-hidden");
-
-      // For teacher: hide student group select, show auto-assigned subject
+      // For teacher: show First Name & Surname inputs, show Subject text input, hide student group select
+      if (rowStudentName) rowStudentName.classList.remove("view-hidden");
+      if (groupTeacherName) groupTeacherName.classList.add("view-hidden");
       if (onboardingGroupAcademic) onboardingGroupAcademic.classList.add("view-hidden");
       if (onboardingGroupTeacherSubject) onboardingGroupTeacherSubject.classList.remove("view-hidden");
 
-      // Prevent hidden inputs from blocking HTML form submission
       if (onboardingAcademicSelect) {
         onboardingAcademicSelect.required = false;
         onboardingAcademicSelect.disabled = true;
       }
       if (onboardingName) {
-        onboardingName.required = false;
-        onboardingName.disabled = true;
+        onboardingName.required = true;
+        onboardingName.disabled = false;
       }
       if (onboardingSurname) {
         onboardingSurname.required = false;
-        onboardingSurname.disabled = true;
+        onboardingSurname.disabled = false;
       }
       if (onboardingTeacherSelect) {
-        onboardingTeacherSelect.required = true;
-        onboardingTeacherSelect.disabled = false;
+        onboardingTeacherSelect.required = false;
+        onboardingTeacherSelect.disabled = true;
       }
-
-      syncTeacherDetails();
     } else {
       if (roleLabelStudent) roleLabelStudent.classList.add("selected");
       if (roleLabelTeacher) roleLabelTeacher.classList.remove("selected");
       if (onboardingAvatarBadge) onboardingAvatarBadge.innerHTML = '<i class="fi fi-ss-student"></i>';
 
-      // Show Student Name & Surname inputs, hide Teacher Name dropdown
+      // For student: show First Name & Surname inputs, show student group select, hide teacher subject field
       if (rowStudentName) rowStudentName.classList.remove("view-hidden");
       if (groupTeacherName) groupTeacherName.classList.add("view-hidden");
-
-      // For student: show group select (English Business Grp 1/2), hide teacher subject field
       if (onboardingGroupAcademic) onboardingGroupAcademic.classList.remove("view-hidden");
       if (onboardingGroupTeacherSubject) onboardingGroupTeacherSubject.classList.add("view-hidden");
 
@@ -3484,11 +3729,6 @@ function initFirebaseAuthAndProfile() {
         onboardingTeacherSelect.disabled = true;
       }
     }
-  }
-
-  // Teacher name selection change -> auto-fills subject & gender automatically
-  if (onboardingTeacherSelect) {
-    onboardingTeacherSelect.addEventListener("change", syncTeacherDetails);
   }
 
   // Role card clicking
@@ -3606,32 +3846,22 @@ function initFirebaseAuthAndProfile() {
       const userEmail = (currentUser.email || "").toLowerCase().trim();
       const isAdminAccount = userEmail === "dodchadam@gmail.com" || userEmail === "dotchadam@gmail.com";
       const selectedRole = isAdminAccount ? "admin" : (roleSelectedVal ? roleSelectedVal.value : "student");
-      let fullName = "";
-      let firstName = "";
-      let surname = "";
-
-      if (selectedRole === "teacher") {
-        fullName = onboardingTeacherSelect ? onboardingTeacherSelect.value : "";
-        if (!fullName) {
-          alert("Please select your teacher name from the schedule.");
-          return;
-        }
-        firstName = fullName;
-      } else {
-        firstName = onboardingName ? onboardingName.value.trim() : "";
-        surname = onboardingSurname ? onboardingSurname.value.trim() : "";
-        fullName = (firstName && surname) ? `${firstName} ${surname}` : (firstName || surname || currentUser.displayName || (isAdminAccount ? "Adam" : "Student"));
-      }
+      firstName = onboardingName ? onboardingName.value.trim() : "";
+      surname = onboardingSurname ? onboardingSurname.value.trim() : "";
+      fullName = (firstName && surname) ? `${firstName} ${surname}` : (firstName || surname || currentUser.displayName || (isAdminAccount ? "Adam" : (selectedRole === "teacher" ? "Professor" : "Student")));
 
       const gender = onboardingGender ? onboardingGender.value : "Male";
       let academicDetail = "";
+      let userGroup = "grp1";
       if (isAdminAccount) {
         academicDetail = "Super Admin";
+        userGroup = "grp1";
       } else if (selectedRole === "teacher") {
-        const matchedTeacher = SCHEDULE_TEACHERS.find((t) => t.name === fullName);
-        academicDetail = matchedTeacher ? matchedTeacher.subject : (onboardingTeacherSubjectVal ? onboardingTeacherSubjectVal.value : "Teaching Faculty");
+        academicDetail = (onboardingTeacherSubjectVal && onboardingTeacherSubjectVal.value.trim()) || "Teaching Faculty";
+        userGroup = "grp1";
       } else {
-        academicDetail = onboardingAcademicSelect ? onboardingAcademicSelect.value : "English Business Grp 1";
+        academicDetail = onboardingAcademicSelect ? onboardingAcademicSelect.value : "2ANG-AFF 1 (Grp 1)";
+        userGroup = (academicDetail.includes("2ANG-AFF 2") || academicDetail.includes("Grp 2") || academicDetail.includes("Group 2")) ? "grp2" : "grp1";
       }
 
       const userStatus = isAdminAccount ? "approved" : "pending";
@@ -3645,6 +3875,7 @@ function initFirebaseAuthAndProfile() {
         photoURL: currentUser.photoURL || "assets/avatar.jpg",
         role: selectedRole,
         gender: gender,
+        group: userGroup,
         academicDetail: academicDetail,
         status: userStatus,
         profileCompleted: true,
@@ -4205,7 +4436,29 @@ function syncDefaultDay() {
 
 // =========================================================
 // ===== QUILL-Q CHAT SYSTEM (REAL-TIME, SEEN, DATES) =====
-// =========================================================
+let currentChatGroup = "grp1";
+
+function switchChatGroup(group) {
+  currentChatGroup = group === "grp2" ? "grp2" : "grp1";
+  updateChatGroupUIState();
+  if (currentUser) {
+    bindServerChat(currentUser);
+  }
+}
+
+function updateChatGroupUIState() {
+  const btnChatGrp1 = document.getElementById("btn-chat-grp1");
+  const btnChatGrp2 = document.getElementById("btn-chat-grp2");
+  const switcher = document.querySelector(".chat-group-switcher");
+  const profile = currentProfile;
+  const canSwitch = isSuperAdminUser(profile) || (profile && profile.role === "teacher");
+
+  if (switcher) {
+    switcher.style.display = canSwitch ? "inline-flex" : "none";
+  }
+  if (btnChatGrp1) btnChatGrp1.classList.toggle("active", currentChatGroup === "grp1");
+  if (btnChatGrp2) btnChatGrp2.classList.toggle("active", currentChatGroup === "grp2");
+}
 
 let chatMessagesUnsubscribe = null;
 let chatMessagesCache = [];
@@ -4458,7 +4711,7 @@ async function loadOlderChatMessages() {
   try {
     const olderQuery = db
       .collection("chats")
-      .doc("general")
+      .doc(currentChatGroup || "grp1")
       .collection("messages")
       .orderBy("createdAt", "desc")
       .startAfter(oldestChatDoc)
@@ -4620,7 +4873,7 @@ function markMessagesAsSeen() {
     if (!msg.seenBy) msg.seenBy = {};
     msg.seenBy[myUid] = seenPayload;
 
-    const ref = db.collection("chats").doc("general").collection("messages").doc(msg.id);
+    const ref = db.collection("chats").doc(currentChatGroup || "grp1").collection("messages").doc(msg.id);
     batch.update(ref, {
       [`seenBy.${myUid}`]: seenPayload
     });
@@ -4628,7 +4881,7 @@ function markMessagesAsSeen() {
   });
 
   try {
-    localStorage.setItem("quill_q_chat_cache", JSON.stringify(chatMessagesCache));
+    localStorage.setItem("quill_q_chat_cache_" + (currentChatGroup || "grp1"), JSON.stringify(chatMessagesCache));
   } catch (e) {}
 
   if (count > 0) {
@@ -4710,7 +4963,7 @@ async function sendChatMessage(text) {
   };
   chatMessagesCache.push(optimisticMsg);
   try {
-    localStorage.setItem("quill_q_chat_cache", JSON.stringify(chatMessagesCache.slice(-60)));
+    localStorage.setItem("quill_q_chat_cache_" + (currentChatGroup || "grp1"), JSON.stringify(chatMessagesCache.slice(-60)));
   } catch (e) {}
   renderChatMessages();
 
@@ -4728,7 +4981,8 @@ async function sendChatMessage(text) {
         ...messageDoc,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
-      const docRef = await db.collection("chats").doc("general").collection("messages").add(serverPayload);
+      const activeGroup = currentChatGroup || "grp1";
+      const docRef = await db.collection("chats").doc(activeGroup).collection("messages").add(serverPayload);
       // Replace temporary local ID with server doc ID
       const idx = chatMessagesCache.findIndex((m) => m.id === localMsgId);
       if (idx !== -1) {
@@ -4737,10 +4991,12 @@ async function sendChatMessage(text) {
 
       // Broadcast background push notification to all class devices
       if (typeof broadcastPushNotification === "function") {
+        const groupLabel = activeGroup === "grp2" ? "Group 2 Chat" : "Group 1 Chat";
         broadcastPushNotification({
-          title: `💬 ${senderName} (Class Chat)`,
+          title: `💬 ${senderName} (${groupLabel})`,
           body: cleanText,
           targetView: "chat",
+          targetGroup: activeGroup,
           url: "./index.html",
           tag: "chat-msg-" + docRef.id
         });
@@ -4759,18 +5015,42 @@ function bindServerChat(user) {
     chatMessagesUnsubscribe = null;
   }
 
+  const profile = currentProfile;
+  const isSuperAdmin = isSuperAdminUser(profile);
+  const isTeacher = profile && profile.role === "teacher";
+  const isApproved = profile && (profile.status === "approved" || isSuperAdmin);
+
+  // If regular student, strictly lock chat group to assigned group
+  if (!isSuperAdmin && !isTeacher) {
+    currentChatGroup = getUserGroup(profile);
+  }
+
+  // Bind group switcher chips in class chat header
+  const btnChatGrp1 = document.getElementById("btn-chat-grp1");
+  const btnChatGrp2 = document.getElementById("btn-chat-grp2");
+  if (btnChatGrp1 && !btnChatGrp1.dataset.bound) {
+    btnChatGrp1.dataset.bound = "true";
+    btnChatGrp1.addEventListener("click", () => switchChatGroup("grp1"));
+  }
+  if (btnChatGrp2 && !btnChatGrp2.dataset.bound) {
+    btnChatGrp2.dataset.bound = "true";
+    btnChatGrp2.addEventListener("click", () => switchChatGroup("grp2"));
+  }
+  updateChatGroupUIState();
+
   // Restore cached messages from local storage first
   try {
-    const localCached = JSON.parse(localStorage.getItem("quill_q_chat_cache") || "[]");
+    const localCached = JSON.parse(localStorage.getItem("quill_q_chat_cache_" + currentChatGroup) || "[]");
     if (localCached && localCached.length > 0) {
       chatMessagesCache = localCached;
       renderChatMessages();
+    } else {
+      chatMessagesCache = [];
+      renderChatMessages();
     }
-  } catch (e) {}
-
-  const profile = currentProfile;
-  const isSuperAdmin = isSuperAdminUser(profile);
-  const isApproved = profile && (profile.status === "approved" || isSuperAdmin);
+  } catch (e) {
+    chatMessagesCache = [];
+  }
 
   if (!user || !isApproved || !db) {
     if (!chatMessagesCache || chatMessagesCache.length === 0) {
@@ -4786,7 +5066,7 @@ function bindServerChat(user) {
   // Query only the couple latest messages (e.g. 15 messages) to save server reads and memory
   const query = db
     .collection("chats")
-    .doc("general")
+    .doc(currentChatGroup || "grp1")
     .collection("messages")
     .orderBy("createdAt", "asc")
     .limitToLast(chatBatchLimit);
@@ -4813,7 +5093,7 @@ function bindServerChat(user) {
 
         chatMessagesCache = messages;
         try {
-          localStorage.setItem("quill_q_chat_cache", JSON.stringify(chatMessagesCache));
+          localStorage.setItem("quill_q_chat_cache_" + (currentChatGroup || "grp1"), JSON.stringify(chatMessagesCache));
         } catch (e) {}
         renderChatMessages();
       } else {
