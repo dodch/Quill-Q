@@ -2439,7 +2439,19 @@ function formatExpirationDate(expStr) {
   return expStr;
 }
 
-let quickNotesSeen = localStorage.getItem("quill_q_notes_dismissed") === "true";
+function isQuickNotesDismissed(validNotes) {
+  try {
+    const dismissed = localStorage.getItem("quill_q_notes_dismissed");
+    if (!dismissed) return false;
+    const dismissedCount = localStorage.getItem("quill_q_notes_dismissed_count");
+    const currentCount = validNotes ? validNotes.length : 0;
+    // If user marked dismissed and no new notes have been added, keep dismissed
+    if (dismissed === "true" && (!dismissedCount || parseInt(dismissedCount, 10) >= currentCount)) {
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
 
 function updateMobileQuickNotesTrigger(validNotes) {
   const triggerBtn = document.getElementById("mobile-quick-notes-trigger");
@@ -2449,30 +2461,33 @@ function updateMobileQuickNotesTrigger(validNotes) {
   if (!triggerBtn) return;
 
   const count = validNotes ? validNotes.length : 0;
+  const isDismissed = isQuickNotesDismissed(validNotes);
+
   if (count > 0) {
     if (iconEmpty) iconEmpty.style.display = "none";
+    if (iconNote) iconNote.style.display = "inline-flex";
 
-    if (!quickNotesSeen) {
-      // Unread: show red dot, hide note icon
-      if (iconNote) iconNote.style.display = "none";
+    if (!isDismissed) {
+      // Unread: show red notification badge
+      triggerBtn.classList.add("has-unread-notes");
+      triggerBtn.classList.remove("notes-dismissed");
       if (badge) {
-        badge.style.display = "inline-flex";
         badge.textContent = count > 9 ? "9+" : count;
         badge.title = `${count} quick note${count > 1 ? "s" : ""}`;
       }
-      triggerBtn.classList.remove("notes-dismissed");
     } else {
-      // Dismissed: hide red dot, show document note icon
-      if (badge) badge.style.display = "none";
-      if (iconNote) iconNote.style.display = "inline-flex";
+      // Dismissed: hide red badge, keep note icon visible
+      triggerBtn.classList.remove("has-unread-notes");
       triggerBtn.classList.add("notes-dismissed");
+      if (badge) badge.textContent = "";
     }
     triggerBtn.classList.add("has-notes");
   } else {
+    // No notes: empty plus icon, badge completely hidden
     if (iconEmpty) iconEmpty.style.display = "inline-flex";
     if (iconNote) iconNote.style.display = "none";
-    if (badge) badge.style.display = "none";
-    triggerBtn.classList.remove("has-notes", "notes-dismissed");
+    if (badge) badge.textContent = "";
+    triggerBtn.classList.remove("has-notes", "notes-dismissed", "has-unread-notes");
   }
 }
 
@@ -2573,12 +2588,12 @@ function initQuickNotesManager() {
     document.body.style.overflow = "hidden";
 
     // Mark notes as seen/read so red notification dot dismisses and note icon shows permanently
-    quickNotesSeen = true;
+    const validNotes = currentQuickNotes.filter((n) => !isNoteExpired(n));
     try {
       localStorage.setItem("quill_q_notes_dismissed", "true");
+      localStorage.setItem("quill_q_notes_dismissed_count", String(validNotes.length));
     } catch (e) {}
 
-    const validNotes = currentQuickNotes.filter((n) => !isNoteExpired(n));
     updateMobileQuickNotesTrigger(validNotes);
   }
 

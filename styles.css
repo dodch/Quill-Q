@@ -3492,41 +3492,60 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     display: none !important;
   }
 
-  /* 2 in one row for Subjects Bento Grid on mobile */
+  /* 2 in one row for Subjects Bento Grid on mobile with responsive sizing */
   .subjects-bento-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 12px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .bento-subject-card {
-    padding: 16px 14px !important;
-    min-height: 84px !important;
+    padding: 14px 10px !important;
+    min-height: 80px !important;
     border-width: 2px !important;
     border-radius: 18px !important;
-    box-shadow: 2.5px 3.5px 0px #1a1816 !important;
+    box-shadow: 2px 3px 0px #1a1816 !important;
     flex-direction: column !important;
     justify-content: center !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
   }
 
   .bento-card-top {
-    gap: 10px !important;
+    gap: 8px !important;
     align-items: center !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .bento-card-text {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
   }
 
   .bento-card-title {
-    font-size: 17.5px !important;
+    font-size: 15.5px !important;
     line-height: 1.15 !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    hyphens: auto !important;
   }
 
   .bento-card-art {
-    width: 38px !important;
-    height: 38px !important;
+    width: 32px !important;
+    height: 32px !important;
+    flex-shrink: 0 !important;
   }
 
   .bento-card-art svg,
   .bento-icon-svg {
-    width: 36px !important;
-    height: 36px !important;
+    width: 30px !important;
+    height: 30px !important;
   }
 
   /* Schedule Detailed Cards & Weekly Day Selector for Mobile */
@@ -3904,25 +3923,26 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   }
 
   /* ========== Subjects Quick Notes on Mobile: Floating Half-Circle Edge Trigger & Modal ========== */
-  /* Only show the edge trigger when on the Subjects view */
+  /* Only show the edge trigger when on the Subjects view - positioned on the LEFT edge */
   .main[data-current-page="subjects"] .mobile-quick-notes-edge-btn {
     display: flex !important;
     position: fixed !important;
-    right: -25px !important;
+    left: -24px !important;
+    right: auto !important;
     top: 45% !important;
     transform: translateY(-50%) !important;
-    z-index: 9999 !important;
+    z-index: 950 !important; /* Kept under sidebar (z-index: 1000) and sidebar-backdrop (z-index: 999) */
     width: 50px !important;
     height: 50px !important;
     background: #ffffff !important;
     border: 1.5px solid #dcd5c7 !important;
     border-radius: 50% !important;
-    box-shadow: -2px 3px 10px rgba(26, 24, 22, 0.1) !important;
+    box-shadow: 2px 3px 10px rgba(26, 24, 22, 0.1) !important;
     cursor: pointer !important;
     align-items: center !important;
-    justify-content: flex-start !important;
-    padding-left: 7px !important;
-    padding-right: 0 !important;
+    justify-content: flex-end !important;
+    padding-right: 8px !important;
+    padding-left: 0 !important;
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     outline: none !important;
@@ -3931,13 +3951,13 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   }
 
   .main[data-current-page="subjects"] .mobile-quick-notes-edge-btn:hover {
-    transform: translateY(-50%) translateX(-6px) !important;
+    transform: translateY(-50%) translateX(6px) !important;
     background: #fdfaf3 !important;
-    box-shadow: -4px 4px 14px rgba(26, 24, 22, 0.14) !important;
+    box-shadow: 4px 4px 14px rgba(26, 24, 22, 0.14) !important;
   }
 
   .main[data-current-page="subjects"] .mobile-quick-notes-edge-btn:active {
-    transform: translateY(-50%) translateX(-2px) !important;
+    transform: translateY(-50%) translateX(2px) !important;
   }
 
   .main[data-current-page="subjects"] .mobile-quick-notes-edge-btn.has-notes {
@@ -3989,22 +4009,37 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     color: #1a1816 !important;
   }
 
-  /* Red notification badge when there are unread notes */
+  /* Red notification badge when there are unread notes - circular notification pip */
   .mobile-notes-badge {
+    display: none !important;
     background: #e03131 !important;
     color: #ffffff !important;
     font-family: 'Outfit', sans-serif !important;
-    font-size: 11px !important;
+    font-size: 10px !important;
     font-weight: 800 !important;
-    width: 20px !important;
-    height: 20px !important;
-    border-radius: 50% !important;
-    display: inline-flex !important;
+    position: absolute !important;
+    top: 3px !important;
+    right: 5px !important;
+    min-width: 15px !important;
+    height: 15px !important;
+    padding: 0 3px !important;
+    border-radius: 999px !important;
     align-items: center !important;
     justify-content: center !important;
-    border: none !important;
-    box-shadow: 0 1px 4px rgba(224, 49, 49, 0.4) !important;
+    border: 1.5px solid #ffffff !important;
+    box-shadow: 0 1px 4px rgba(224, 49, 49, 0.45) !important;
     animation: quickNotePulse 2.2s infinite ease-in-out !important;
+    line-height: 1 !important;
+    box-sizing: border-box !important;
+    pointer-events: none !important;
+  }
+
+  .mobile-quick-notes-edge-btn.has-unread-notes .mobile-notes-badge {
+    display: inline-flex !important;
+  }
+
+  .mobile-quick-notes-edge-btn.notes-dismissed .mobile-notes-badge {
+    display: none !important;
   }
 
   @keyframes quickNotePulse {
