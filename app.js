@@ -1752,6 +1752,7 @@ async function registerDeviceFCMToken() {
       const tokenDocId = btoa(currentToken.slice(-32)).replace(/[/+=]/g, "_");
       await db.collection("users").doc(currentUser.uid).collection("fcmTokens").doc(tokenDocId).set({
         token: currentToken,
+        userId: currentUser.uid,
         platform: isIOSDevice() ? "ios" : (navigator.userAgent.includes("Android") ? "android" : "desktop"),
         userAgent: navigator.userAgent,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()

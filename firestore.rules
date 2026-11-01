@@ -125,6 +125,12 @@ service cloud.firestore {
         allow delete: if isApprovedUser() && (request.auth.uid == studentId || isSuperAdmin());
       }
     }
+
+    // Allow approved users to read subscriber device tokens across users collection for multi-device broadcast
+    match /{path=**}/fcmTokens/{tokenId} {
+      allow read: if isApprovedUser();
+      allow write: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId || isSuperAdmin());
+    }
   }
 }
 
