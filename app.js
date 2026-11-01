@@ -3079,7 +3079,7 @@ function initSearch() {
 }
 
 // --- Firebase & User Profile Management ---
-const firebaseConfig = {
+var firebaseConfig = window.firebaseConfig || {
   projectId: "quill-q-dodch",
   appId: "1:648049411331:web:880ce305ebe145df9e9536",
   storageBucket: "quill-q-dodch.firebasestorage.app",
@@ -3090,6 +3090,7 @@ const firebaseConfig = {
   vapidKey: "BFYzADoTQ1yCuaWyT00HXmt06FFxJ1xgW8Af7xrskV3-i51JYoL6idPnTnPqZAMRuyMl6D5tYebZ5ZWGmGcIyYw",
   pushEndpoint: "https://quill-push-dispatcher.dodchadam.workers.dev"
 };
+window.firebaseConfig = firebaseConfig;
 
 let auth = null;
 let db = null;

@@ -1,7 +1,7 @@
 /**
  * firebase-config.js - Shared Firebase Credentials & Init for Quill-Q
  */
-const firebaseConfig = {
+var firebaseConfig = window.firebaseConfig || {
   projectId: "quill-q-dodch",
   appId: "1:648049411331:web:880ce305ebe145df9e9536",
   storageBucket: "quill-q-dodch.firebasestorage.app",
@@ -13,6 +13,7 @@ const firebaseConfig = {
   // Cloudflare Worker Push Dispatcher URL
   pushEndpoint: "https://quill-push-dispatcher.dodchadam.workers.dev"
 };
+window.firebaseConfig = firebaseConfig;
 
 function initFirebase() {
   if (typeof firebase !== "undefined" && !firebase.apps.length) {
