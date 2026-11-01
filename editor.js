@@ -219,6 +219,17 @@
         loadedDocumentData = { id: currentDocId, ...docPayload };
         renderAuthorBadge(loadedDocumentData);
 
+        // Broadcast background push notification to all class devices
+        if (typeof broadcastPushNotification === "function") {
+          const isEx = (docPayload.docType === "exercise");
+          broadcastPushNotification({
+            title: isEx ? `✏️ New Exercise: ${docTitle}` : `📄 New Notes: ${docTitle}`,
+            body: `${docPayload.subjectName} • Added by ${docPayload.authorName}`,
+            url: `subject.html?subject=${encodeURIComponent(currentSubject.id)}`,
+            targetView: "subject"
+          });
+        }
+
         // Migrate local storage key from draft to new docId
         savePinnedNotes();
         try { localStorage.removeItem(prevDraftKey); } catch (e) {}

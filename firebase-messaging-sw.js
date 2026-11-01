@@ -4,6 +4,14 @@
 importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js');
 
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
 // Initialize Firebase in worker context
 firebase.initializeApp({
   projectId: "quill-q-dodch",
@@ -17,12 +25,9 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background messages delivered when browser/app is closed or phone is locked
-messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message:', payload);
-
-  const notification = payload.notification || {};
-  const data = payload.data || {};
+function formatAndShowNotification(payload) {
+  const notification = (payload && payload.notification) || {};
+  const data = (payload && payload.data) || {};
   const notificationTitle = notification.title || data.title || 'Quill-Q Notification';
   const notificationOptions = {
     body: notification.body || data.body || data.desc || data.message || '',
@@ -37,7 +42,31 @@ messaging.onBackgroundMessage((payload) => {
     renotify: true
   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  return self.registration.showNotification(notificationTitle, notificationOptions);
+}
+
+// Handle background messages delivered when browser/app is closed or phone is locked
+messaging.onBackgroundMessage((payload) => {
+  console.log('[firebase-messaging-sw.js] Received background message:', payload);
+  return formatAndShowNotification(payload);
+});
+
+// Fallback for standard Web Push events
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  let parsed = null;
+  try {
+    parsed = event.data.json();
+  } catch (e) {
+    parsed = { notification: { body: event.data.text() } };
+  }
+
+  // If FCM SDK already processed it, don't duplicate
+  if (parsed && (parsed.fcmMessageId || parsed['google.c.sender.id'] || parsed.from)) {
+    return;
+  }
+
+  event.waitUntil(formatAndShowNotification(parsed));
 });
 
 // User taps on notification when app was closed

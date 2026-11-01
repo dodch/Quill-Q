@@ -1520,7 +1520,7 @@ function showInAppToast(data) {
 async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   try {
-    const reg = await navigator.serviceWorker.register("./sw.js");
+    const reg = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
     console.log("Quill-Q Service Worker registered:", reg.scope);
 
     // Listen for navigation messages sent when user taps on mobile notification
@@ -1738,11 +1738,7 @@ async function registerDeviceFCMToken() {
 
     let serviceWorkerRegistration = null;
     if ("serviceWorker" in navigator) {
-      try {
-        serviceWorkerRegistration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-      } catch (e) {
-        serviceWorkerRegistration = await navigator.serviceWorker.ready;
-      }
+      serviceWorkerRegistration = await navigator.serviceWorker.ready;
     }
 
     const currentToken = await messaging.getToken({
@@ -2442,6 +2438,13 @@ function initHomeworksManager() {
       if (db) {
         try {
           await db.collection("homeworks").doc(taskId).set(newTask);
+          if (typeof broadcastPushNotification === "function") {
+            broadcastPushNotification({
+              title: `📝 New Homework: ${newTask.subject || "Assignment"}`,
+              body: `${newTask.title || newTask.desc || ""}${newTask.due ? ` (Due: ${newTask.due})` : ""}`,
+              targetView: "homeworks"
+            });
+          }
         } catch (dbErr) {
           console.error("Error saving task to server:", dbErr);
           alert("Error saving to server: " + (dbErr.message || "Permission denied"));
@@ -2749,6 +2752,13 @@ function initQuickNotesManager() {
       if (db) {
         try {
           await db.collection("quickNotes").doc(noteId).set(newNote);
+          if (typeof broadcastPushNotification === "function") {
+            broadcastPushNotification({
+              title: `📌 Pinned Note from ${newNote.authorName || "Classmate"}`,
+              body: newNote.text || "Check the latest pinned note",
+              targetView: "home"
+            });
+          }
         } catch (dbErr) {
           console.error("Error creating quick note:", dbErr);
           showCustomAlert("Error saving quick note: " + (dbErr.message || "Permission denied"));
