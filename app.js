@@ -4734,6 +4734,17 @@ async function sendChatMessage(text) {
       if (idx !== -1) {
         chatMessagesCache[idx].id = docRef.id;
       }
+
+      // Broadcast background push notification to all class devices
+      if (typeof broadcastPushNotification === "function") {
+        broadcastPushNotification({
+          title: `💬 ${senderName} (Class Chat)`,
+          body: cleanText,
+          targetView: "chat",
+          url: "./index.html",
+          tag: "chat-msg-" + docRef.id
+        });
+      }
     } catch (err) {
       console.warn("Failed syncing chat message to server:", err);
       // Message is kept locally in cache so user does not lose their chat
