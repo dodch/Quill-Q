@@ -1738,7 +1738,11 @@ async function registerDeviceFCMToken() {
 
     let serviceWorkerRegistration = null;
     if ("serviceWorker" in navigator) {
-      serviceWorkerRegistration = await navigator.serviceWorker.ready;
+      try {
+        serviceWorkerRegistration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+      } catch (e) {
+        serviceWorkerRegistration = await navigator.serviceWorker.ready;
+      }
     }
 
     const currentToken = await messaging.getToken({
