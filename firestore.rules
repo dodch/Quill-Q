@@ -52,6 +52,11 @@ service cloud.firestore {
       match /tasks/{taskId} {
         allow read, write: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin());
       }
+
+      // Device push notification tokens
+      match /fcmTokens/{tokenId} {
+        allow read, write: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin());
+      }
     }
 
     // Shared server-wide homeworks and reminders:

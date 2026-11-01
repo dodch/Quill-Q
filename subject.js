@@ -12,6 +12,7 @@
   let currentSubjectId = "writing";
   let documentsUnsubscribe = null;
   let allDocumentsCache = [];
+  let isFirstDocsSnapshot = true;
 
   const SUPER_ADMIN_EMAILS = ["dodchadam@gmail.com", "dotchadam@gmail.com"];
 
@@ -307,6 +308,8 @@
       documentsUnsubscribe = null;
     }
 
+    isFirstDocsSnapshot = true;
+
     if (!db || !currentUser) return;
 
     const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
@@ -346,6 +349,84 @@
 
     documentsUnsubscribe = docRef.onSnapshot(
       (snapshot) => {
+        // Detect newly added documents/exercises
+        if (!isFirstDocsSnapshot) {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+              const docData = change.doc.data();
+              if (docData && docData.authorId !== (currentUser ? currentUser.uid : null)) {
+                const isEx = docData.docType === "exercise";
+                const author = docData.authorName || "Classmate";
+                const title = docData.title || "Untitled";
+                
+                // Audio Chime
+                try {
+                  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                  const osc = ctx.createOscillator();
+                  const gain = ctx.createGain();
+                  osc.type = "sine";
+                  osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                  osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+                  gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                  osc.connect(gain);
+                  gain.connect(ctx.destination);
+                  osc.start(ctx.currentTime);
+                  osc.stop(ctx.currentTime + 0.5);
+                } catch (e) {}
+
+                // In-app Toast alert
+                const toastContainer = document.getElementById("inapp-toast-container");
+                if (toastContainer) {
+                  const toast = document.createElement("div");
+                  toast.className = `inapp-toast ${isEx ? 'toast-exercise' : 'toast-doc'}`;
+                  toast.setAttribute("role", "alert");
+                  toast.innerHTML = `
+                    <div class="inapp-toast-icon-wrap">
+                      <i class="fi ${isEx ? 'fi-rr-edit' : 'fi-rr-document'}"></i>
+                    </div>
+                    <div class="inapp-toast-body">
+                      <div class="inapp-toast-header">
+                        <span class="inapp-toast-badge">${isEx ? 'New Exercise' : 'New Notes'}</span>
+                      </div>
+                      <div class="inapp-toast-title">${escapeHtml(title)}</div>
+                      <div class="inapp-toast-desc">${escapeHtml(docData.excerpt || "Added to subject")}</div>
+                      <div class="inapp-toast-meta">By ${escapeHtml(author)}</div>
+                    </div>
+                    <button type="button" class="inapp-toast-close" aria-label="Dismiss">&times;</button>
+                  `;
+                  toast.addEventListener("click", (e) => {
+                    if (e.target.closest(".inapp-toast-close")) return;
+                    window.location.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}&docId=${encodeURIComponent(change.doc.id)}`;
+                  });
+                  const closeBtn = toast.querySelector(".inapp-toast-close");
+                  if (closeBtn) {
+                    closeBtn.addEventListener("click", (e) => {
+                      e.stopPropagation();
+                      toast.remove();
+                    });
+                  }
+                  setTimeout(() => { if (toast.parentNode) toast.remove(); }, 6500);
+                  toastContainer.appendChild(toast);
+                }
+
+                // Browser/System notification
+                if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+                  try {
+                    new Notification(isEx ? `✏️ New Exercise: ${title}` : `📄 New Notes: ${title}`, {
+                      body: `By ${author}\n${docData.excerpt || ""}`,
+                      icon: "assets/icon-192.png",
+                      badge: "assets/favicon-32x32-light.png",
+                      tag: "subject-doc-" + change.doc.id
+                    });
+                  } catch (e) {}
+                }
+              }
+            }
+          });
+        }
+        isFirstDocsSnapshot = false;
+
         const docs = [];
         snapshot.forEach((d) => {
           docs.push({ id: d.id, ...d.data() });

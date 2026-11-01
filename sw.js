@@ -9,7 +9,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// Push notification listener for incoming Web Push events
+// Push notification listener for incoming Web Push events (Supports FCM background messages & custom push)
 self.addEventListener('push', (event) => {
   let data = {};
   if (event.data) {
@@ -20,13 +20,20 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  const title = data.title || 'Quill-Q Notification';
+  // Handle standard Web Push and FCM notification payload shapes
+  const notification = data.notification || {};
+  const payloadData = data.data || {};
+  const title = notification.title || data.title || 'Quill-Q Notification';
+  const body = notification.body || data.body || data.desc || data.message || '';
   const options = {
-    body: data.body || data.desc || data.message || '',
-    icon: data.icon || 'assets/icon-192.png',
-    badge: data.badge || 'assets/favicon-32x32-light.png',
+    body: body,
+    icon: notification.icon || data.icon || 'assets/icon-192.png',
+    badge: notification.badge || data.badge || 'assets/favicon-32x32-light.png',
     tag: data.tag || ('quill-notif-' + Date.now()),
-    data: data.data || { url: './index.html', targetView: data.targetView || 'home' },
+    data: {
+      url: payloadData.url || data.url || './index.html',
+      targetView: payloadData.targetView || data.targetView || 'home'
+    },
     vibrate: [150, 80, 150],
     renotify: true
   };

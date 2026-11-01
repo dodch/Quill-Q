@@ -1434,6 +1434,14 @@ function showInAppToast(data) {
       typeClass = "toast-chat";
       badgeText = "Class Chat";
       iconHtml = '<i class="fi fi-rr-comment-alt-dots"></i>';
+    } else if (toastType === "exercise") {
+      typeClass = "toast-exercise";
+      badgeText = data.badge || "Exercise";
+      iconHtml = '<i class="fi fi-rr-edit"></i>';
+    } else if (toastType === "doc") {
+      typeClass = "toast-doc";
+      badgeText = data.badge || "Document";
+      iconHtml = '<i class="fi fi-rr-document"></i>';
     } else {
       typeClass = "toast-info";
       badgeText = data.badge || "Notice";
@@ -1477,6 +1485,12 @@ function showInAppToast(data) {
       const navChat = document.getElementById("nav-chat");
       if (navChat) navChat.classList.add("active");
       switchView("chat");
+    } else if (data.type === "doc" || data.type === "exercise") {
+      if (data.url) {
+        window.location.href = data.url;
+      } else if (data.subjectId) {
+        window.location.href = `subject.html?id=${encodeURIComponent(data.subjectId)}`;
+      }
     }
     closeToast();
   });
@@ -1704,10 +1718,53 @@ async function requestNotificationAccess() {
         body: "Quill-Q is ready. You will receive live homework and chat alerts on this device.",
         tag: "quill-welcome"
       });
+
+      // Register device FCM push token into Firestore subscribers list
+      await registerDeviceFCMToken();
+
       await showCustomAlert("Notifications enabled successfully on this device!", "All Set", '<i class="fi fi-rr-bell-ring"></i>');
     }
   } catch (err) {
     console.warn("Notification request permission failed:", err);
+  }
+}
+
+// Registers this device's FCM push token in Firestore under /users/{uid}/fcmTokens
+async function registerDeviceFCMToken() {
+  if (typeof firebase === "undefined" || typeof firebase.messaging !== "function") return;
+  try {
+    const messaging = firebase.messaging();
+    if (!firebaseConfig || !firebaseConfig.vapidKey) return;
+
+    let serviceWorkerRegistration = null;
+    if ("serviceWorker" in navigator) {
+      serviceWorkerRegistration = await navigator.serviceWorker.ready;
+    }
+
+    const currentToken = await messaging.getToken({
+      vapidKey: firebaseConfig.vapidKey,
+      serviceWorkerRegistration: serviceWorkerRegistration || undefined
+    });
+
+    if (currentToken && currentUser && db) {
+      console.log("FCM Device Token acquired:", currentToken);
+      // Clean safe key
+      const tokenDocId = btoa(currentToken.slice(-32)).replace(/[/+=]/g, "_");
+      await db.collection("users").doc(currentUser.uid).collection("fcmTokens").doc(tokenDocId).set({
+        token: currentToken,
+        platform: isIOSDevice() ? "ios" : (navigator.userAgent.includes("Android") ? "android" : "desktop"),
+        userAgent: navigator.userAgent,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      // Also mirror token onto user document for fast subscriber queries
+      await db.collection("users").doc(currentUser.uid).set({
+        fcmToken: currentToken,
+        fcmUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    }
+  } catch (fcmErr) {
+    console.warn("Could not register FCM Device Token:", fcmErr);
   }
 }
 
@@ -2417,6 +2474,7 @@ function initHomeworksManager() {
 // ===== Quick Notes Manager (Subjects View Paperclip Note) =====
 let currentQuickNotes = [];
 let quickNotesUnsubscribe = null;
+let isFirstQuickNotesSnapshot = true;
 
 function isNoteExpired(note) {
   if (!note || !note.expiresAt) return false;
@@ -2734,10 +2792,40 @@ function bindQuickNotesListener(user) {
     quickNotesUnsubscribe = null;
   }
 
+  isFirstQuickNotesSnapshot = true;
+
   if (user && db) {
     try {
       quickNotesUnsubscribe = db.collection("quickNotes")
         .onSnapshot((snapshot) => {
+          // Detect new notes added by classmates/teachers
+          if (!isFirstQuickNotesSnapshot) {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === "added") {
+                const noteData = change.doc.data();
+                if (noteData && noteData.userId !== (currentUser ? currentUser.uid : null) && !isNoteExpired(noteData)) {
+                  playNotificationChime();
+                  showInAppToast({
+                    type: "info",
+                    badge: "Quick Note",
+                    icon: '<i class="fi fi-rr-clip"></i>',
+                    title: `📌 Note from ${noteData.authorName || "Classmate"}`,
+                    message: noteData.text || "",
+                    meta: noteData.expiresAt ? `Expires: ${formatExpirationDate(noteData.expiresAt)}` : ""
+                  });
+                  sendSystemNotification(`📌 New Note from ${noteData.authorName || "Classmate"}`, {
+                    body: noteData.text || "Added a quick note",
+                    icon: "assets/icon-192.png",
+                    badge: "assets/favicon-32x32-light.png",
+                    tag: "quick-note-" + change.doc.id,
+                    data: { url: "./index.html", targetView: "subjects" }
+                  });
+                }
+              }
+            });
+          }
+          isFirstQuickNotesSnapshot = false;
+
           const list = [];
           snapshot.forEach((doc) => {
             list.push({ id: doc.id, ...doc.data() });
@@ -3679,6 +3767,9 @@ function initFirebaseAuthAndProfile() {
             bindServerSchedule(user);
             bindServerChat(user);
             bindQuickNotesListener(user);
+            if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+              registerDeviceFCMToken().catch(console.warn);
+            }
             navigateToDashboard();
           } else {
             bindUserTasks(null);

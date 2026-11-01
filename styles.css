@@ -5674,6 +5674,26 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   color: #7f1d1d;
 }
 
+.toast-doc .inapp-toast-icon-wrap {
+  background: #bbf7d0;
+  color: #166534;
+}
+
+.toast-doc .inapp-toast-badge {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.toast-exercise .inapp-toast-icon-wrap {
+  background: #fed7aa;
+  color: #9a3412;
+}
+
+.toast-exercise .inapp-toast-badge {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
 .inapp-toast-title {
   font-size: 13.5px;
   font-weight: 700;

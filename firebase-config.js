@@ -8,7 +8,8 @@ const firebaseConfig = {
   apiKey: "AIzaSyBhOd39WoozsZBCrCRjQt1D23uoTJqqZgk",
   authDomain: "quill-q-dodch.firebaseapp.com",
   messagingSenderId: "648049411331",
-  projectNumber: "648049411331"
+  projectNumber: "648049411331",
+  vapidKey: "BFYzADoTQ1yCuaWyT00HXmt06FFxJ1xgW8Af7xrskV3-i51JYoL6idPnTnPqZAMRuyMl6D5tYebZ5ZWGmGcIyYw"
 };
 
 function initFirebase() {
