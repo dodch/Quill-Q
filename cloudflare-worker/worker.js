@@ -132,7 +132,7 @@ async function getGoogleOAuth2Token(clientEmail, privateKeyPem) {
   const cryptoKey = await crypto.subtle.importKey(
     "pkcs8",
     binaryKey,
-    { name: "RSASSA-PKPKCS1-v1_5", hash: "SHA-256" },
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
     false,
     ["sign"]
   );

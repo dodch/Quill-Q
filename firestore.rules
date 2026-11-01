@@ -35,15 +35,7 @@ service cloud.firestore {
       return (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
               "group" in get(/databases/$(database)/documents/users/$(request.auth.uid)).data)
         ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.group
-        : ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-            "academicDetail" in get(/databases/$(database)/documents/users/$(request.auth.uid)).data &&
-            (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.academicDetail.matches('.*Grp 2.*') ||
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.academicDetail.matches('.*2ANG-AFF 2.*')))
-            ? "grp2" : "grp1");
-    }
-
-    function canAccessGroup(targetGroup) {
-      return isTeacherOrAdmin() || getUserGroup() == targetGroup;
+        : "grp1";
     }
 
     // User profile document:
@@ -76,25 +68,25 @@ service cloud.firestore {
 
     // Shared Homeworks (Group-separated):
     match /homeworks/{hwId} {
-      allow read: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1'));
-      allow create: if isApprovedUser() && canAccessGroup(request.resource.data.get('group', 'grp1')) && request.resource.data.userId == request.auth.uid;
-      allow update: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1'));
-      allow delete: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1')) && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow read: if isApprovedUser() && (isTeacherOrAdmin() || resource.data.group == getUserGroup());
+      allow create: if isApprovedUser() && (isTeacherOrAdmin() || request.resource.data.group == getUserGroup()) && request.resource.data.userId == request.auth.uid;
+      allow update: if isApprovedUser() && (isTeacherOrAdmin() || resource.data.group == getUserGroup());
+      allow delete: if isApprovedUser() && (isTeacherOrAdmin() || resource.data.group == getUserGroup()) && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
 
     match /tasks/{taskId} {
-      allow read: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1'));
-      allow create: if isApprovedUser() && canAccessGroup(request.resource.data.get('group', 'grp1')) && request.resource.data.userId == request.auth.uid;
-      allow update: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1'));
-      allow delete: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1')) && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow read: if isApprovedUser() && (isTeacherOrAdmin() || resource.data.group == getUserGroup());
+      allow create: if isApprovedUser() && (isTeacherOrAdmin() || request.resource.data.group == getUserGroup()) && request.resource.data.userId == request.auth.uid;
+      allow update: if isApprovedUser() && (isTeacherOrAdmin() || resource.data.group == getUserGroup());
+      allow delete: if isApprovedUser() && (isTeacherOrAdmin() || resource.data.group == getUserGroup()) && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
 
     // Shared Quick Notes (Group-separated):
     match /quickNotes/{noteId} {
-      allow read: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1'));
-      allow create: if isApprovedUser() && canAccessGroup(request.resource.data.get('group', 'grp1')) && request.resource.data.userId == request.auth.uid;
-      allow update: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1')) && (resource.data.userId == request.auth.uid || isSuperAdmin());
-      allow delete: if isApprovedUser() && canAccessGroup(resource.data.get('group', 'grp1')) && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow read: if isApprovedUser() && (isTeacherOrAdmin() || resource.data.group == getUserGroup());
+      allow create: if isApprovedUser() && (isTeacherOrAdmin() || request.resource.data.group == getUserGroup()) && request.resource.data.userId == request.auth.uid;
+      allow update: if isApprovedUser() && (isTeacherOrAdmin() || resource.data.group == getUserGroup()) && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow delete: if isApprovedUser() && (isTeacherOrAdmin() || resource.data.group == getUserGroup()) && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
 
     // Server-wide Timetables & Schedules (Group-separated):
@@ -108,10 +100,10 @@ service cloud.firestore {
 
     // Class Chat (Group-separated channels):
     match /chats/{channelId}/messages/{messageId} {
-      allow read: if isApprovedUser() && canAccessGroup(channelId == "grp2" ? "grp2" : "grp1");
-      allow create: if isApprovedUser() && canAccessGroup(channelId == "grp2" ? "grp2" : "grp1") && request.resource.data.userId == request.auth.uid;
-      allow update: if isApprovedUser() && canAccessGroup(channelId == "grp2" ? "grp2" : "grp1");
-      allow delete: if isApprovedUser() && canAccessGroup(channelId == "grp2" ? "grp2" : "grp1") && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow read: if isApprovedUser() && (isTeacherOrAdmin() || channelId == getUserGroup());
+      allow create: if isApprovedUser() && (isTeacherOrAdmin() || channelId == getUserGroup()) && request.resource.data.userId == request.auth.uid;
+      allow update: if isApprovedUser() && (isTeacherOrAdmin() || channelId == getUserGroup());
+      allow delete: if isApprovedUser() && (isTeacherOrAdmin() || channelId == getUserGroup()) && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
 
     // Unified Subject Documents & Lesson Notes (Unified across all groups):
