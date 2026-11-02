@@ -209,9 +209,9 @@
         <span id="highlighter-btn-label">Highlight</span>
       </button>
 
-      <!-- Teacher Red Pen Button (Only shown for teachers/admins) -->
-      <button type="button" class="editor-btn-secondary btn-teacher-pen view-hidden" id="btn-teacher-pen" title="Teacher Pen: Draw marks, grades & notes directly on paper" aria-label="Teacher Pen">
-        <i class="fi fi-rr-pen-nib" style="color: #e03131;"></i>
+      <!-- Pen Button (Teacher Red Pen or Student Drawing Pen) -->
+      <button type="button" class="editor-btn-secondary btn-teacher-pen view-hidden" id="btn-teacher-pen" title="Handwriting Pen: Draw marks & notes directly on paper" aria-label="Pen">
+        <i class="fi fi-rr-pen-nib" id="nav-pen-icon" style="color: #e03131;"></i>
         <span id="teacher-pen-btn-label">Red Pen</span>
       </button>
 
@@ -436,13 +436,13 @@
       <button type="button" class="pen-tool-btn active" data-tool="pen" title="Freehand Drawing Pen">
         <i class="fi fi-rr-pen-nib"></i>
       </button>
-      <button type="button" class="pen-tool-btn" data-tool="check" title="Quick Grade: Checkmark (✓)">
+      <button type="button" class="pen-tool-btn teacher-only-tool" data-tool="check" title="Quick Grade: Checkmark (✓) [Teacher Only]">
         <i class="fi fi-rr-check" style="color: #2b8a3e;"></i>
       </button>
-      <button type="button" class="pen-tool-btn" data-tool="cross" title="Quick Grade: Cross (✗)">
+      <button type="button" class="pen-tool-btn teacher-only-tool" data-tool="cross" title="Quick Grade: Cross (✗) [Teacher Only]">
         <i class="fi fi-rr-cross" style="color: #e03131;"></i>
       </button>
-      <button type="button" class="pen-tool-btn" data-tool="star" title="Quick Grade: Gold Star (⭐)">
+      <button type="button" class="pen-tool-btn teacher-only-tool" data-tool="star" title="Quick Grade: Gold Star (⭐) [Teacher Only]">
         <span style="font-size: 14px;">⭐</span>
       </button>
       <button type="button" class="pen-tool-btn" data-tool="eraser" title="Eraser: Remove marks">
@@ -454,11 +454,11 @@
 
     <!-- Color Swatches -->
     <div class="pen-color-group" id="pen-color-group">
-      <button type="button" class="pen-color-swatch active" data-color="#e03131" style="--pen-swatch-color: #e03131;" title="Teacher Red"></button>
-      <button type="button" class="pen-color-swatch" data-color="#1971c2" style="--pen-swatch-color: #1971c2;" title="Electric Blue"></button>
-      <button type="button" class="pen-color-swatch" data-color="#2f9e44" style="--pen-swatch-color: #2f9e44;" title="Teacher Green"></button>
-      <button type="button" class="pen-color-swatch" data-color="#f59f00" style="--pen-swatch-color: #f59f00;" title="Gold Yellow"></button>
-      <button type="button" class="pen-color-swatch" data-color="#1a1816" style="--pen-swatch-color: #1a1816;" title="Charcoal Ink"></button>
+      <button type="button" class="pen-color-swatch teacher-only-color active" id="pen-swatch-red" data-color="#e03131" style="--pen-swatch-color: #e03131;" title="Teacher Red [Teacher Only]"></button>
+      <button type="button" class="pen-color-swatch" id="pen-swatch-blue" data-color="#1971c2" style="--pen-swatch-color: #1971c2;" title="Electric Blue"></button>
+      <button type="button" class="pen-color-swatch" id="pen-swatch-green" data-color="#2f9e44" style="--pen-swatch-color: #2f9e44;" title="Teacher Green"></button>
+      <button type="button" class="pen-color-swatch" id="pen-swatch-yellow" data-color="#f59f00" style="--pen-swatch-color: #f59f00;" title="Gold Yellow"></button>
+      <button type="button" class="pen-color-swatch" id="pen-swatch-black" data-color="#1a1816" style="--pen-swatch-color: #1a1816;" title="Charcoal Ink"></button>
     </div>
 
     <div class="pen-toolbar-sep"></div>

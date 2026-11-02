@@ -164,8 +164,9 @@ function PageAnnotationCanvas({
   strokes = [],
   penActive = false,
   penTool = "pen",
-  penColor = "#e03131",
+  penColor = "#1971c2",
   penSize = 3.5,
+  isTeacher = false,
   onAddStroke
 }) {
   const canvasRef = useRef(null);
@@ -197,9 +198,44 @@ function PageAnnotationCanvas({
       list.push(inProgressStroke);
     }
 
-    for (const stroke of list) {
+    // Separate student strokes and teacher marks
+    const studentStrokes = list.filter((s) => s.authorRole !== "teacher" && !s.isTeacherMark);
+    const teacherStrokes = list.filter((s) => s.authorRole === "teacher" || s.isTeacherMark);
+
+    const hasStudentEraser = studentStrokes.some((s) => s.isEraser);
+
+    // If there are no teacher marks OR no student eraser strokes, simple fast render
+    if (!hasStudentEraser || teacherStrokes.length === 0) {
+      for (const stroke of studentStrokes) {
+        renderSingleStroke(ctx, stroke, width, height);
+      }
+      for (const stroke of teacherStrokes) {
+        renderSingleStroke(ctx, stroke, width, height);
+      }
+      ctx.restore();
+      return;
+    }
+
+    // Protection Engine: Render student strokes (with student erasers) to an isolated offscreen canvas
+    // so student eraser strokes (destination-out) only erase student ink!
+    const offscreen = document.createElement("canvas");
+    offscreen.width = canvas.width;
+    offscreen.height = canvas.height;
+    const offCtx = offscreen.getContext("2d");
+    offCtx.scale(dpr, dpr);
+
+    for (const stroke of studentStrokes) {
+      renderSingleStroke(offCtx, stroke, width, height);
+    }
+
+    // Blit student markings to main canvas
+    ctx.drawImage(offscreen, 0, 0, width, height);
+
+    // Draw teacher marks ON TOP: Teacher red pen, stars & grading marks remain 100% immune to student erasers!
+    for (const stroke of teacherStrokes) {
       renderSingleStroke(ctx, stroke, width, height);
     }
+
     ctx.restore();
   }, []);
 
@@ -232,10 +268,18 @@ function PageAnnotationCanvas({
     const ny = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
 
     if (penTool === "check" || penTool === "cross" || penTool === "star") {
+      // ONLY teachers can add stars, checkmarks and crosses!
+      if (!isTeacher) {
+        isDrawingRef.current = false;
+        return;
+      }
+
       const stampStroke = {
         id: "stamp-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
         type: "stamp",
         stampType: penTool,
+        authorRole: "teacher",
+        isTeacherMark: true,
         color: penTool === "star" ? "#f59f00" : penColor,
         size: penSize,
         pos: { x: nx, y: ny }
@@ -246,11 +290,18 @@ function PageAnnotationCanvas({
     }
 
     // Freehand Pen or Eraser
+    // Students can use any color pen EXCEPT RED! If student has red, force to electric blue
+    const effectiveColor = (!isTeacher && (penColor === "#e03131" || penColor?.toLowerCase() === "red"))
+      ? "#1971c2"
+      : penColor;
+
     activeStrokeRef.current = {
       id: "stroke-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
       type: "stroke",
       isEraser: penTool === "eraser",
-      color: penColor,
+      authorRole: isTeacher ? "teacher" : "student",
+      isTeacherMark: Boolean(isTeacher),
+      color: effectiveColor,
       size: penSize,
       points: [{ x: nx, y: ny }]
     };
@@ -329,8 +380,9 @@ function A4PageSheet({
   strokes = [],
   penActive = false,
   penTool = "pen",
-  penColor = "#e03131",
+  penColor = "#1971c2",
   penSize = 3.5,
+  isTeacher = false,
   onAddStroke
 }) {
   const [editor, setEditor] = useState(null);
@@ -452,7 +504,7 @@ function A4PageSheet({
           </div>
         </footer>
 
-        {/* Teacher Annotation Canvas Overlay */}
+        {/* Annotation Canvas Overlay (Student or Teacher) */}
         <PageAnnotationCanvas
           pageId={page.id}
           strokes={strokes}
@@ -460,6 +512,7 @@ function A4PageSheet({
           penTool={penTool}
           penColor={penColor}
           penSize={penSize}
+          isTeacher={isTeacher}
           onAddStroke={onAddStroke}
         />
       </article>
@@ -701,7 +754,8 @@ export function MultiPageBlockNoteApp({
   onAnnotationsChange,
   onBridgeReady,
   editable = true,
-  uploadFile
+  uploadFile,
+  isTeacher = false
 }) {
   const [docTitle, setDocTitle] = useState(initialDocTitle);
 
@@ -731,10 +785,10 @@ export function MultiPageBlockNoteApp({
   const annotationsRef = useRef(annotations);
   annotationsRef.current = annotations;
 
-  // Teacher Pen Drawing Tool State
+  // Handwriting Pen Drawing Tool State (Teacher Red for teachers, Electric Blue for students)
   const [penActive, setPenActive] = useState(false);
   const [penTool, setPenTool] = useState("pen"); // 'pen' | 'check' | 'cross' | 'star' | 'eraser'
-  const [penColor, setPenColor] = useState("#e03131"); // Teacher Red by default
+  const [penColor, setPenColor] = useState(isTeacher ? "#e03131" : "#1971c2");
   const [penSize, setPenSize] = useState(3.5); // Medium stroke by default
 
   const penActiveRef = useRef(penActive);
@@ -1255,8 +1309,22 @@ export function MultiPageBlockNoteApp({
     return false;
   }, [editable, getTargetEditor, notifyHistoryChange, onChange, buildExportPayload, scrollToPage]);
 
-  // Teacher Pen: Add new handwritten stroke
+  // Add new handwritten stroke
   const handleAddStroke = useCallback((pageId, stroke) => {
+    // Tag stroke role
+    stroke.authorRole = isTeacher ? "teacher" : "student";
+    stroke.isTeacherMark = Boolean(isTeacher);
+
+    // Safeguard: Students cannot use red ink or teacher stamps
+    if (!isTeacher) {
+      if (stroke.color === "#e03131" || stroke.color?.toLowerCase() === "red") {
+        stroke.color = "#1971c2";
+      }
+      if (stroke.type === "stamp") {
+        return;
+      }
+    }
+
     setAnnotations((prev) => {
       const currentList = prev[pageId] ? [...prev[pageId], stroke] : [stroke];
       const updated = { ...prev, [pageId]: currentList };
@@ -1269,18 +1337,29 @@ export function MultiPageBlockNoteApp({
       if (onAnnotationsChange) onAnnotationsChange(updated);
       return updated;
     });
-  }, [onChange, onAnnotationsChange, buildExportPayload]);
+  }, [isTeacher, onChange, onAnnotationsChange, buildExportPayload]);
 
-  // Teacher Pen: Undo last stroke
+  // Undo last stroke (if student, only undos student strokes)
   const handleUndoPen = useCallback(() => {
     if (penHistoryStackRef.current.length === 0) return false;
-    const lastItem = penHistoryStackRef.current.pop();
-    penRedoStackRef.current.push(lastItem);
+
+    let targetIndex = -1;
+    for (let i = penHistoryStackRef.current.length - 1; i >= 0; i--) {
+      const item = penHistoryStackRef.current[i];
+      if (isTeacher || (!item.stroke?.isTeacherMark && item.stroke?.authorRole !== "teacher")) {
+        targetIndex = i;
+        break;
+      }
+    }
+
+    if (targetIndex === -1) return false;
+    const [targetItem] = penHistoryStackRef.current.splice(targetIndex, 1);
+    penRedoStackRef.current.push(targetItem);
 
     setAnnotations((prev) => {
-      const currentList = prev[lastItem.pageId] || [];
-      const updatedList = currentList.filter((s) => s.id !== lastItem.stroke.id);
-      const updated = { ...prev, [lastItem.pageId]: updatedList };
+      const currentList = prev[targetItem.pageId] || [];
+      const updatedList = currentList.filter((s) => s.id !== targetItem.stroke.id);
+      const updated = { ...prev, [targetItem.pageId]: updatedList };
       annotationsRef.current = updated;
 
       if (onChange) onChange(buildExportPayload());
@@ -1288,9 +1367,9 @@ export function MultiPageBlockNoteApp({
       return updated;
     });
     return true;
-  }, [onChange, onAnnotationsChange, buildExportPayload]);
+  }, [isTeacher, onChange, onAnnotationsChange, buildExportPayload]);
 
-  // Teacher Pen: Redo last stroke
+  // Redo last stroke
   const handleRedoPen = useCallback(() => {
     if (penRedoStackRef.current.length === 0) return false;
     const redoItem = penRedoStackRef.current.pop();
@@ -1309,21 +1388,27 @@ export function MultiPageBlockNoteApp({
     return true;
   }, [onChange, onAnnotationsChange, buildExportPayload]);
 
-  // Teacher Pen: Clear marks on a specific page
+  // Clear marks on a specific page (Students CANNOT erase teachers' marks!)
   const handleClearPagePen = useCallback((pageId) => {
     const targetId = pageId || lastActivePageIdRef.current || pagesRef.current[visiblePageIndex]?.id;
     if (!targetId) return;
 
     setAnnotations((prev) => {
       if (!prev[targetId] || prev[targetId].length === 0) return prev;
-      const updated = { ...prev, [targetId]: [] };
+
+      // If student, preserve all teacher marks and only delete student strokes
+      const updatedList = isTeacher
+        ? []
+        : prev[targetId].filter((s) => s.isTeacherMark || s.authorRole === "teacher");
+
+      const updated = { ...prev, [targetId]: updatedList };
       annotationsRef.current = updated;
 
       if (onChange) onChange(buildExportPayload());
       if (onAnnotationsChange) onAnnotationsChange(updated);
       return updated;
     });
-  }, [visiblePageIndex, onChange, onAnnotationsChange, buildExportPayload]);
+  }, [isTeacher, visiblePageIndex, onChange, onAnnotationsChange, buildExportPayload]);
 
   // Add Page After Index
   const handleAddPageAfter = useCallback((index) => {
@@ -1456,15 +1541,21 @@ export function MultiPageBlockNoteApp({
         },
         getPenMode: () => Boolean(penActiveRef.current),
         setPenTool: (tool) => {
+          if (!isTeacher && (tool === "star" || tool === "check" || tool === "cross")) {
+            tool = "pen";
+          }
           setPenTool(tool);
           penToolRef.current = tool;
         },
         getPenTool: () => penToolRef.current || "pen",
         setPenColor: (color) => {
+          if (!isTeacher && (color === "#e03131" || color?.toLowerCase() === "red")) {
+            color = "#1971c2";
+          }
           setPenColor(color);
           penColorRef.current = color;
         },
-        getPenColor: () => penColorRef.current || "#e03131",
+        getPenColor: () => penColorRef.current || (isTeacher ? "#e03131" : "#1971c2"),
         setPenSize: (size) => {
           const num = Number(size) || 3.5;
           setPenSize(num);
@@ -1518,7 +1609,8 @@ export function MultiPageBlockNoteApp({
     handleRedoPen,
     handleClearPagePen,
     clearMultiSelections,
-    applyStyleToMultiSelections
+    applyStyleToMultiSelections,
+    isTeacher
   ]);
 
   return (
@@ -1583,6 +1675,7 @@ export function MultiPageBlockNoteApp({
             penTool={penTool}
             penColor={penColor}
             penSize={penSize}
+            isTeacher={isTeacher}
             onAddStroke={handleAddStroke}
           />
         ))}

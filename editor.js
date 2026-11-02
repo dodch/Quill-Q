@@ -71,6 +71,14 @@
     return false;
   }
 
+  function isUserTeacher() {
+    if (reviewingStudent) return true;
+    if (isStudentWorksheet) return false;
+    return Boolean(
+      currentProfile && (currentProfile.role === "teacher" || isSuperAdminUser(currentProfile, currentUser))
+    );
+  }
+
   function extractExcerpt(blocks, maxLen = 140) {
     if (!blocks || !Array.isArray(blocks)) return "";
     let text = "";
@@ -179,6 +187,10 @@
       // 1. If student is working on an exercise worksheet, save to their personal submission subcollection!
       if (isStudentWorksheet) {
         const subDocRef = collectionRef.doc(currentDocId).collection("submissions").doc(currentUser.uid);
+        const penAnnotations = reactEditorBridge && typeof reactEditorBridge.getAnnotations === "function"
+          ? reactEditorBridge.getAnnotations()
+          : {};
+
         await subDocRef.set({
           studentId: currentUser.uid,
           studentName: currentProfile?.displayName || currentUser.displayName || "Student",
@@ -186,9 +198,14 @@
           studentEmail: currentUser.email,
           content: jsonString,
           pageCount: pageCount,
+          studentAnnotations: penAnnotations,
           status: currentStudentSubmission?.status || "in-progress",
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
+
+        if (currentStudentSubmission) {
+          currentStudentSubmission.studentAnnotations = penAnnotations;
+        }
 
         hasPendingChanges = false;
         updateSaveStatus("saved");
@@ -401,7 +418,26 @@
         }
         renderPinnedNotes();
 
-        mountReactBlockNote(initialContent, true, currentStudentSubmission?.teacherAnnotations || null);
+        // Combine student's handwriting and teacher's markings so both render on worksheet
+        const mergedAnnotations = {};
+        const teacherA = currentStudentSubmission?.teacherAnnotations || {};
+        const studentA = currentStudentSubmission?.studentAnnotations || {};
+        const pageIds = new Set([...Object.keys(teacherA), ...Object.keys(studentA)]);
+        pageIds.forEach((pId) => {
+          const listT = Array.isArray(teacherA[pId]) ? teacherA[pId] : [];
+          const listS = Array.isArray(studentA[pId]) ? studentA[pId] : [];
+          const seen = new Set();
+          const combined = [];
+          [...listS, ...listT].forEach((stroke) => {
+            if (stroke && stroke.id && !seen.has(stroke.id)) {
+              seen.add(stroke.id);
+              combined.push(stroke);
+            }
+          });
+          mergedAnnotations[pId] = combined;
+        });
+
+        mountReactBlockNote(initialContent, true, mergedAnnotations);
         updateSaveStatus("saved");
         return;
       }
@@ -542,15 +578,16 @@
       if (btnViewSubmissions) btnViewSubmissions.classList.add("view-hidden");
     }
 
-    // Teacher Red Pen: Visible for teachers/admins or whenever reviewing student work
+    // Pen Button: Visible for teachers/admins, reviewing student work, student exercises, or document editors
     const btnNavPen = document.getElementById("btn-teacher-pen");
     if (btnNavPen) {
-      if (isTeacher || reviewingStudent) {
+      if (isTeacher || reviewingStudent || isStudentWorksheet || canEditDocument) {
         btnNavPen.classList.remove("view-hidden");
       } else {
         btnNavPen.classList.add("view-hidden");
       }
     }
+    configurePenRoleUI();
 
     if (btnToggleType) {
       if (isSuperAdmin && currentDocId) {
@@ -575,6 +612,11 @@
 
     if (banner) banner.classList.remove("view-hidden");
     if (btnSubmit) btnSubmit.classList.remove("view-hidden");
+
+    // Student Handwriting Pen button is visible on worksheets
+    const btnNavPen = document.getElementById("btn-teacher-pen");
+    if (btnNavPen) btnNavPen.classList.remove("view-hidden");
+    configurePenRoleUI();
 
     // Students only read the teacher's pinned notes (cannot add or delete notes)
     const addNoteBtn = document.getElementById("btn-create-pinned-note");
@@ -759,17 +801,30 @@
       masterExerciseBlocks = reactEditorBridge.getJSONString();
     }
 
-    // Load student's worksheet content and latest teacher annotations
+    // Load student's worksheet content and combined annotations
     const studentContent = student.content || masterExerciseBlocks || "{}";
-    let studentAnnotations = student.teacherAnnotations || null;
+    const combinedAnnotations = {};
 
     try {
       const subSnap = await db.collection("subjects").doc(currentSubject.id).collection("documents").doc(currentDocId).collection("submissions").doc(student.id).get();
       if (subSnap.exists) {
         const sData = subSnap.data();
-        if (sData.teacherAnnotations) {
-          studentAnnotations = sData.teacherAnnotations;
-        }
+        const teacherA = sData.teacherAnnotations || {};
+        const studentA = sData.studentAnnotations || {};
+        const pageIds = new Set([...Object.keys(teacherA), ...Object.keys(studentA)]);
+        pageIds.forEach((pId) => {
+          const listT = Array.isArray(teacherA[pId]) ? teacherA[pId] : [];
+          const listS = Array.isArray(studentA[pId]) ? studentA[pId] : [];
+          const seen = new Set();
+          const combined = [];
+          [...listS, ...listT].forEach((stroke) => {
+            if (stroke && stroke.id && !seen.has(stroke.id)) {
+              seen.add(stroke.id);
+              combined.push(stroke);
+            }
+          });
+          combinedAnnotations[pId] = combined;
+        });
       }
     } catch (e) {
       console.warn("Could not fetch submission annotations:", e);
@@ -786,7 +841,7 @@
     if (editorContainer) {
       editorContainer.innerHTML = "";
     }
-    mountReactBlockNote(studentContent, false, studentAnnotations);
+    mountReactBlockNote(studentContent, false, combinedAnnotations);
 
     const banner = document.getElementById("exercise-review-banner");
     const nameEl = document.getElementById("exercise-review-student-name");
@@ -795,6 +850,7 @@
     const btnNavPen = document.getElementById("btn-teacher-pen");
 
     if (btnNavPen) btnNavPen.classList.remove("view-hidden");
+    configurePenRoleUI();
     if (nameEl) nameEl.textContent = student.studentName || "Student";
     if (statusEl) statusEl.textContent = student.status === "reviewed" ? "✅ Reviewed" : (student.status === "submitted" ? "🟢 Submitted" : "🟡 In Progress");
     if (avatarEl && student.studentAvatar) avatarEl.src = student.studentAvatar;
@@ -814,6 +870,7 @@
     const isTeacher = currentProfile && (currentProfile.role === "teacher" || isSuperAdminUser(currentProfile, currentUser));
     const btnNavPen = document.getElementById("btn-teacher-pen");
     if (btnNavPen && !isTeacher) btnNavPen.classList.add("view-hidden");
+    configurePenRoleUI();
 
     // Cleanly unmount student worksheet and restore teacher's master blocks
     if (reactEditorBridge && reactEditorBridge.root && typeof reactEditorBridge.root.unmount === "function") {
@@ -983,6 +1040,7 @@
     try {
       const docTitle = titleInput ? titleInput.value : "";
       const subjName = currentSubject ? currentSubject.name : "";
+      const isTeacherRole = isUserTeacher();
 
       reactEditorBridge = renderFn(editorContainer, {
         initialContent: initialContent || undefined,
@@ -990,6 +1048,7 @@
         docTitle: docTitle,
         subjectName: subjName,
         editable: editable,
+        isTeacher: isTeacherRole,
         uploadFile: handleEditorFileUpload,
         onChange: () => {
           if (editable) {
@@ -1204,11 +1263,70 @@
   }
 
   /* ==========================================================================
-     TEACHER FREEHAND PEN & MARKING PALETTE
+     TEACHER & STUDENT HANDWRITING PEN PALETTE
      ========================================================================== */
+
+  function configurePenRoleUI() {
+    const isTeacher = isUserTeacher();
+    const btnNavPen = document.getElementById("btn-teacher-pen");
+    const navIcon = document.getElementById("nav-pen-icon");
+    const navLabel = document.getElementById("teacher-pen-btn-label");
+    const toolbar = document.getElementById("teacher-pen-toolbar");
+
+    if (btnNavPen) {
+      if (isTeacher) {
+        btnNavPen.classList.remove("student-pen-btn");
+        if (navLabel) navLabel.textContent = "Red Pen";
+        if (navIcon) navIcon.style.color = "#e03131";
+        btnNavPen.title = "Teacher Pen: Draw marks, grades & notes directly on paper";
+        btnNavPen.setAttribute("aria-label", "Teacher Red Pen");
+      } else {
+        btnNavPen.classList.add("student-pen-btn");
+        if (navLabel) navLabel.textContent = "Pen";
+        if (navIcon) navIcon.style.color = "#1971c2";
+        btnNavPen.title = "Pen: Write and draw notes directly on paper";
+        btnNavPen.setAttribute("aria-label", "Handwriting Pen");
+      }
+    }
+
+    if (toolbar) {
+      if (isTeacher) {
+        toolbar.classList.remove("is-student-pen");
+      } else {
+        toolbar.classList.add("is-student-pen");
+
+        // Ensure student doesn't have teacher-only stamps active
+        const curTool = reactEditorBridge && typeof reactEditorBridge.getPenTool === "function" ? reactEditorBridge.getPenTool() : "pen";
+        if (curTool === "star" || curTool === "check" || curTool === "cross") {
+          if (reactEditorBridge && typeof reactEditorBridge.setPenTool === "function") {
+            reactEditorBridge.setPenTool("pen");
+          }
+          const toolBtns = toolbar.querySelectorAll(".pen-tool-btn");
+          toolBtns.forEach((b) => {
+            b.classList.toggle("active", b.dataset.tool === "pen");
+          });
+        }
+
+        // Ensure student doesn't have teacher red ink active
+        const curColor = reactEditorBridge && typeof reactEditorBridge.getPenColor === "function" ? reactEditorBridge.getPenColor() : "#1971c2";
+        if (curColor === "#e03131" || curColor?.toLowerCase() === "red") {
+          if (reactEditorBridge && typeof reactEditorBridge.setPenColor === "function") {
+            reactEditorBridge.setPenColor("#1971c2");
+          }
+          const colorBtns = toolbar.querySelectorAll(".pen-color-swatch");
+          colorBtns.forEach((b) => {
+            b.classList.toggle("active", b.dataset.color === "#1971c2");
+          });
+        }
+      }
+    }
+  }
 
   function toggleTeacherPen(forceState = null) {
     if (!reactEditorBridge) return;
+    configurePenRoleUI();
+    const isTeacher = isUserTeacher();
+
     const currentMode = typeof reactEditorBridge.getPenMode === "function" ? reactEditorBridge.getPenMode() : false;
     const newMode = forceState !== null ? Boolean(forceState) : !currentMode;
 
@@ -1224,10 +1342,31 @@
       if (btnNavPen) btnNavPen.classList.add("active");
       if (btnRevPen) btnRevPen.classList.add("active");
       if (toolbar) toolbar.classList.remove("view-hidden");
-      const curTool = reactEditorBridge && typeof reactEditorBridge.getPenTool === "function" ? reactEditorBridge.getPenTool() : "pen";
-      const curColor = reactEditorBridge && typeof reactEditorBridge.getPenColor === "function" ? reactEditorBridge.getPenColor() : "#e03131";
+
+      // Ensure tool & color match role
+      let curTool = reactEditorBridge && typeof reactEditorBridge.getPenTool === "function" ? reactEditorBridge.getPenTool() : "pen";
+      if (!isTeacher && (curTool === "star" || curTool === "check" || curTool === "cross")) {
+        curTool = "pen";
+        if (typeof reactEditorBridge.setPenTool === "function") reactEditorBridge.setPenTool("pen");
+      }
+
+      let curColor = reactEditorBridge && typeof reactEditorBridge.getPenColor === "function" ? reactEditorBridge.getPenColor() : (isTeacher ? "#e03131" : "#1971c2");
+      if (!isTeacher && (curColor === "#e03131" || curColor?.toLowerCase() === "red")) {
+        curColor = "#1971c2";
+        if (typeof reactEditorBridge.setPenColor === "function") reactEditorBridge.setPenColor("#1971c2");
+      }
+
+      // Sync active classes on toolbar buttons
+      if (toolbar) {
+        toolbar.querySelectorAll(".pen-tool-btn").forEach((b) => b.classList.toggle("active", b.dataset.tool === curTool));
+        toolbar.querySelectorAll(".pen-color-swatch").forEach((b) => b.classList.toggle("active", b.dataset.color === curColor));
+      }
+
       updateToolbarToolVisuals(curTool, curColor);
-      showToast("Teacher Pen active: Draw marks, grades & notes directly on paper");
+      showToast(isTeacher
+        ? "Teacher Pen active: Draw marks, grades & notes directly on paper"
+        : "Pen active: Write and draw notes directly on paper"
+      );
     } else {
       if (btnNavPen) btnNavPen.classList.remove("active");
       if (btnRevPen) btnRevPen.classList.remove("active");
@@ -1269,7 +1408,8 @@
         b.removeAttribute("tabindex");
       });
 
-      const color = activeColor || (reactEditorBridge && typeof reactEditorBridge.getPenColor === "function" ? reactEditorBridge.getPenColor() : "#e03131");
+      const isTeacher = isUserTeacher();
+      const color = activeColor || (reactEditorBridge && typeof reactEditorBridge.getPenColor === "function" ? reactEditorBridge.getPenColor() : (isTeacher ? "#e03131" : "#1971c2"));
 
       if (toolbarIcon) {
         if (tool === "check") {
@@ -1293,7 +1433,7 @@
         else if (tool === "star") toolbarTitle.textContent = "Gold Star";
         else {
           const colorNames = {
-            "#e03131": "Red Pen",
+            "#e03131": isTeacher ? "Red Pen" : "Pen",
             "#1971c2": "Blue Pen",
             "#2f9e44": "Green Pen",
             "#f59f00": "Gold Pen",
@@ -1335,10 +1475,14 @@
     }
     if (btnPenClear) {
       btnPenClear.addEventListener("click", async () => {
+        const isTeacher = isUserTeacher();
+        const msg = isTeacher
+          ? "Clear all handwritten marks on this page?"
+          : "Clear all your handwriting on this page? (Teacher marks will be preserved)";
         let confirmed = false;
         if (typeof window.showCustomConfirm === "function") {
           confirmed = await window.showCustomConfirm(
-            "Clear all handwritten marks on this page?",
+            msg,
             "Clear Page Marks",
             '<i class="fi fi-rr-trash"></i>',
             "Clear Marks",
@@ -1346,11 +1490,11 @@
             true
           );
         } else {
-          confirmed = window.confirm("Clear all handwritten marks on this page?");
+          confirmed = window.confirm(msg);
         }
         if (confirmed && reactEditorBridge && typeof reactEditorBridge.clearPagePen === "function") {
           reactEditorBridge.clearPagePen();
-          showToast("Page markings cleared");
+          showToast(isTeacher ? "Page markings cleared" : "Your handwriting cleared");
         }
       });
     }
@@ -1360,17 +1504,28 @@
       const toolBtns = toolbar.querySelectorAll(".pen-tool-btn");
       toolBtns.forEach((btn) => {
         btn.addEventListener("click", () => {
+          const tool = btn.dataset.tool || "pen";
+          const isTeacher = isUserTeacher();
+
+          // Students cannot use check, cross, or star
+          if (!isTeacher && (tool === "check" || tool === "cross" || tool === "star")) {
+            showToast("Grading stamps (✓, ✗, ⭐) are reserved for teachers.", "error");
+            return;
+          }
+
           toolBtns.forEach((b) => b.classList.remove("active"));
           btn.classList.add("active");
-          const tool = btn.dataset.tool || "pen";
           if (reactEditorBridge && typeof reactEditorBridge.setPenTool === "function") {
             reactEditorBridge.setPenTool(tool);
           }
-          const currentColor = reactEditorBridge && typeof reactEditorBridge.getPenColor === "function" ? reactEditorBridge.getPenColor() : "#e03131";
+          const currentColor = reactEditorBridge && typeof reactEditorBridge.getPenColor === "function" ? reactEditorBridge.getPenColor() : (isTeacher ? "#e03131" : "#1971c2");
           updateToolbarToolVisuals(tool, currentColor);
 
           if (tool === "eraser") {
-            showToast("Eraser active: Drag over markings to erase");
+            showToast(isTeacher
+              ? "Eraser active: Drag over markings to erase"
+              : "Eraser active: Drag over your handwriting to erase (teacher marks cannot be erased)"
+            );
           }
         });
       });
@@ -1383,9 +1538,17 @@
           // If in eraser mode, colors cannot be selected
           if (curTool === "eraser") return;
 
+          const color = btn.dataset.color || "#1971c2";
+          const isTeacher = isUserTeacher();
+
+          // Students cannot use red ink
+          if (!isTeacher && (color === "#e03131" || color?.toLowerCase() === "red")) {
+            showToast("Red ink is reserved for teacher grading. Please select another color.", "error");
+            return;
+          }
+
           colorBtns.forEach((b) => b.classList.remove("active"));
           btn.classList.add("active");
-          const color = btn.dataset.color || "#e03131";
           if (reactEditorBridge && typeof reactEditorBridge.setPenColor === "function") {
             reactEditorBridge.setPenColor(color);
           }

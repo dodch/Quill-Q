@@ -114,9 +114,26 @@ service cloud.firestore {
       allow delete: if isApprovedUser() && (resource.data.authorId == request.auth.uid || isSuperAdmin());
 
       match /submissions/{studentId} {
-        allow read: if isApprovedUser() && (request.auth.uid == studentId || isSuperAdmin() || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "teacher"));
-        allow create: if isApprovedUser() && request.auth.uid == studentId;
-        allow update: if isApprovedUser() && (request.auth.uid == studentId || isSuperAdmin() || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "teacher"));
+        allow read: if isApprovedUser() && (request.auth.uid == studentId || isTeacherOrAdmin());
+        allow create: if isApprovedUser() && request.auth.uid == studentId &&
+          !('teacherAnnotations' in request.resource.data) &&
+          !('reviewedBy' in request.resource.data) &&
+          !('reviewedAt' in request.resource.data);
+        allow update: if isApprovedUser() && (
+          isTeacherOrAdmin() ||
+          (request.auth.uid == studentId &&
+            // Students cannot add, modify, or erase teacher annotations
+            (!('teacherAnnotations' in request.resource.data) ||
+             ('teacherAnnotations' in resource.data && request.resource.data.teacherAnnotations == resource.data.teacherAnnotations)) &&
+            // Students cannot forge teacher review identity or timestamps
+            (!('reviewedBy' in request.resource.data) ||
+             ('reviewedBy' in resource.data && request.resource.data.reviewedBy == resource.data.reviewedBy)) &&
+            (!('reviewedAt' in request.resource.data) ||
+             ('reviewedAt' in resource.data && request.resource.data.reviewedAt == resource.data.reviewedAt)) &&
+            // Students cannot mark their own submission as reviewed
+            (request.resource.data.status != "reviewed" || resource.data.status == "reviewed")
+          )
+        );
         allow delete: if isApprovedUser() && (request.auth.uid == studentId || isSuperAdmin());
       }
     }
