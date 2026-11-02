@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="styles.min.css?v=56" />
+  <link rel="stylesheet" href="styles.min.css?v=60" />
   <link rel="stylesheet" href="libs/blocknote-react.bundle.css?v=3" />
 
   <style>
@@ -181,6 +181,16 @@
     </div>
 
     <div class="editor-bar-right">
+      <!-- Undo / Redo Buttons -->
+      <div class="editor-history-group" id="editor-history-group" role="group" aria-label="Undo and redo history">
+        <button type="button" class="editor-btn-secondary btn-editor-history" id="btn-editor-undo" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
+          <i class="fi fi-rr-undo"></i>
+        </button>
+        <button type="button" class="editor-btn-secondary btn-editor-history" id="btn-editor-redo" title="Redo (Ctrl+Y)" aria-label="Redo" disabled>
+          <i class="fi fi-rr-redo"></i>
+        </button>
+      </div>
+
       <!-- Teacher Submissions Button -->
       <button type="button" class="editor-btn-secondary view-hidden" id="btn-view-submissions" title="View student submissions">
         <i class="fi fi-rr-users"></i>
@@ -191,6 +201,18 @@
       <button type="button" class="editor-btn-primary btn-submit-exercise view-hidden" id="btn-submit-exercise" title="Turn in your worksheet">
         <i class="fi fi-rr-paper-plane"></i>
         <span id="btn-submit-exercise-text">Turn In</span>
+      </button>
+
+      <!-- Quick Highlighter Button -->
+      <button type="button" class="editor-btn-secondary btn-highlighter-mode" id="btn-highlighter-mode" title="Quick Highlighter: Select text to highlight instantly (or hold Ctrl to multi-select)" aria-label="Quick Highlighter">
+        <i class="fi fi-rr-marker" style="color: #f59f00;"></i>
+        <span id="highlighter-btn-label">Highlight</span>
+      </button>
+
+      <!-- Teacher Red Pen Button (Only shown for teachers/admins) -->
+      <button type="button" class="editor-btn-secondary btn-teacher-pen view-hidden" id="btn-teacher-pen" title="Teacher Pen: Draw marks, grades & notes directly on paper" aria-label="Teacher Pen">
+        <i class="fi fi-rr-pen-nib" style="color: #e03131;"></i>
+        <span id="teacher-pen-btn-label">Red Pen</span>
       </button>
 
       <!-- Add Pinned Note Button -->
@@ -253,6 +275,14 @@
         </div>
       </div>
       <div class="exercise-banner-actions">
+        <button type="button" class="editor-btn-secondary btn-review-pen" id="btn-review-pen" title="Grade with handwritten red pen">
+          <i class="fi fi-rr-pen-nib" style="color: #e03131;"></i>
+          <span>Red Pen</span>
+        </button>
+        <button type="button" class="editor-btn-primary btn-save-review-marks" id="btn-save-review-marks" title="Save handwritten marks to student submission">
+          <i class="fi fi-rr-check"></i>
+          <span>Save Marks</span>
+        </button>
         <button type="button" class="editor-btn-secondary" id="btn-exit-review">
           <i class="fi fi-rr-arrow-left"></i>
           <span>Back to Master</span>
@@ -392,6 +422,81 @@
     </div>
   </div>
 
+  <!-- Floating Teacher Pen Toolbar (Palette) -->
+  <div class="teacher-pen-toolbar view-hidden" id="teacher-pen-toolbar" role="toolbar" aria-label="Teacher Grading Pen Controls">
+    <div class="pen-toolbar-handle" id="pen-toolbar-handle" title="Teacher Marking Palette">
+      <i class="fi fi-rr-pen-nib" id="pen-toolbar-icon" style="color: #e03131;"></i>
+      <span class="pen-toolbar-title" id="pen-toolbar-title">Red Pen</span>
+    </div>
+
+    <div class="pen-toolbar-sep"></div>
+
+    <!-- Tool Selector -->
+    <div class="pen-tool-group" id="pen-tool-group">
+      <button type="button" class="pen-tool-btn active" data-tool="pen" title="Freehand Drawing Pen">
+        <i class="fi fi-rr-pen-nib"></i>
+      </button>
+      <button type="button" class="pen-tool-btn" data-tool="check" title="Quick Grade: Checkmark (✓)">
+        <i class="fi fi-rr-check" style="color: #2b8a3e;"></i>
+      </button>
+      <button type="button" class="pen-tool-btn" data-tool="cross" title="Quick Grade: Cross (✗)">
+        <i class="fi fi-rr-cross" style="color: #e03131;"></i>
+      </button>
+      <button type="button" class="pen-tool-btn" data-tool="star" title="Quick Grade: Gold Star (⭐)">
+        <span style="font-size: 14px;">⭐</span>
+      </button>
+      <button type="button" class="pen-tool-btn" data-tool="eraser" title="Eraser: Remove marks">
+        <i class="fi fi-rr-eraser"></i>
+      </button>
+    </div>
+
+    <div class="pen-toolbar-sep"></div>
+
+    <!-- Color Swatches -->
+    <div class="pen-color-group" id="pen-color-group">
+      <button type="button" class="pen-color-swatch active" data-color="#e03131" style="--pen-swatch-color: #e03131;" title="Teacher Red"></button>
+      <button type="button" class="pen-color-swatch" data-color="#1971c2" style="--pen-swatch-color: #1971c2;" title="Electric Blue"></button>
+      <button type="button" class="pen-color-swatch" data-color="#2f9e44" style="--pen-swatch-color: #2f9e44;" title="Teacher Green"></button>
+      <button type="button" class="pen-color-swatch" data-color="#f59f00" style="--pen-swatch-color: #f59f00;" title="Gold Yellow"></button>
+      <button type="button" class="pen-color-swatch" data-color="#1a1816" style="--pen-swatch-color: #1a1816;" title="Charcoal Ink"></button>
+    </div>
+
+    <div class="pen-toolbar-sep"></div>
+
+    <!-- Stroke Width Selector -->
+    <div class="pen-size-group">
+      <button type="button" class="pen-size-btn" data-size="2" title="Fine Stroke (2px)">
+        <span class="pen-size-dot dot-sm"></span>
+      </button>
+      <button type="button" class="pen-size-btn active" data-size="3.5" title="Medium Stroke (3.5px)">
+        <span class="pen-size-dot dot-md"></span>
+      </button>
+      <button type="button" class="pen-size-btn" data-size="7" title="Thick Stroke (7px)">
+        <span class="pen-size-dot dot-lg"></span>
+      </button>
+    </div>
+
+    <div class="pen-toolbar-sep"></div>
+
+    <!-- Undo & Clear Actions -->
+    <div class="pen-action-group">
+      <button type="button" class="pen-action-btn" id="btn-pen-undo" title="Undo Last Pen Mark">
+        <i class="fi fi-rr-undo"></i>
+      </button>
+      <button type="button" class="pen-action-btn" id="btn-pen-clear" title="Clear All Marks on Active Page">
+        <i class="fi fi-rr-trash"></i>
+      </button>
+    </div>
+
+    <div class="pen-toolbar-sep"></div>
+
+    <!-- Close / Exit Pen Mode -->
+    <button type="button" class="pen-btn-done" id="btn-pen-done" title="Finish handwriting / switch back to text">
+      <i class="fi fi-rr-check"></i>
+      <span>Done</span>
+    </button>
+  </div>
+
   <!-- In-App Floating Toast Container -->
   <div class="inapp-toast-container" id="inapp-toast-container" aria-live="polite" aria-atomic="true"></div>
 
@@ -407,9 +512,9 @@
   <script src="custom-dialog.js"></script>
 
   <!-- React + BlockNote + Mantine Bundle -->
-  <script src="libs/blocknote-react.bundle.js?v=6"></script>
+  <script src="libs/blocknote-react.bundle.js?v=10"></script>
 
   <!-- BlockNote Standalone Editor Controller -->
-  <script src="editor.js?v=21"></script>
+  <script src="editor.js?v=25"></script>
 </body>
 </html>

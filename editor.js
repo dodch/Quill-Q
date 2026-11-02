@@ -46,6 +46,18 @@
   const btnSaveIcon = document.getElementById("btn-save-icon");
   const btnSaveText = document.getElementById("btn-save-text");
   const btnPrintDoc = document.getElementById("btn-print-doc");
+  const btnUndo = document.getElementById("btn-editor-undo");
+  const btnRedo = document.getElementById("btn-editor-redo");
+
+  function updateHistoryUI(status) {
+    const isEditable = Boolean(canEditDocument && !reviewingStudent);
+    if (btnUndo) {
+      btnUndo.disabled = !isEditable || !status?.canUndo;
+    }
+    if (btnRedo) {
+      btnRedo.disabled = !isEditable || !status?.canRedo;
+    }
+  }
 
   function getQueryParam(key) {
     const params = new URLSearchParams(window.location.search);
@@ -184,12 +196,37 @@
         return;
       }
 
-      // 2. If teacher is reviewing a student submission, protect master document from overwriting
+      // 2. If teacher is reviewing a student submission, save teacher's handwritten marks & review status!
       if (reviewingStudent) {
-        if (manual) showToast("Viewing student submission (Read-only review mode)");
+        const subDocRef = collectionRef.doc(currentDocId).collection("submissions").doc(reviewingStudent.id);
+        const penAnnotations = reactEditorBridge && typeof reactEditorBridge.getAnnotations === "function" 
+          ? reactEditorBridge.getAnnotations() 
+          : {};
+
+        await subDocRef.set({
+          teacherAnnotations: penAnnotations,
+          reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          reviewedBy: currentProfile?.displayName || currentUser.displayName || "Teacher",
+          status: "reviewed"
+        }, { merge: true });
+
+        if (reviewingStudent) {
+          reviewingStudent.teacherAnnotations = penAnnotations;
+          reviewingStudent.status = "reviewed";
+        }
+
+        const reviewStatus = document.getElementById("exercise-review-status");
+        if (reviewStatus) reviewStatus.textContent = "✅ Reviewed & Graded";
+
+        hasPendingChanges = false;
         updateSaveStatus("saved");
+        if (manual) showToast("Teacher marks & annotations saved to student submission!");
         return;
       }
+
+      const currentAnnotations = reactEditorBridge && typeof reactEditorBridge.getAnnotations === "function" 
+        ? reactEditorBridge.getAnnotations() 
+        : {};
 
       const docPayload = {
         subjectId: currentSubject.id,
@@ -200,6 +237,7 @@
         excerpt: excerpt,
         pageCount: pageCount,
         pinnedNotes: pinnedNotesCache || [],
+        annotations: currentAnnotations,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
@@ -363,7 +401,7 @@
         }
         renderPinnedNotes();
 
-        mountReactBlockNote(initialContent, true);
+        mountReactBlockNote(initialContent, true, currentStudentSubmission?.teacherAnnotations || null);
         updateSaveStatus("saved");
         return;
       }
@@ -387,7 +425,7 @@
         loadPinnedNotes();
       }
 
-      mountReactBlockNote(data.content, canEditDocument);
+      mountReactBlockNote(data.content, canEditDocument, data.annotations || null);
       if (canEditDocument) {
         updateSaveStatus("saved");
       }
@@ -403,8 +441,16 @@
 
   function applyEditingPermissions(canEdit, authorName = "") {
     if (!canEdit) {
-      // Viewer Mode: Hide manual save button
+      // Viewer Mode: Hide manual save button and disable history buttons
       if (btnSaveDoc) btnSaveDoc.style.display = "none";
+      if (btnUndo) {
+        btnUndo.disabled = true;
+        btnUndo.title = "Undo unavailable in read-only mode";
+      }
+      if (btnRedo) {
+        btnRedo.disabled = true;
+        btnRedo.title = "Redo unavailable in read-only mode";
+      }
 
       // Title input is read-only for viewer
       if (titleInput) {
@@ -412,8 +458,14 @@
         titleInput.style.cursor = "default";
       }
     } else {
-      // Editor Mode: Show save button
+      // Editor Mode: Show save button and restore history tooltips
       if (btnSaveDoc) btnSaveDoc.style.display = "inline-flex";
+      if (btnUndo) {
+        btnUndo.title = "Undo (Ctrl+Z)";
+      }
+      if (btnRedo) {
+        btnRedo.title = "Redo (Ctrl+Y / Ctrl+Shift+Z)";
+      }
       if (titleInput) {
         titleInput.readOnly = false;
         titleInput.style.cursor = "text";
@@ -488,6 +540,16 @@
     } else {
       if (typeBadge) typeBadge.classList.add("view-hidden");
       if (btnViewSubmissions) btnViewSubmissions.classList.add("view-hidden");
+    }
+
+    // Teacher Red Pen: Visible for teachers/admins or whenever reviewing student work
+    const btnNavPen = document.getElementById("btn-teacher-pen");
+    if (btnNavPen) {
+      if (isTeacher || reviewingStudent) {
+        btnNavPen.classList.remove("view-hidden");
+      } else {
+        btnNavPen.classList.add("view-hidden");
+      }
     }
 
     if (btnToggleType) {
@@ -697,8 +759,21 @@
       masterExerciseBlocks = reactEditorBridge.getJSONString();
     }
 
-    // Load student's worksheet content
+    // Load student's worksheet content and latest teacher annotations
     const studentContent = student.content || masterExerciseBlocks || "{}";
+    let studentAnnotations = student.teacherAnnotations || null;
+
+    try {
+      const subSnap = await db.collection("subjects").doc(currentSubject.id).collection("documents").doc(currentDocId).collection("submissions").doc(student.id).get();
+      if (subSnap.exists) {
+        const sData = subSnap.data();
+        if (sData.teacherAnnotations) {
+          studentAnnotations = sData.teacherAnnotations;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch submission annotations:", e);
+    }
 
     // Cleanly unmount previous BlockNote editor instance and mount student's worksheet
     if (reactEditorBridge && reactEditorBridge.root && typeof reactEditorBridge.root.unmount === "function") {
@@ -711,15 +786,17 @@
     if (editorContainer) {
       editorContainer.innerHTML = "";
     }
-    mountReactBlockNote(studentContent, false);
+    mountReactBlockNote(studentContent, false, studentAnnotations);
 
     const banner = document.getElementById("exercise-review-banner");
     const nameEl = document.getElementById("exercise-review-student-name");
     const statusEl = document.getElementById("exercise-review-status");
     const avatarEl = document.getElementById("exercise-review-avatar");
+    const btnNavPen = document.getElementById("btn-teacher-pen");
 
+    if (btnNavPen) btnNavPen.classList.remove("view-hidden");
     if (nameEl) nameEl.textContent = student.studentName || "Student";
-    if (statusEl) statusEl.textContent = student.status === "submitted" ? "🟢 Submitted" : (student.status === "in-progress" ? "🟡 In Progress" : "⚪ Not Started");
+    if (statusEl) statusEl.textContent = student.status === "reviewed" ? "✅ Reviewed" : (student.status === "submitted" ? "🟢 Submitted" : "🟡 In Progress");
     if (avatarEl && student.studentAvatar) avatarEl.src = student.studentAvatar;
     if (banner) banner.classList.remove("view-hidden");
 
@@ -729,9 +806,14 @@
   }
 
   function exitStudentReview() {
+    toggleTeacherPen(false);
     reviewingStudent = null;
     const banner = document.getElementById("exercise-review-banner");
     if (banner) banner.classList.add("view-hidden");
+
+    const isTeacher = currentProfile && (currentProfile.role === "teacher" || isSuperAdminUser(currentProfile, currentUser));
+    const btnNavPen = document.getElementById("btn-teacher-pen");
+    if (btnNavPen && !isTeacher) btnNavPen.classList.add("view-hidden");
 
     // Cleanly unmount student worksheet and restore teacher's master blocks
     if (reactEditorBridge && reactEditorBridge.root && typeof reactEditorBridge.root.unmount === "function") {
@@ -744,7 +826,7 @@
     if (editorContainer) {
       editorContainer.innerHTML = "";
     }
-    mountReactBlockNote(masterExerciseBlocks || undefined, canEditDocument);
+    mountReactBlockNote(masterExerciseBlocks || undefined, canEditDocument, loadedDocumentData?.annotations || null);
 
     if (titleInput && canEditDocument) titleInput.readOnly = false;
     renderPinnedNotes();
@@ -887,7 +969,7 @@
     window.handleBlockNoteUploadFile = handleEditorFileUpload;
   }
 
-  function mountReactBlockNote(initialContent, editable = true) {
+  function mountReactBlockNote(initialContent, editable = true, initialAnnotations = null) {
     if (!editorContainer) return;
 
     const renderFn = window.renderMultiPageBlockNote || window.renderBlockNoteReact;
@@ -904,6 +986,7 @@
 
       reactEditorBridge = renderFn(editorContainer, {
         initialContent: initialContent || undefined,
+        initialAnnotations: initialAnnotations || undefined,
         docTitle: docTitle,
         subjectName: subjName,
         editable: editable,
@@ -913,8 +996,19 @@
             triggerAutosaveDebounced();
           }
         },
+        onAnnotationsChange: () => {
+          if (editable || reviewingStudent) {
+            triggerAutosaveDebounced();
+          }
+        },
+        onHistoryChange: (historyStatus) => {
+          updateHistoryUI(historyStatus);
+        },
         onBridgeReady: (bridge) => {
           reactEditorBridge = bridge;
+          if (bridge && typeof bridge.onHistoryChange === "function") {
+            bridge.onHistoryChange(updateHistoryUI);
+          }
         }
       });
     } catch (err) {
@@ -1026,11 +1120,74 @@
       });
     }
 
-    // Keyboard shortcut: Ctrl+S / Cmd+S
+    // Undo and Redo Navbar Buttons
+    if (btnUndo) {
+      btnUndo.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (!canEditDocument || reviewingStudent) return;
+        if (reactEditorBridge && typeof reactEditorBridge.undo === "function") {
+          reactEditorBridge.undo();
+        }
+      });
+    }
+
+    if (btnRedo) {
+      btnRedo.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (!canEditDocument || reviewingStudent) return;
+        if (reactEditorBridge && typeof reactEditorBridge.redo === "function") {
+          reactEditorBridge.redo();
+        }
+      });
+    }
+
+    // Quick Highlighter Button in Navbar
+    const btnHighlighter = document.getElementById("btn-highlighter-mode");
+    if (btnHighlighter) {
+      btnHighlighter.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (!canEditDocument && !isStudentWorksheet) return;
+        if (reactEditorBridge && typeof reactEditorBridge.toggleHighlighterMode === "function") {
+          const isActive = reactEditorBridge.toggleHighlighterMode();
+          btnHighlighter.classList.toggle("active", isActive);
+          if (isActive) {
+            showToast("Quick Highlighter active: Select any text to highlight instantly (or hold Ctrl to multi-select)");
+          }
+        }
+      });
+    }
+
+    // Keyboard shortcuts: Ctrl+S (Save), Ctrl+Z (Undo), Ctrl+Y / Ctrl+Shift+Z (Redo)
     window.addEventListener("keydown", (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+      // Save: Ctrl+S / Cmd+S
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
         saveDocumentToFirestore(true);
+        return;
+      }
+
+      // History fallback shortcuts when focus is outside inputs and textareas
+      if (canEditDocument && !reviewingStudent && reactEditorBridge) {
+        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : "";
+        const isTextInput = activeTag === "input" || activeTag === "textarea";
+
+        if (!isTextInput) {
+          // Undo: Ctrl+Z / Cmd+Z (without shift)
+          if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "z") {
+            e.preventDefault();
+            if (typeof reactEditorBridge.undo === "function") {
+              reactEditorBridge.undo();
+            }
+          }
+          // Redo: Ctrl+Y / Cmd+Y OR Ctrl+Shift+Z / Cmd+Shift+Z
+          else if (((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") ||
+                   ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "z")) {
+            e.preventDefault();
+            if (typeof reactEditorBridge.redo === "function") {
+              reactEditorBridge.redo();
+            }
+          }
+        }
       }
     });
 
@@ -1043,6 +1200,212 @@
     });
 
     initSmartStickyNavbar();
+    initTeacherPenManager();
+  }
+
+  /* ==========================================================================
+     TEACHER FREEHAND PEN & MARKING PALETTE
+     ========================================================================== */
+
+  function toggleTeacherPen(forceState = null) {
+    if (!reactEditorBridge) return;
+    const currentMode = typeof reactEditorBridge.getPenMode === "function" ? reactEditorBridge.getPenMode() : false;
+    const newMode = forceState !== null ? Boolean(forceState) : !currentMode;
+
+    if (typeof reactEditorBridge.setPenMode === "function") {
+      reactEditorBridge.setPenMode(newMode);
+    }
+
+    const btnNavPen = document.getElementById("btn-teacher-pen");
+    const btnRevPen = document.getElementById("btn-review-pen");
+    const toolbar = document.getElementById("teacher-pen-toolbar");
+
+    if (newMode) {
+      if (btnNavPen) btnNavPen.classList.add("active");
+      if (btnRevPen) btnRevPen.classList.add("active");
+      if (toolbar) toolbar.classList.remove("view-hidden");
+      const curTool = reactEditorBridge && typeof reactEditorBridge.getPenTool === "function" ? reactEditorBridge.getPenTool() : "pen";
+      const curColor = reactEditorBridge && typeof reactEditorBridge.getPenColor === "function" ? reactEditorBridge.getPenColor() : "#e03131";
+      updateToolbarToolVisuals(curTool, curColor);
+      showToast("Teacher Pen active: Draw marks, grades & notes directly on paper");
+    } else {
+      if (btnNavPen) btnNavPen.classList.remove("active");
+      if (btnRevPen) btnRevPen.classList.remove("active");
+      if (toolbar) toolbar.classList.add("view-hidden");
+    }
+  }
+
+  function updateToolbarToolVisuals(tool, activeColor) {
+    const toolbar = document.getElementById("teacher-pen-toolbar");
+    if (!toolbar) return;
+    const colorGroup = toolbar.querySelector("#pen-color-group") || toolbar.querySelector(".pen-color-group");
+    const colorBtns = toolbar.querySelectorAll(".pen-color-swatch");
+    const toolbarTitle = toolbar.querySelector("#pen-toolbar-title") || toolbar.querySelector(".pen-toolbar-title");
+    const toolbarIcon = toolbar.querySelector("#pen-toolbar-icon") || toolbar.querySelector(".pen-toolbar-handle i");
+
+    if (tool === "eraser") {
+      if (colorGroup) {
+        colorGroup.classList.add("is-disabled");
+        colorGroup.setAttribute("aria-disabled", "true");
+        colorGroup.setAttribute("title", "Colors are not available in Eraser mode. Select Pen to draw with ink.");
+      }
+      colorBtns.forEach((b) => {
+        b.disabled = true;
+        b.setAttribute("tabindex", "-1");
+      });
+      if (toolbarTitle) toolbarTitle.textContent = "Eraser";
+      if (toolbarIcon) {
+        toolbarIcon.className = "fi fi-rr-eraser";
+        toolbarIcon.style.color = "#c92a2a";
+      }
+    } else {
+      if (colorGroup) {
+        colorGroup.classList.remove("is-disabled");
+        colorGroup.removeAttribute("aria-disabled");
+        colorGroup.removeAttribute("title");
+      }
+      colorBtns.forEach((b) => {
+        b.disabled = false;
+        b.removeAttribute("tabindex");
+      });
+
+      const color = activeColor || (reactEditorBridge && typeof reactEditorBridge.getPenColor === "function" ? reactEditorBridge.getPenColor() : "#e03131");
+
+      if (toolbarIcon) {
+        if (tool === "check") {
+          toolbarIcon.className = "fi fi-rr-check";
+          toolbarIcon.style.color = "#2b8a3e";
+        } else if (tool === "cross") {
+          toolbarIcon.className = "fi fi-rr-cross";
+          toolbarIcon.style.color = "#e03131";
+        } else if (tool === "star") {
+          toolbarIcon.className = "fi fi-rr-star";
+          toolbarIcon.style.color = "#f59f00";
+        } else {
+          toolbarIcon.className = "fi fi-rr-pen-nib";
+          toolbarIcon.style.color = color;
+        }
+      }
+
+      if (toolbarTitle) {
+        if (tool === "check") toolbarTitle.textContent = "Checkmark";
+        else if (tool === "cross") toolbarTitle.textContent = "Cross";
+        else if (tool === "star") toolbarTitle.textContent = "Gold Star";
+        else {
+          const colorNames = {
+            "#e03131": "Red Pen",
+            "#1971c2": "Blue Pen",
+            "#2f9e44": "Green Pen",
+            "#f59f00": "Gold Pen",
+            "#1a1816": "Black Pen"
+          };
+          toolbarTitle.textContent = colorNames[(color || "").toLowerCase()] || "Pen";
+        }
+      }
+    }
+  }
+
+  function initTeacherPenManager() {
+    const btnNavPen = document.getElementById("btn-teacher-pen");
+    const btnRevPen = document.getElementById("btn-review-pen");
+    const btnSaveMarks = document.getElementById("btn-save-review-marks");
+    const btnPenDone = document.getElementById("btn-pen-done");
+    const btnPenUndo = document.getElementById("btn-pen-undo");
+    const btnPenClear = document.getElementById("btn-pen-clear");
+    const toolbar = document.getElementById("teacher-pen-toolbar");
+
+    if (btnNavPen) {
+      btnNavPen.addEventListener("click", () => toggleTeacherPen());
+    }
+    if (btnRevPen) {
+      btnRevPen.addEventListener("click", () => toggleTeacherPen());
+    }
+    if (btnSaveMarks) {
+      btnSaveMarks.addEventListener("click", () => saveDocumentToFirestore(true));
+    }
+    if (btnPenDone) {
+      btnPenDone.addEventListener("click", () => toggleTeacherPen(false));
+    }
+    if (btnPenUndo) {
+      btnPenUndo.addEventListener("click", () => {
+        if (reactEditorBridge && typeof reactEditorBridge.undoPen === "function") {
+          reactEditorBridge.undoPen();
+        }
+      });
+    }
+    if (btnPenClear) {
+      btnPenClear.addEventListener("click", async () => {
+        let confirmed = false;
+        if (typeof window.showCustomConfirm === "function") {
+          confirmed = await window.showCustomConfirm(
+            "Clear all handwritten marks on this page?",
+            "Clear Page Marks",
+            '<i class="fi fi-rr-trash"></i>',
+            "Clear Marks",
+            "Keep Marks",
+            true
+          );
+        } else {
+          confirmed = window.confirm("Clear all handwritten marks on this page?");
+        }
+        if (confirmed && reactEditorBridge && typeof reactEditorBridge.clearPagePen === "function") {
+          reactEditorBridge.clearPagePen();
+          showToast("Page markings cleared");
+        }
+      });
+    }
+
+    // Tool Buttons in Floating Toolbar (pen, check, cross, star, eraser)
+    if (toolbar) {
+      const toolBtns = toolbar.querySelectorAll(".pen-tool-btn");
+      toolBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          toolBtns.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          const tool = btn.dataset.tool || "pen";
+          if (reactEditorBridge && typeof reactEditorBridge.setPenTool === "function") {
+            reactEditorBridge.setPenTool(tool);
+          }
+          const currentColor = reactEditorBridge && typeof reactEditorBridge.getPenColor === "function" ? reactEditorBridge.getPenColor() : "#e03131";
+          updateToolbarToolVisuals(tool, currentColor);
+
+          if (tool === "eraser") {
+            showToast("Eraser active: Drag over markings to erase");
+          }
+        });
+      });
+
+      // Color Swatches
+      const colorBtns = toolbar.querySelectorAll(".pen-color-swatch");
+      colorBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const curTool = reactEditorBridge && typeof reactEditorBridge.getPenTool === "function" ? reactEditorBridge.getPenTool() : "pen";
+          // If in eraser mode, colors cannot be selected
+          if (curTool === "eraser") return;
+
+          colorBtns.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          const color = btn.dataset.color || "#e03131";
+          if (reactEditorBridge && typeof reactEditorBridge.setPenColor === "function") {
+            reactEditorBridge.setPenColor(color);
+          }
+          updateToolbarToolVisuals(curTool, color);
+        });
+      });
+
+      // Size Buttons
+      const sizeBtns = toolbar.querySelectorAll(".pen-size-btn");
+      sizeBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          sizeBtns.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          const size = parseFloat(btn.dataset.size) || 3.5;
+          if (reactEditorBridge && typeof reactEditorBridge.setPenSize === "function") {
+            reactEditorBridge.setPenSize(size);
+          }
+        });
+      });
+    }
   }
 
   // Smart Sticky Navbar: slides up when scrolling down, reappears immediately when scrolling up

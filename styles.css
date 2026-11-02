@@ -8046,6 +8046,415 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   box-shadow: 1px 1px 0 #1a1816;
 }
 
+/* Undo & Redo History Buttons in Navbar */
+.editor-history-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-editor-history {
+  width: 36px;
+  height: 36px;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  user-select: none;
+}
+
+.btn-editor-history i {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.btn-editor-history:disabled,
+.btn-editor-history[disabled] {
+  opacity: 0.38 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  background: #f6f3ee !important;
+  color: #8c827a !important;
+  border-color: #8c827a !important;
+  box-shadow: 1px 1px 0 rgba(26, 24, 22, 0.2) !important;
+  transform: none !important;
+}
+
+.btn-teacher-pen.active {
+  background: #ffe3e3 !important;
+  color: #c92a2a !important;
+  border-color: #e03131 !important;
+  box-shadow: 2px 2px 0 #c92a2a !important;
+}
+
+.btn-review-pen {
+  background: #fff5f5;
+  border-color: #e03131;
+  color: #c92a2a;
+}
+
+.btn-review-pen:hover {
+  background: #ffe3e3;
+}
+
+.btn-save-review-marks {
+  background: #20c997;
+}
+
+/* Floating Teacher Pen Toolbar (Palette) */
+.teacher-pen-toolbar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffffff;
+  border: 2.5px solid #1a1816;
+  border-radius: 16px;
+  box-shadow: 4px 5px 0 #1a1816;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 99990;
+  animation: penToolbarEntrance 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  user-select: none;
+  max-width: 95vw;
+  box-sizing: border-box;
+}
+
+@keyframes penToolbarEntrance {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.pen-toolbar-handle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1a1816;
+  white-space: nowrap;
+}
+
+.pen-toolbar-sep {
+  width: 1.5px;
+  height: 24px;
+  background: #e2dcd3;
+  flex-shrink: 0;
+}
+
+.pen-tool-group,
+.pen-color-group,
+.pen-size-group,
+.pen-action-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pen-tool-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1.5px solid #1a1816;
+  background: #ffffff;
+  box-shadow: 1.5px 1.5px 0 #1a1816;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #1a1816;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.pen-tool-btn:hover {
+  background: #fbf7ee;
+  transform: translate(-1px, -1px);
+  box-shadow: 2px 2px 0 #1a1816;
+}
+
+.pen-tool-btn.active {
+  background: #ffe3e3;
+  border-color: #e03131;
+  color: #c92a2a;
+  transform: translate(1px, 1px);
+  box-shadow: 0 0 0 #1a1816;
+}
+
+.pen-color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1.5px #1a1816;
+  background: var(--pen-swatch-color, #e03131);
+  cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+  padding: 0;
+}
+
+.pen-color-swatch:hover {
+  transform: scale(1.15);
+}
+
+.pen-color-swatch.active {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 2px #1a1816, 0 0 0 4px var(--pen-swatch-color, #e03131);
+}
+
+/* Disabled state when eraser is selected */
+.pen-color-group {
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.pen-color-group.is-disabled {
+  opacity: 0.22 !important;
+  filter: grayscale(1) !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+.pen-color-group.is-disabled .pen-color-swatch {
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  transform: none !important;
+  box-shadow: 0 0 0 1.5px #8c827a !important;
+}
+
+.pen-size-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1.5px solid transparent;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pen-size-btn:hover {
+  background: #f4efe6;
+}
+
+.pen-size-btn.active {
+  border-color: #1a1816;
+  background: #fdfaf3;
+}
+
+.pen-size-dot {
+  background: #1a1816;
+  border-radius: 50%;
+  display: block;
+}
+
+.pen-size-dot.dot-sm {
+  width: 4px;
+  height: 4px;
+}
+
+.pen-size-dot.dot-md {
+  width: 7px;
+  height: 7px;
+}
+
+.pen-size-dot.dot-lg {
+  width: 11px;
+  height: 11px;
+}
+
+.pen-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid #1a1816;
+  background: #ffffff;
+  box-shadow: 1.5px 1.5px 0 #1a1816;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #1a1816;
+  cursor: pointer;
+}
+
+.pen-action-btn:hover {
+  background: #fbf7ee;
+  transform: translate(-1px, -1px);
+  box-shadow: 2px 2px 0 #1a1816;
+}
+
+.pen-btn-done {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1.5px solid #1a1816;
+  background: #20c997;
+  color: #ffffff;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.05rem;
+  font-weight: 700;
+  box-shadow: 2px 2px 0 #1a1816;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.pen-btn-done:hover {
+  background: #12b886;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #1a1816;
+}
+
+/* Multi-Selection CSS Custom Highlight API */
+::highlight(quill-multi-select) {
+  background-color: rgba(255, 212, 59, 0.45);
+  color: inherit;
+  outline: 2px dashed #1a1816;
+  border-radius: 3px;
+}
+
+/* Floating Multi-Selection Action Toolbar */
+.multi-select-toolbar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffffff;
+  border: 2.5px solid #1a1816;
+  border-radius: 16px;
+  box-shadow: 4px 6px 0px #1a1816;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 99995;
+  animation: penToolbarEntrance 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+  user-select: none;
+  max-width: 95vw;
+  box-sizing: border-box;
+}
+
+.multi-select-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fdf2da;
+  border: 1.5px solid #1a1816;
+  border-radius: 8px;
+  padding: 4px 9px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a1816;
+  box-shadow: 1.5px 1.5px 0 #1a1816;
+  white-space: nowrap;
+}
+
+.multi-select-sep {
+  width: 1.5px;
+  height: 22px;
+  background: #e2dcd3;
+  flex-shrink: 0;
+}
+
+.multi-select-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #7d756c;
+  white-space: nowrap;
+}
+
+.multi-select-colors {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ms-color-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1.5px solid #1a1816;
+  box-shadow: 1px 1px 0 #1a1816;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ms-color-btn:hover {
+  transform: scale(1.22);
+  box-shadow: 1.5px 1.5px 0 #1a1816;
+}
+
+.ms-color-btn.ms-clear-color {
+  background: #f1f3f5;
+  color: #868e96;
+  font-size: 11px;
+}
+
+.ms-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1.5px solid #1a1816;
+  background: #ffffff;
+  box-shadow: 1px 1px 0 #1a1816;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #1a1816;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.ms-action-btn:hover {
+  background: #fbf7ee;
+  transform: translate(-1px, -1px);
+}
+
+.ms-btn-cancel {
+  width: auto;
+  padding: 0 10px;
+  background: #f1f3f5;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.btn-highlighter-mode.active {
+  background: #fff3bf !important;
+  color: #d9480f !important;
+  border-color: #fab005 !important;
+  box-shadow: 2px 2px 0 #d9480f !important;
+}
+
+/* Cursor when Quick Highlighter is active */
+.multipage-editor-root.highlighter-mode-active .bn-editor {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M16 2l6 6-10 10H6v-6L16 2z' fill='%23ffd43b' stroke='%231a1816' stroke-width='1.8' stroke-linejoin='round'/%3E%3Cpath d='M3 21h5' stroke='%23fab005' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 3 21, text !important;
+}
+
 .editor-btn-primary {
   height: 36px;
   box-sizing: border-box;
@@ -8486,6 +8895,41 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   box-shadow: 6px 9px 0 #1a1816;
 }
 
+/* Teacher Freehand Pen Overlay Canvas on A4 Sheet */
+.a4-pen-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  z-index: 12;
+  pointer-events: none;
+  touch-action: none;
+  box-sizing: border-box;
+}
+
+.a4-pen-canvas.pen-active {
+  pointer-events: auto !important;
+  cursor: crosshair;
+}
+
+.a4-pen-canvas.pen-active.tool-eraser {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='10' fill='%23ffe3e3' fill-opacity='0.45' stroke='%23e03131' stroke-width='2' stroke-dasharray='4 2'/%3E%3Cpath d='M10 14h8M14 10v8' stroke='%23c92a2a' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") 14 14, cell !important;
+}
+
+.a4-pen-canvas.pen-active.tool-check {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 12l6 6L20 6' fill='none' stroke='%232b8a3e' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, crosshair !important;
+}
+
+.a4-pen-canvas.pen-active.tool-cross {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='%23e03131' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 12 12, crosshair !important;
+}
+
+.a4-pen-canvas.pen-active.tool-star {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' fill='%23f59f00' stroke='%231a1816' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, crosshair !important;
+}
+
 /* Running Header */
 .a4-running-header {
   display: flex;
@@ -8675,10 +9119,17 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   .editor-title-card,
   .a4-page-break-divider,
   .a4-btn-remove-page,
+  .teacher-pen-toolbar,
+  #teacher-pen-toolbar,
   .bn-toolbar,
   .bn-menu,
   .inapp-toast-container {
     display: none !important;
+  }
+  .a4-pen-canvas {
+    display: block !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
   }
   .editor-main-canvas {
     max-width: 100% !important;
@@ -8960,6 +9411,35 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   .editor-btn-secondary {
     padding: 6px 10px;
     font-size: 0.95rem;
+  }
+
+  .btn-editor-history {
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+    border-radius: 8px;
+  }
+
+  .btn-editor-history i {
+    font-size: 13px;
+  }
+
+  /* Mobile Teacher Pen Toolbar */
+  .teacher-pen-toolbar {
+    bottom: 12px;
+    padding: 6px 10px;
+    gap: 6px;
+    max-width: 96vw;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .teacher-pen-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pen-toolbar-title {
+    display: none;
   }
 
   .editor-btn-primary {
