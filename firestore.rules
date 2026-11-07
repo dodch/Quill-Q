@@ -67,7 +67,7 @@ service cloud.firestore {
 
     // Global Configuration (Academic classes, groups, & subjects):
     match /config/{configId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow write: if isSuperAdmin();
     }
 

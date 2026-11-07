@@ -559,6 +559,16 @@
       const fb = initFirebase();
       auth = fb.auth;
       db = fb.db;
+      if (window.AcademicRegistry && typeof window.AcademicRegistry.bindFirestoreAcademicStructure === "function") {
+        window.AcademicRegistry.bindFirestoreAcademicStructure(db);
+      }
+    }
+
+    if (window.AcademicRegistry && typeof window.AcademicRegistry.onAcademicStructureChange === "function") {
+      window.AcademicRegistry.onAcademicStructureChange(() => {
+        initSubjectDropdown();
+        renderSubjectHero(currentSubjectId);
+      });
     }
 
     // 3. Auth state listener

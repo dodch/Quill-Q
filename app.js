@@ -3989,6 +3989,9 @@ function initFirebaseAuthAndProfile() {
       }
       auth = firebase.auth();
       db = firebase.firestore();
+      if (window.AcademicRegistry && typeof window.AcademicRegistry.bindFirestoreAcademicStructure === "function") {
+        window.AcademicRegistry.bindFirestoreAcademicStructure(db);
+      }
     } catch (e) {
       console.warn("Firebase initialization warning:", e);
     }
@@ -4618,6 +4621,7 @@ function initFirebaseAuthAndProfile() {
               registerDeviceFCMToken().catch(console.warn);
             }
             navigateToDashboard();
+            renderSubjectsView();
           } else {
             bindUserTasks(null);
             bindServerSchedule(null);
@@ -4636,6 +4640,13 @@ function initFirebaseAuthAndProfile() {
         bindQuickNotesListener(null);
         applyProfileToUI(null);
       }
+    });
+  }
+
+  // Live real-time updates when academic classes or subjects change
+  if (window.AcademicRegistry && typeof window.AcademicRegistry.onAcademicStructureChange === "function") {
+    window.AcademicRegistry.onAcademicStructureChange(() => {
+      renderSubjectsView();
     });
   }
 }

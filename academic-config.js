@@ -132,21 +132,52 @@
         if (doc.exists) {
           const data = doc.data();
           if (data && Array.isArray(data.classes) && data.classes.length > 0) {
-            activeClasses = data.classes;
+            activeClasses = data.classes.map(c => {
+              if (c.id === "2ang-aff" && (!Array.isArray(c.subjects) || c.subjects.length === 0)) {
+                return { ...c, subjects: BUSINESS_SUBJECTS };
+              }
+              if (!Array.isArray(c.subjects)) {
+                return { ...c, subjects: [] };
+              }
+              return c;
+            });
             saveToLocalCache();
             notifyListeners();
             return;
           }
         }
-        // If doc doesn't exist yet, seed it once
-        docRef.set({ classes: DEFAULT_ACADEMIC_CLASSES, updatedAt: new Date().toISOString() }, { merge: true })
-          .catch((err) => console.warn("Could not auto-seed academic structure:", err));
       }, (err) => {
         console.warn("Firestore academic structure listener warning:", err);
       });
     } catch (err) {
       console.warn("Error binding academic structure:", err);
     }
+  }
+
+  async function refreshAcademicStructure(db) {
+    if (!db) return activeClasses;
+    try {
+      const doc = await db.collection("config").doc("academic_structure").get();
+      if (doc.exists) {
+        const data = doc.data();
+        if (data && Array.isArray(data.classes) && data.classes.length > 0) {
+          activeClasses = data.classes.map(c => {
+            if (c.id === "2ang-aff" && (!Array.isArray(c.subjects) || c.subjects.length === 0)) {
+              return { ...c, subjects: BUSINESS_SUBJECTS };
+            }
+            if (!Array.isArray(c.subjects)) {
+              return { ...c, subjects: [] };
+            }
+            return c;
+          });
+          saveToLocalCache();
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      console.warn("Could not refresh academic structure:", e);
+    }
+    return activeClasses;
   }
 
   /**
@@ -350,6 +381,7 @@
     deleteSubjectFromClass,
     normalizeProfileAcademic,
     bindFirestoreAcademicStructure,
+    refreshAcademicStructure,
     saveAcademicStructureToServer,
     onAcademicStructureChange
   };
@@ -357,6 +389,20 @@
   // Attach to window and export if module
   if (typeof window !== "undefined") {
     window.AcademicRegistry = AcademicRegistry;
+
+    // Auto-connect when Firebase becomes available in the browser
+    const attemptAutoBind = () => {
+      if (typeof firebase !== "undefined" && firebase.apps && firebase.apps.length) {
+        try {
+          bindFirestoreAcademicStructure(firebase.firestore());
+        } catch (e) {}
+      }
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", attemptAutoBind);
+    } else {
+      attemptAutoBind();
+    }
   }
   if (typeof module !== "undefined" && module.exports) {
     module.exports = AcademicRegistry;
