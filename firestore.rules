@@ -38,6 +38,12 @@ service cloud.firestore {
         : "grp1";
     }
 
+    // Global Configuration (Academic classes & groups):
+    match /config/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
     // User profile document:
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin() || isTeacherOrAdmin());
@@ -49,6 +55,7 @@ service cloud.firestore {
       );
       allow update: if isAuthenticated() && (
         isSuperAdmin() ||
+        (isTeacherOrAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'approvedBy', 'approvedByName', 'approvedAt', 'declinedBy', 'declinedAt'])) ||
         (request.auth.uid == userId && (
           (resource.data.status == "pending" && request.resource.data.status == "pending") ||
           (request.resource.data.role == resource.data.role &&
@@ -89,21 +96,18 @@ service cloud.firestore {
       allow delete: if isApprovedUser() && (isTeacherOrAdmin() || resource.data.group == getUserGroup()) && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
 
-    // Server-wide Timetables & Schedules (Group-separated):
+    // Server-wide Timetables & Schedules (Multi-class & multi-group):
     match /schedules/{dayId} {
-      allow read: if isApprovedUser() && (
-        isTeacherOrAdmin() ||
-        (dayId.matches('grp2_.*') ? getUserGroup() == "grp2" : getUserGroup() == "grp1")
-      );
+      allow read: if isApprovedUser();
       allow write: if isSuperAdmin();
     }
 
-    // Class Chat (Group-separated channels):
+    // Class Chat (Multi-class & multi-group channels):
     match /chats/{channelId}/messages/{messageId} {
-      allow read: if isApprovedUser() && (isTeacherOrAdmin() || channelId == getUserGroup());
-      allow create: if isApprovedUser() && (isTeacherOrAdmin() || channelId == getUserGroup()) && request.resource.data.userId == request.auth.uid;
-      allow update: if isApprovedUser() && (isTeacherOrAdmin() || channelId == getUserGroup());
-      allow delete: if isApprovedUser() && (isTeacherOrAdmin() || channelId == getUserGroup()) && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow read: if isApprovedUser();
+      allow create: if isApprovedUser() && request.resource.data.userId == request.auth.uid;
+      allow update: if isApprovedUser();
+      allow delete: if isApprovedUser() && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
 
     // Unified Subject Documents & Lesson Notes (Unified across all groups):

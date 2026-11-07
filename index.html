@@ -245,8 +245,8 @@
             </div>
           </div>
 
-          <!-- Gender & Department / Group Row -->
-          <div class="onboarding-row">
+          <!-- Student Academic Fields: Class & Group Selection -->
+          <div class="onboarding-row" id="row-student-academic">
             <div class="onboarding-group flex-1">
               <label class="onboarding-label" for="onboarding-gender">Gender <span class="required-star">*</span></label>
               <select class="modal-form-select" id="onboarding-gender" required>
@@ -256,24 +256,46 @@
               </select>
             </div>
 
-            <!-- Student: Group 1 / 2 Dropdown -->
-            <div class="onboarding-group flex-1" id="onboarding-group-academic">
-              <label class="onboarding-label" id="onboarding-academic-label" for="onboarding-academic-select">
-                Class / Group <span class="required-star">*</span>
+            <div class="onboarding-group flex-1" id="onboarding-group-class-select">
+              <label class="onboarding-label" for="onboarding-class-select">
+                Enrolled Class <span class="required-star">*</span>
               </label>
-              <select class="modal-form-select" id="onboarding-academic-select">
-                <option value="" disabled selected>Select your group</option>
-                <option value="2ANG-AFF 1" selected>Groupe 1 (2ANG-AFF 1)</option>
-                <option value="2ANG-AFF 2">Groupe 2 (2ANG-AFF 2)</option>
+              <select class="modal-form-select" id="onboarding-class-select">
+                <!-- Dynamically populated from AcademicRegistry -->
               </select>
             </div>
 
-            <!-- Teacher: Course / Subject Text Input -->
-            <div class="onboarding-group flex-1 view-hidden" id="onboarding-group-teacher-subject">
-              <label class="onboarding-label" for="onboarding-teacher-subject-val">
-                Course / Subject <span style="font-weight: 400; color: #8c8275;">(Optional)</span>
+            <div class="onboarding-group flex-1" id="onboarding-group-group-select">
+              <label class="onboarding-label" for="onboarding-group-select">
+                Group <span class="required-star">*</span>
               </label>
-              <input type="text" class="modal-form-input" id="onboarding-teacher-subject-val" placeholder="e.g. British History, Writing..." />
+              <select class="modal-form-select" id="onboarding-group-select">
+                <!-- Dynamically populated from AcademicRegistry based on selected class -->
+              </select>
+              <!-- Hidden fallback input for legacy code compatibility -->
+              <input type="hidden" id="onboarding-academic-select" value="2ANG-AFF 1" />
+            </div>
+          </div>
+
+          <!-- Teacher Academic Fields: Course & Multi-select Classes -->
+          <div class="onboarding-group view-hidden" id="onboarding-group-teacher-section">
+            <div class="onboarding-row" style="margin-bottom: 12px;">
+              <div class="onboarding-group flex-1">
+                <label class="onboarding-label" for="onboarding-teacher-subject-val">
+                  Subject / Course Taught <span class="required-star">*</span>
+                </label>
+                <input type="text" class="modal-form-input" id="onboarding-teacher-subject-val" placeholder="e.g. British History, Translation, Writing..." />
+              </div>
+            </div>
+
+            <div class="onboarding-group" style="margin-bottom: 8px;">
+              <label class="onboarding-label" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>Classes You Teach <span class="required-star">*</span></span>
+                <span style="font-size: 11.5px; font-weight: 400; color: #72685d;">Click to toggle one or multiple classes</span>
+              </label>
+              <div id="onboarding-teacher-classes-chips" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
+                <!-- Dynamically populated chips from AcademicRegistry -->
+              </div>
             </div>
           </div>
 
@@ -408,6 +430,13 @@
           </span>
           <span>Chat</span>
         </a>
+        <a href="#" class="nav-item view-hidden" id="nav-approvals" data-page="approvals">
+          <span class="nav-icon-wrap" style="position: relative; display: inline-flex;">
+            <i class="fi fi-rr-user-check nav-icon"></i>
+            <span class="nav-approvals-badge view-hidden" id="nav-approvals-badge">0</span>
+          </span>
+          <span>My Students</span>
+        </a>
       </nav>
 
       <!-- Sidebar User Profile Widget (Clickable: opens Profile & Admin section) -->
@@ -430,8 +459,9 @@
     <!-- Mobile Top Navigation Bar -->
     <header class="mobile-top-bar" id="mobile-top-bar">
       <div class="mobile-bar-left">
-        <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle navigation menu">
+        <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle navigation menu" style="position: relative;">
           <i class="fi fi-rr-menu-burger"></i>
+          <span class="mobile-approvals-dot view-hidden" id="mobile-approvals-dot" style="position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; background: #dc2626; border-radius: 50%; border: 1.5px solid #1a1816; animation: badgePulse 2.2s infinite ease-in-out;"></span>
         </button>
       </div>
       <div class="mobile-bar-brand" id="mobile-bar-brand">
@@ -525,13 +555,18 @@
             <div class="home-preview-meta">
               <span class="home-preview-icon"><i class="fi fi-sr-chalkboard-user"></i></span>
               <div class="home-preview-texts">
-                <span class="home-preview-label">Previewing Group Schedule & Tasks</span>
+                <span class="home-preview-label">Previewing Class &amp; Group</span>
                 <span class="home-preview-badge" id="home-schedule-active-badge">Group 1 (2ANG-AFF 1)</span>
               </div>
             </div>
-            <div class="schedule-group-switcher home-group-switcher" id="home-group-switcher" role="tablist">
-              <button type="button" class="group-tab-btn active" data-group="grp1" id="btn-home-sched-grp1">Group 1</button>
-              <button type="button" class="group-tab-btn" data-group="grp2" id="btn-home-sched-grp2">Group 2</button>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <select id="home-schedule-class-select" class="modal-form-select" style="padding: 5px 10px; font-size: 12.5px; border-radius: 10px; border: 2px solid #1a1816; background: #fffdf8; box-shadow: 2px 2px 0px #1a1816; cursor: pointer;">
+                <!-- Populated dynamically -->
+              </select>
+              <div class="schedule-group-switcher home-group-switcher" id="home-group-switcher" role="tablist">
+                <button type="button" class="group-tab-btn active" data-group="grp1" id="btn-home-sched-grp1">Group 1</button>
+                <button type="button" class="group-tab-btn" data-group="grp2" id="btn-home-sched-grp2">Group 2</button>
+              </div>
             </div>
           </div>
 
@@ -589,9 +624,18 @@
               <h2 class="schedule-view-title">Schedule</h2>
               <span class="schedule-group-badge" id="schedule-active-group-badge">Groupe 1 (2ANG-AFF 1)</span>
             </div>
-            <div class="schedule-group-switcher" id="schedule-group-switcher" role="tablist">
-              <button type="button" class="group-tab-btn active" data-group="grp1" id="btn-sched-grp1">Group 1</button>
-              <button type="button" class="group-tab-btn" data-group="grp2" id="btn-sched-grp2">Group 2</button>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <!-- Class switcher for teachers & admins -->
+              <div id="schedule-class-switcher-wrap" style="display: none; align-items: center; gap: 6px;">
+                <label for="schedule-class-select" style="font-size: 13px; font-weight: 700; color: #1a1816; font-family: 'Plus Jakarta Sans', sans-serif;">Class:</label>
+                <select id="schedule-class-select" class="modal-form-select" style="padding: 6px 12px; font-size: 13px; border-radius: 10px; border: 2px solid #1a1816; background: #fffdf8; box-shadow: 2px 2px 0px #1a1816; cursor: pointer;">
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+              <div class="schedule-group-switcher" id="schedule-group-switcher" role="tablist">
+                <button type="button" class="group-tab-btn active" data-group="grp1" id="btn-sched-grp1">Group 1</button>
+                <button type="button" class="group-tab-btn" data-group="grp2" id="btn-sched-grp2">Group 2</button>
+              </div>
             </div>
           </div>
 
@@ -1256,6 +1300,55 @@
           </script>
         </div>
 
+        <!-- TEACHER MY STUDENTS APPROVALS VIEW -->
+        <div class="view-panel view-hidden" id="view-approvals">
+          <div class="profile-view-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 12px;">
+            <div class="profile-view-title-wrap">
+              <h2 style="margin: 0; font-family: 'Patrick Hand', cursive; font-size: 32px; color: #1a1816;">My Students &amp; Class Approvals</h2>
+              <p style="margin: 2px 0 0; font-size: 14.5px; color: #72685d;">Review and approve student registrations for the classes you teach</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button type="button" class="btn-create-account" id="btn-refresh-teacher-approvals" style="background: #fdfaf3; color: #1a1816; padding: 7px 15px; font-size: 13.5px; box-shadow: 2px 3px 0px #1a1816;">
+                <i class="fi fi-rr-refresh"></i>
+                <span>Refresh List</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Class Filter Tabs -->
+          <div class="schedule-day-tabs" id="teacher-approval-class-tabs" style="display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap;">
+            <!-- Rendered dynamically by ProfileManager / app.js -->
+          </div>
+
+          <!-- Pending Students Section -->
+          <div style="background: #fffdf8; border: 2.5px solid #1a1816; border-radius: 20px; padding: 22px; box-shadow: 4px 6px 0px #1a1816; margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 2px dashed #ded6c5; padding-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px;">⏳</span>
+                <h3 style="margin: 0; font-family: 'Patrick Hand', cursive; font-size: 24px; color: #1a1816;">Pending Students (<span id="teacher-pending-count">0</span>)</h3>
+              </div>
+              <span style="font-size: 12px; font-weight: 700; color: #b45309; background: #fef3c7; border: 1.5px solid #1a1816; border-radius: 20px; padding: 3px 10px;">Awaiting Review</span>
+            </div>
+            <div id="teacher-pending-students-list" style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Enrolled / Approved Students Section -->
+          <div style="background: #fdfaf3; border: 2.5px solid #1a1816; border-radius: 20px; padding: 22px; box-shadow: 4px 6px 0px #1a1816;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 2px dashed #ded6c5; padding-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px;">🎓</span>
+                <h3 style="margin: 0; font-family: 'Patrick Hand', cursive; font-size: 24px; color: #1a1816;">Enrolled Students (<span id="teacher-enrolled-count">0</span>)</h3>
+              </div>
+              <span style="font-size: 12px; font-weight: 700; color: #15803d; background: #dcfce7; border: 1.5px solid #1a1816; border-radius: 20px; padding: 3px 10px;">Active Roster</span>
+            </div>
+            <div id="teacher-enrolled-students-list" style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
         <!-- DEDICATED CHAT VIEW -->
         <div class="view-panel view-hidden" id="view-chat">
           <div class="chat-view-container">
@@ -1598,6 +1691,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js"></script>
 
-  <script src="app.min.js?v=61"></script>
+  <script src="academic-config.js?v=63"></script>
+  <script src="profile-manager.js?v=63"></script>
+  <script src="app.min.js?v=63"></script>
 </body>
 </html>

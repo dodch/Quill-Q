@@ -659,9 +659,14 @@
           <i class="fi fi-sr-calendar"></i>
           <span>Weekly Schedule Editor</span>
         </button>
-        <button type="button" class="admin-main-tab-btn" id="btn-tab-members">
+        <button type="button" class="admin-main-tab-btn" id="btn-tab-classes">
+          <i class="fi fi-sr-graduation-cap"></i>
+          <span>Classes &amp; Groups (<span id="badge-total-classes">2</span>)</span>
+        </button>
+        <button type="button" class="admin-main-tab-btn" id="btn-tab-members" style="position: relative;">
           <i class="fi fi-sr-users"></i>
           <span>Member Approvals (<span id="badge-total-pending">0</span>)</span>
+          <span class="admin-pending-dot view-hidden" id="admin-pending-dot" style="width: 10px; height: 10px; background: #dc2626; border-radius: 50%; border: 1.5px solid #1a1816; margin-left: 6px; display: inline-block; animation: badgePulse 2s infinite;"></span>
         </button>
       </div>
     </section>
@@ -674,12 +679,19 @@
           <input type="text" class="schedule-date-input" id="input-day-date-label" value="Monday, Oct 19" placeholder="Date Label (e.g. Oct 19)" title="Label shown on dashboard for this day" />
         </div>
 
-        <div class="schedule-group-select-wrap" style="display:flex; align-items:center; gap:8px;">
-          <label for="admin-select-schedule-group" style="font-weight:700; font-size:14px; color:#5a5044;">Class Group:</label>
-          <select id="admin-select-schedule-group" class="admin-form-select" style="padding:6px 12px; font-weight:700; width:auto; background:#ffffff;">
-            <option value="grp1" selected>Group 1 (2ANG-AFF 1)</option>
-            <option value="grp2">Group 2 (2ANG-AFF 2)</option>
-          </select>
+        <div class="schedule-group-select-wrap" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <label for="admin-select-schedule-class" style="font-weight:700; font-size:14px; color:#5a5044;">Class:</label>
+            <select id="admin-select-schedule-class" class="admin-form-select" style="padding:6px 12px; font-weight:700; width:auto; background:#ffffff;">
+              <!-- Dynamically populated from AcademicRegistry -->
+            </select>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <label for="admin-select-schedule-group" style="font-weight:700; font-size:14px; color:#5a5044;">Group:</label>
+            <select id="admin-select-schedule-group" class="admin-form-select" style="padding:6px 12px; font-weight:700; width:auto; background:#ffffff;">
+              <!-- Dynamically populated from AcademicRegistry based on chosen class -->
+            </select>
+          </div>
         </div>
 
         <div class="schedule-actions-group">
@@ -712,6 +724,25 @@
       <!-- Class Slots List -->
       <div class="schedule-slots-container" id="schedule-slots-list">
         <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- SECTION 3: CLASSES & GROUPS MANAGEMENT -->
+    <section class="admin-panel-card view-hidden" id="panel-classes">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px dashed #ded6c5; padding-bottom: 14px; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h2 style="font-family: 'Patrick Hand', cursive; font-size: 28px; margin: 0; color: #1a1816;">Classes &amp; Groups Manager</h2>
+          <p style="margin: 2px 0 0; font-size: 14px; color: #72685d;">Create new university classes, configure groups, and edit academic structure</p>
+        </div>
+        <button type="button" class="btn-create-account" id="btn-create-class-modal-trigger" style="background: #e89838; padding: 9px 18px; font-size: 14.5px;">
+          <i class="fi fi-rr-plus"></i>
+          <span>+ Create New Class</span>
+        </button>
+      </div>
+
+      <!-- Classes Grid -->
+      <div class="admin-classes-grid" id="admin-classes-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px;">
+        <!-- Rendered dynamically by admin.js -->
       </div>
     </section>
 
@@ -852,6 +883,141 @@
     </div>
   </div>
 
+  <!-- CREATE / EDIT CLASS MODAL -->
+  <div class="admin-modal-backdrop view-hidden" id="modal-class-create">
+    <div class="admin-modal-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; border-bottom: 2px dashed #ded6c5; padding-bottom: 12px;">
+        <h3 style="font-family: 'Patrick Hand', cursive; font-size: 26px; margin: 0; color: #1a1816;" id="modal-class-title">Create New Academic Class</h3>
+        <button type="button" class="btn-slot-move" id="btn-close-class-modal" style="width: 28px; height: 28px; font-size: 14px;">✕</button>
+      </div>
+
+      <form id="form-create-class" autocomplete="off">
+        <input type="hidden" id="class-edit-id" value="" />
+
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="input-class-name">Full Class Name <span style="color:#b91c1c;">*</span></label>
+          <input type="text" class="admin-form-input" id="input-class-name" placeholder="e.g. 2nd Year Translation (Traduction)" required />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="input-class-code">Class Code <span style="color:#b91c1c;">*</span></label>
+            <input type="text" class="admin-form-input" id="input-class-code" placeholder="e.g. 2ANG-TRAD" required />
+          </div>
+
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="input-class-year">Level / Year</label>
+            <input type="text" class="admin-form-input" id="input-class-year" placeholder="e.g. 2nd Year" value="2nd Year" />
+          </div>
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="input-class-desc">Description</label>
+          <input type="text" class="admin-form-input" id="input-class-desc" placeholder="Brief summary of specialty or department" />
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn-create-account" id="btn-cancel-create-class" style="background: #fdf6e2; color: #1a1816; flex: 1;">Cancel</button>
+          <button type="submit" class="btn-create-account" id="btn-save-class-submit" style="background: #e89838; flex: 1;">Save Class</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD GROUP MODAL -->
+  <div class="admin-modal-backdrop view-hidden" id="modal-add-group">
+    <div class="admin-modal-card" style="max-width: 440px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; border-bottom: 2px dashed #ded6c5; padding-bottom: 12px;">
+        <h3 style="font-family: 'Patrick Hand', cursive; font-size: 24px; margin: 0; color: #1a1816;">Add Group to Class</h3>
+        <button type="button" class="btn-slot-move" id="btn-close-group-modal" style="width: 28px; height: 28px; font-size: 14px;">✕</button>
+      </div>
+
+      <form id="form-add-group" autocomplete="off">
+        <input type="hidden" id="group-target-class-id" value="" />
+
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="input-group-name">Group Name <span style="color:#b91c1c;">*</span></label>
+          <input type="text" class="admin-form-input" id="input-group-name" placeholder="e.g. Group 3" required />
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="input-group-code">Group Code <span style="color:#b91c1c;">*</span></label>
+          <input type="text" class="admin-form-input" id="input-group-code" placeholder="e.g. 2ANG-AFF 3" required />
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn-create-account" id="btn-cancel-add-group" style="background: #fdf6e2; color: #1a1816; flex: 1;">Cancel</button>
+          <button type="submit" class="btn-create-account" style="background: #5bae86; flex: 1;">Add Group</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TEACHER TEACHING CLASSES ASSIGNMENT MODAL -->
+  <div class="admin-modal-backdrop view-hidden" id="modal-teacher-classes">
+    <div class="admin-modal-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; border-bottom: 2px dashed #ded6c5; padding-bottom: 12px;">
+        <div>
+          <h3 style="font-family: 'Patrick Hand', cursive; font-size: 24px; margin: 0; color: #1a1816;">Manage Teacher's Classes</h3>
+          <p id="teacher-modal-subtitle" style="margin: 2px 0 0; font-size: 13.5px; color: #72685d;">Select which classes this professor teaches</p>
+        </div>
+        <button type="button" class="btn-slot-move" id="btn-close-teacher-classes-modal" style="width: 28px; height: 28px; font-size: 14px;">✕</button>
+      </div>
+
+      <form id="form-teacher-classes" autocomplete="off">
+        <input type="hidden" id="target-teacher-id" value="" />
+
+        <div class="admin-form-group">
+          <label class="admin-form-label">Assigned Classes (Select all that apply):</label>
+          <div id="teacher-classes-checkboxes-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 22px;">
+          <button type="button" class="btn-create-account" id="btn-cancel-teacher-classes" style="background: #fdf6e2; color: #1a1816; flex: 1;">Cancel</button>
+          <button type="submit" class="btn-create-account" style="background: #5bae86; flex: 1;">Save Assignments</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- REASSIGN STUDENT CLASS & GROUP MODAL -->
+  <div class="admin-modal-backdrop view-hidden" id="modal-reassign-student">
+    <div class="admin-modal-card" style="max-width: 460px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; border-bottom: 2px dashed #ded6c5; padding-bottom: 12px;">
+        <div>
+          <h3 style="font-family: 'Patrick Hand', cursive; font-size: 24px; margin: 0; color: #1a1816;">Reassign Student</h3>
+          <p id="reassign-student-subtitle" style="margin: 2px 0 0; font-size: 13.5px; color: #72685d;">Change this student's class and group</p>
+        </div>
+        <button type="button" class="btn-slot-move" id="btn-close-reassign-modal" style="width: 28px; height: 28px; font-size: 14px;">✕</button>
+      </div>
+
+      <form id="form-reassign-student" autocomplete="off">
+        <input type="hidden" id="reassign-student-id" value="" />
+
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="reassign-select-class">Class</label>
+          <select class="admin-form-select" id="reassign-select-class" required>
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="reassign-select-group">Group</label>
+          <select class="admin-form-select" id="reassign-select-group" required>
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 22px;">
+          <button type="button" class="btn-create-account" id="btn-cancel-reassign" style="background: #fdf6e2; color: #1a1816; flex: 1;">Cancel</button>
+          <button type="submit" class="btn-create-account" style="background: #e89838; flex: 1;">Reassign Student</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- In-app Toasts -->
   <div class="inapp-toast-container" id="inapp-toast-container" aria-live="polite" aria-atomic="true"></div>
 
@@ -864,6 +1030,8 @@
   <script src="firebase-config.js"></script>
   <script src="subjects-config.js"></script>
   <script src="custom-dialog.js"></script>
-  <script src="admin.js?v=4"></script>
+  <script src="academic-config.js"></script>
+  <script src="profile-manager.js"></script>
+  <script src="admin.js?v=5"></script>
 </body>
 </html>

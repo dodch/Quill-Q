@@ -5761,6 +5761,45 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   animation: badgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+.nav-approvals-badge {
+  position: absolute;
+  top: -5px;
+  right: -9px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  min-width: 19px;
+  height: 19px;
+  border-radius: 10px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #1a1816;
+  box-shadow: 1.5px 2px 0px #1a1816;
+  animation: badgePulse 2.2s infinite ease-in-out;
+}
+
+.badge-live-pulse {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  animation: badgePulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
+  box-shadow: 1.5px 2px 0px #1a1816 !important;
+  border: 1.5px solid #1a1816 !important;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 1.5px 2px 0px #1a1816;
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 2px 3px 0px #1a1816, 0 0 10px rgba(220, 38, 38, 0.7);
+  }
+}
+
 @keyframes badgePop {
   0% { transform: scale(0.4); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
@@ -5768,6 +5807,10 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 
 #nav-chat.active .nav-icon {
   color: #e07a5f !important;
+}
+
+#nav-approvals.active .nav-icon {
+  color: #dc2626 !important;
 }
 
 /* Full-screen dedicated layout when on Chat view */

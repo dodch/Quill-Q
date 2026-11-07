@@ -139,32 +139,73 @@ const DEFAULT_TIMETABLE_SEED_GRP2 = {
   Sun: { dayName: "Sunday", dateLabel: "Sunday, Oct 25", activeClassIndex: -1, scheduleVersion: OFFICIAL_SCHEDULE_VERSION, items: [] }
 };
 
+function getUserClassId(profile) {
+  if (!profile) return "2ang-aff";
+  if (profile.classId) return profile.classId;
+  if (window.AcademicRegistry) {
+    const norm = window.AcademicRegistry.normalizeProfileAcademic(profile);
+    return norm.classId || "2ang-aff";
+  }
+  return "2ang-aff";
+}
+
 function getUserGroup(profile) {
   if (!profile) return "grp1";
   if (profile.group) return profile.group;
+  if (window.AcademicRegistry) {
+    const norm = window.AcademicRegistry.normalizeProfileAcademic(profile);
+    return norm.group || "grp1";
+  }
   const detail = String(profile.academicDetail || "").toLowerCase();
-  if (detail.includes("grp 2") || detail.includes("grp2") || detail.includes("group 2") || detail.includes("2ang-aff 2")) {
+  if (detail.includes("grp 2") || detail.includes("grp2") || detail.includes("group 2") || detail.includes("2ang-aff 2") || detail.includes("2ang-trad 2")) {
     return "grp2";
   }
   return "grp1";
 }
 
 let allSchedulesCache = {
-  grp1: JSON.parse(JSON.stringify(DEFAULT_TIMETABLE_SEED)),
-  grp2: JSON.parse(JSON.stringify(DEFAULT_TIMETABLE_SEED_GRP2))
+  "2ang-aff_grp1": JSON.parse(JSON.stringify(DEFAULT_TIMETABLE_SEED)),
+  "2ang-aff_grp2": JSON.parse(JSON.stringify(DEFAULT_TIMETABLE_SEED_GRP2)),
+  "grp1": JSON.parse(JSON.stringify(DEFAULT_TIMETABLE_SEED)),
+  "grp2": JSON.parse(JSON.stringify(DEFAULT_TIMETABLE_SEED_GRP2))
 };
 
+let currentActiveScheduleClass = "2ang-aff";
 let currentActiveScheduleGroup = "grp1";
 let TIMETABLE = JSON.parse(JSON.stringify(DEFAULT_TIMETABLE_SEED));
 let scheduleUnsubscribe = null;
 
 function setScheduleGroup(group) {
-  currentActiveScheduleGroup = group === "grp2" ? "grp2" : "grp1";
-  if (allSchedulesCache[currentActiveScheduleGroup]) {
+  setScheduleClassAndGroup(currentActiveScheduleClass, group);
+}
+
+function setScheduleClassAndGroup(classId, groupId) {
+  currentActiveScheduleClass = classId || "2ang-aff";
+  currentActiveScheduleGroup = groupId || "grp1";
+  const scheduleKey = `${currentActiveScheduleClass}_${currentActiveScheduleGroup}`;
+
+  if (allSchedulesCache[scheduleKey]) {
+    TIMETABLE = allSchedulesCache[scheduleKey];
+  } else if (currentActiveScheduleClass === "2ang-aff" && allSchedulesCache[currentActiveScheduleGroup]) {
     TIMETABLE = allSchedulesCache[currentActiveScheduleGroup];
-  } else {
+  } else if (currentActiveScheduleClass === "2ang-aff") {
     TIMETABLE = currentActiveScheduleGroup === "grp2" ? DEFAULT_TIMETABLE_SEED_GRP2 : DEFAULT_TIMETABLE_SEED;
+  } else {
+    // Generate blank days for unconfigured classes / groups
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const dayNames = { Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday", Sat: "Saturday", Sun: "Sunday" };
+    TIMETABLE = {};
+    days.forEach((d, i) => {
+      TIMETABLE[d] = {
+        dayName: dayNames[d],
+        dateLabel: `${dayNames[d]}, Oct ${19 + i}`,
+        activeClassIndex: -1,
+        scheduleVersion: OFFICIAL_SCHEDULE_VERSION,
+        items: []
+      };
+    });
   }
+
   updateScheduleGroupUIState();
   updateTodayStatus();
   renderDetailedSchedule(currentSelectedDay);
@@ -180,24 +221,44 @@ function updateScheduleGroupUIState() {
   const btnHomeGrp2 = document.getElementById("btn-home-sched-grp2");
   const btnHwGrp1 = document.getElementById("btn-hw-sched-grp1");
   const btnHwGrp2 = document.getElementById("btn-hw-sched-grp2");
-  const badge = document.getElementById("schedule-group-badge");
+  const badge = document.getElementById("schedule-active-group-badge");
   const homeBadge = document.getElementById("home-schedule-active-badge");
   const hwBadge = document.getElementById("hw-active-group-badge");
   const switcher = document.querySelector(".schedule-group-switcher");
   const homeHeader = document.getElementById("home-schedule-preview-header");
   const hwSwitcher = document.getElementById("hw-group-switcher");
 
+  const classSwitcherWrap = document.getElementById("schedule-class-switcher-wrap");
+  const classSelect = document.getElementById("schedule-class-select");
+  const homeClassSelect = document.getElementById("home-schedule-class-select");
+
   const profile = currentProfile;
   const canSwitch = isSuperAdminUser(profile) || (profile && profile.role === "teacher");
 
-  if (switcher) {
-    switcher.style.display = canSwitch ? "inline-flex" : "none";
-  }
-  if (homeHeader) {
-    homeHeader.style.display = canSwitch ? "flex" : "none";
-  }
-  if (hwSwitcher) {
-    hwSwitcher.style.display = canSwitch ? "inline-flex" : "none";
+  if (switcher) switcher.style.display = canSwitch ? "inline-flex" : "none";
+  if (homeHeader) homeHeader.style.display = canSwitch ? "flex" : "none";
+  if (hwSwitcher) hwSwitcher.style.display = canSwitch ? "inline-flex" : "none";
+  if (classSwitcherWrap) classSwitcherWrap.style.display = canSwitch ? "inline-flex" : "none";
+
+  // Populate & sync class select dropdowns for teacher/admin
+  if (canSwitch && window.AcademicRegistry) {
+    const allClasses = window.AcademicRegistry.getAllClasses();
+    const availableClasses = isSuperAdminUser(profile) ? allClasses : allClasses.filter(c => window.ProfileManager ? window.ProfileManager.teacherTeachesClass(profile, c.id) : true);
+    const classesToRender = availableClasses.length ? availableClasses : allClasses;
+
+    if (classSelect) {
+      if (classSelect.options.length !== classesToRender.length) {
+        classSelect.innerHTML = classesToRender.map(c => `<option value="${c.id}" ${c.id === currentActiveScheduleClass ? "selected" : ""}>${c.shortName || c.name}</option>`).join("");
+      }
+      classSelect.value = currentActiveScheduleClass;
+    }
+
+    if (homeClassSelect) {
+      if (homeClassSelect.options.length !== classesToRender.length) {
+        homeClassSelect.innerHTML = classesToRender.map(c => `<option value="${c.id}" ${c.id === currentActiveScheduleClass ? "selected" : ""}>${c.shortName || c.name}</option>`).join("");
+      }
+      homeClassSelect.value = currentActiveScheduleClass;
+    }
   }
 
   const isGrp1 = currentActiveScheduleGroup === "grp1";
@@ -210,16 +271,16 @@ function updateScheduleGroupUIState() {
   if (btnHwGrp1) btnHwGrp1.classList.toggle("active", isGrp1);
   if (btnHwGrp2) btnHwGrp2.classList.toggle("active", isGrp2);
 
-  const groupLabel = isGrp2 ? "Group 2 (2ANG-AFF 2)" : "Group 1 (2ANG-AFF 1)";
-  if (badge) {
-    badge.textContent = groupLabel;
-  }
-  if (homeBadge) {
-    homeBadge.textContent = groupLabel;
-  }
-  if (hwBadge) {
-    hwBadge.textContent = groupLabel;
-  }
+  // Group label with class name
+  const clsObj = (window.AcademicRegistry && typeof window.AcademicRegistry.getClassById === "function") ? window.AcademicRegistry.getClassById(currentActiveScheduleClass) : null;
+  const grpObj = (window.AcademicRegistry && typeof window.AcademicRegistry.getGroup === "function") ? window.AcademicRegistry.getGroup(currentActiveScheduleClass, currentActiveScheduleGroup) : null;
+  const clsCode = clsObj ? clsObj.code : (currentActiveScheduleClass === "2ang-trad" ? "2ANG-TRAD" : "2ANG-AFF");
+  const grpName = grpObj ? grpObj.name : (isGrp2 ? "Group 2" : "Group 1");
+  const groupLabel = `${grpName} (${clsCode} ${isGrp2 ? "2" : "1"})`;
+
+  if (badge) badge.textContent = groupLabel;
+  if (homeBadge) homeBadge.textContent = groupLabel;
+  if (hwBadge) hwBadge.textContent = groupLabel;
 }
 
 function bindServerSchedule(user) {
@@ -232,10 +293,29 @@ function bindServerSchedule(user) {
   const isSuperAdmin = isSuperAdminUser(profile);
   const isApproved = profile && (profile.status === "approved" || isSuperAdmin);
   const userGrp = getUserGroup(profile);
+  const userClass = getUserClassId(profile);
 
-  // If regular student, strictly lock their active group to their assigned group
+  // If regular student, strictly lock their active class and group to their assigned values
   if (!isSuperAdmin && (!profile || profile.role !== "teacher")) {
+    currentActiveScheduleClass = userClass;
     currentActiveScheduleGroup = userGrp;
+  }
+
+  // Bind Class Selectors
+  const classSelect = document.getElementById("schedule-class-select");
+  if (classSelect && !classSelect.dataset.bound) {
+    classSelect.dataset.bound = "true";
+    classSelect.addEventListener("change", (e) => {
+      setScheduleClassAndGroup(e.target.value, currentActiveScheduleGroup);
+    });
+  }
+
+  const homeClassSelect = document.getElementById("home-schedule-class-select");
+  if (homeClassSelect && !homeClassSelect.dataset.bound) {
+    homeClassSelect.dataset.bound = "true";
+    homeClassSelect.addEventListener("change", (e) => {
+      setScheduleClassAndGroup(e.target.value, currentActiveScheduleGroup);
+    });
   }
 
   // Bind Schedule View Switcher Buttons
@@ -297,12 +377,19 @@ function bindServerSchedule(user) {
   // Load cached multi-group schedule if present
   try {
     const localGrp1 = localStorage.getItem("quill_q_server_schedule_grp1") || localStorage.getItem("quill_q_server_schedule");
-    if (localGrp1) allSchedulesCache.grp1 = JSON.parse(localGrp1);
+    if (localGrp1) {
+      allSchedulesCache.grp1 = JSON.parse(localGrp1);
+      allSchedulesCache["2ang-aff_grp1"] = allSchedulesCache.grp1;
+    }
     const localGrp2 = localStorage.getItem("quill_q_server_schedule_grp2");
-    if (localGrp2) allSchedulesCache.grp2 = JSON.parse(localGrp2);
+    if (localGrp2) {
+      allSchedulesCache.grp2 = JSON.parse(localGrp2);
+      allSchedulesCache["2ang-aff_grp2"] = allSchedulesCache.grp2;
+    }
   } catch (e) {}
 
-  TIMETABLE = allSchedulesCache[currentActiveScheduleGroup] || (currentActiveScheduleGroup === "grp2" ? DEFAULT_TIMETABLE_SEED_GRP2 : DEFAULT_TIMETABLE_SEED);
+  const activeKey = `${currentActiveScheduleClass}_${currentActiveScheduleGroup}`;
+  TIMETABLE = allSchedulesCache[activeKey] || allSchedulesCache[currentActiveScheduleGroup] || (currentActiveScheduleGroup === "grp2" ? DEFAULT_TIMETABLE_SEED_GRP2 : DEFAULT_TIMETABLE_SEED);
   updateScheduleGroupUIState();
   updateTodayStatus();
   renderDetailedSchedule(currentSelectedDay);
@@ -316,25 +403,48 @@ function bindServerSchedule(user) {
             if (doc.exists) {
               const docId = doc.id;
               const data = doc.data();
-              if (docId.startsWith("grp2_")) {
-                const dayKey = docId.replace("grp2_", "");
-                if (allSchedulesCache.grp2) allSchedulesCache.grp2[dayKey] = data;
-              } else if (docId.startsWith("grp1_")) {
-                const dayKey = docId.replace("grp1_", "");
-                if (allSchedulesCache.grp1) allSchedulesCache.grp1[dayKey] = data;
+
+              if (docId.includes("_")) {
+                const parts = docId.split("_");
+                if (parts.length === 3) {
+                  // e.g. 2ang-trad_grp1_Mon
+                  const [cId, gId, dKey] = parts;
+                  const sKey = `${cId}_${gId}`;
+                  if (!allSchedulesCache[sKey]) allSchedulesCache[sKey] = {};
+                  allSchedulesCache[sKey][dKey] = data;
+
+                  // Backward compatibility for 2ang-aff
+                  if (cId === "2ang-aff") {
+                    if (!allSchedulesCache[gId]) allSchedulesCache[gId] = {};
+                    allSchedulesCache[gId][dKey] = data;
+                  }
+                } else if (parts.length === 2) {
+                  // e.g. grp1_Mon
+                  const [gId, dKey] = parts;
+                  if (!allSchedulesCache[gId]) allSchedulesCache[gId] = {};
+                  allSchedulesCache[gId][dKey] = data;
+
+                  const sKey = `2ang-aff_${gId}`;
+                  if (!allSchedulesCache[sKey]) allSchedulesCache[sKey] = {};
+                  allSchedulesCache[sKey][dKey] = data;
+                }
               } else {
-                // legacy docId (Mon, Tue, etc.) defaults to grp1
-                if (allSchedulesCache.grp1) allSchedulesCache.grp1[docId] = data;
+                // legacy docId (Mon, Tue) defaults to 2ang-aff grp1
+                if (!allSchedulesCache.grp1) allSchedulesCache.grp1 = {};
+                allSchedulesCache.grp1[docId] = data;
+                if (!allSchedulesCache["2ang-aff_grp1"]) allSchedulesCache["2ang-aff_grp1"] = {};
+                allSchedulesCache["2ang-aff_grp1"][docId] = data;
               }
             }
           });
 
           try {
-            localStorage.setItem("quill_q_server_schedule_grp1", JSON.stringify(allSchedulesCache.grp1));
-            localStorage.setItem("quill_q_server_schedule_grp2", JSON.stringify(allSchedulesCache.grp2));
+            if (allSchedulesCache.grp1) localStorage.setItem("quill_q_server_schedule_grp1", JSON.stringify(allSchedulesCache.grp1));
+            if (allSchedulesCache.grp2) localStorage.setItem("quill_q_server_schedule_grp2", JSON.stringify(allSchedulesCache.grp2));
           } catch (e) {}
 
-          TIMETABLE = allSchedulesCache[currentActiveScheduleGroup] || (currentActiveScheduleGroup === "grp2" ? DEFAULT_TIMETABLE_SEED_GRP2 : DEFAULT_TIMETABLE_SEED);
+          const currentKey = `${currentActiveScheduleClass}_${currentActiveScheduleGroup}`;
+          TIMETABLE = allSchedulesCache[currentKey] || allSchedulesCache[currentActiveScheduleGroup] || (currentActiveScheduleGroup === "grp2" ? DEFAULT_TIMETABLE_SEED_GRP2 : DEFAULT_TIMETABLE_SEED);
           updateScheduleGroupUIState();
           updateTodayStatus();
           renderDetailedSchedule(currentSelectedDay);
@@ -1181,6 +1291,7 @@ function switchView(page) {
   const viewHomeworks = document.getElementById("view-homeworks");
   const viewProfile = document.getElementById("view-profile");
   const viewChat = document.getElementById("view-chat");
+  const viewApprovals = document.getElementById("view-approvals");
   const hwNote = document.getElementById("sticky-homework-note");
   const subjectsSide = document.getElementById("subjects-side-wrap");
   const homeworksSide = document.getElementById("homeworks-side-wrap");
@@ -1193,6 +1304,7 @@ function switchView(page) {
   if (viewHomeworks) viewHomeworks.classList.add("view-hidden");
   if (viewProfile) viewProfile.classList.add("view-hidden");
   if (viewChat) viewChat.classList.add("view-hidden");
+  if (viewApprovals) viewApprovals.classList.add("view-hidden");
 
   if (mainEl) {
     mainEl.setAttribute("data-current-page", page || "home");
@@ -1250,6 +1362,13 @@ function switchView(page) {
     if (subjectsSide) subjectsSide.classList.add("view-hidden");
     if (homeworksSide) homeworksSide.classList.add("view-hidden");
     renderProfileView();
+  } else if (page === "approvals") {
+    if (viewApprovals) viewApprovals.classList.remove("view-hidden");
+    if (mainEl) mainEl.classList.remove("on-schedule-view");
+    if (hwNote) hwNote.classList.add("view-hidden");
+    if (subjectsSide) subjectsSide.classList.add("view-hidden");
+    if (homeworksSide) homeworksSide.classList.add("view-hidden");
+    renderTeacherApprovalsView();
   } else if (page === "chat") {
     if (viewChat) viewChat.classList.remove("view-hidden");
     if (mainEl) mainEl.classList.remove("on-schedule-view");
@@ -1612,6 +1731,10 @@ function showInAppToast(data) {
       typeClass = "toast-exercise";
       badgeText = data.badge || "Exercise";
       iconHtml = '<i class="fi fi-rr-edit"></i>';
+    } else if (toastType === "approval") {
+      typeClass = "toast-warning";
+      badgeText = data.badge || "Approval Request";
+      iconHtml = '<i class="fi fi-rr-user-add"></i>';
     } else if (toastType === "doc") {
       typeClass = "toast-doc";
       badgeText = data.badge || "Document";
@@ -1659,6 +1782,12 @@ function showInAppToast(data) {
       const navChat = document.getElementById("nav-chat");
       if (navChat) navChat.classList.add("active");
       switchView("chat");
+    } else if (data.type === "approval" || data.targetView === "approvals") {
+      const items = document.querySelectorAll(".nav-item");
+      items.forEach((i) => i.classList.remove("active"));
+      const navApprovals = document.getElementById("nav-approvals");
+      if (navApprovals) navApprovals.classList.add("active");
+      switchView("approvals");
     } else if (data.type === "doc" || data.type === "exercise") {
       if (data.url) {
         window.location.href = data.url;
@@ -3478,6 +3607,11 @@ function applyProfileToUI(profile) {
     if (btnGetStarted) btnGetStarted.textContent = "Get Started";
     const navAdmin = document.getElementById("nav-admin");
     if (navAdmin) navAdmin.classList.add("view-hidden");
+    const navApprovals = document.getElementById("nav-approvals");
+    if (navApprovals) navApprovals.classList.add("view-hidden");
+    if (typeof bindTeacherApprovalsListener === "function") {
+      bindTeacherApprovalsListener(null, null);
+    }
     const adminCta = document.getElementById("profile-admin-cta");
     if (adminCta) adminCta.classList.add("view-hidden");
     return;
@@ -3511,6 +3645,26 @@ function applyProfileToUI(profile) {
   }
   if (sideName) sideName.textContent = displayName;
   if (sideRole) sideRole.textContent = `${roleDisplay} • ${academicDisplay}`;
+
+  // Update Teacher Student Approvals nav item & live notifications listener
+  const navApprovals = document.getElementById("nav-approvals");
+  if (navApprovals) {
+    if ((isAdmin || isTeacher) && (profile.status === "approved" || isAdmin)) {
+      navApprovals.classList.remove("view-hidden");
+      if (typeof bindTeacherApprovalsListener === "function") {
+        bindTeacherApprovalsListener(currentUser, profile);
+      }
+    } else {
+      navApprovals.classList.add("view-hidden");
+      if (typeof bindTeacherApprovalsListener === "function") {
+        bindTeacherApprovalsListener(null, null);
+      }
+    }
+  } else {
+    if (typeof bindTeacherApprovalsListener === "function") {
+      bindTeacherApprovalsListener(null, null);
+    }
+  }
 
   // Update Profile page & Admin dashboard if present
   renderProfileView();
@@ -3652,6 +3806,10 @@ function initFirebaseAuthAndProfile() {
       }
     }
 
+    if (window.ProfileManager && typeof window.ProfileManager.populateOnboardingAcademicSelectors === "function") {
+      window.ProfileManager.populateOnboardingAcademicSelectors();
+    }
+
     selectRole("student");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -3674,20 +3832,29 @@ function initFirebaseAuthAndProfile() {
     const isTeacher = role === "teacher";
     if (roleSelectedVal) roleSelectedVal.value = role;
 
+    const rowStudentAcademic = document.getElementById("row-student-academic");
+    const teacherSection = document.getElementById("onboarding-group-teacher-section");
+    const onboardingClassSelect = document.getElementById("onboarding-class-select");
+    const onboardingGroupSelect = document.getElementById("onboarding-group-select");
+
     if (isTeacher) {
       if (roleLabelTeacher) roleLabelTeacher.classList.add("selected");
       if (roleLabelStudent) roleLabelStudent.classList.remove("selected");
       if (onboardingAvatarBadge) onboardingAvatarBadge.innerHTML = '<i class="fi fi-sr-chalkboard-user"></i>';
 
-      // For teacher: show First Name & Surname inputs, show Subject text input, hide student group select
+      // For teacher: show First Name & Surname inputs, show Teacher section (Subject & Multi-Classes chips), hide student class/group dropdowns
       if (rowStudentName) rowStudentName.classList.remove("view-hidden");
       if (groupTeacherName) groupTeacherName.classList.add("view-hidden");
+      if (rowStudentAcademic) rowStudentAcademic.classList.add("view-hidden");
       if (onboardingGroupAcademic) onboardingGroupAcademic.classList.add("view-hidden");
-      if (onboardingGroupTeacherSubject) onboardingGroupTeacherSubject.classList.remove("view-hidden");
+      if (teacherSection) teacherSection.classList.remove("view-hidden");
+      if (onboardingGroupTeacherSubject) onboardingGroupTeacherSubject.classList.add("view-hidden");
 
-      if (onboardingAcademicSelect) {
-        onboardingAcademicSelect.required = false;
-        onboardingAcademicSelect.disabled = true;
+      if (onboardingClassSelect) onboardingClassSelect.disabled = true;
+      if (onboardingGroupSelect) onboardingGroupSelect.disabled = true;
+      if (onboardingTeacherSubjectVal) {
+        onboardingTeacherSubjectVal.required = true;
+        onboardingTeacherSubjectVal.disabled = false;
       }
       if (onboardingName) {
         onboardingName.required = true;
@@ -3706,15 +3873,19 @@ function initFirebaseAuthAndProfile() {
       if (roleLabelTeacher) roleLabelTeacher.classList.remove("selected");
       if (onboardingAvatarBadge) onboardingAvatarBadge.innerHTML = '<i class="fi fi-ss-student"></i>';
 
-      // For student: show First Name & Surname inputs, show student group select, hide teacher subject field
+      // For student: show First Name & Surname inputs, show student class/group dropdowns, hide teacher section
       if (rowStudentName) rowStudentName.classList.remove("view-hidden");
       if (groupTeacherName) groupTeacherName.classList.add("view-hidden");
+      if (rowStudentAcademic) rowStudentAcademic.classList.remove("view-hidden");
       if (onboardingGroupAcademic) onboardingGroupAcademic.classList.remove("view-hidden");
+      if (teacherSection) teacherSection.classList.add("view-hidden");
       if (onboardingGroupTeacherSubject) onboardingGroupTeacherSubject.classList.add("view-hidden");
 
-      if (onboardingAcademicSelect) {
-        onboardingAcademicSelect.required = true;
-        onboardingAcademicSelect.disabled = false;
+      if (onboardingClassSelect) onboardingClassSelect.disabled = false;
+      if (onboardingGroupSelect) onboardingGroupSelect.disabled = false;
+      if (onboardingTeacherSubjectVal) {
+        onboardingTeacherSubjectVal.required = false;
+        onboardingTeacherSubjectVal.disabled = true;
       }
       if (onboardingName) {
         onboardingName.required = true;
@@ -3853,15 +4024,44 @@ function initFirebaseAuthAndProfile() {
       const gender = onboardingGender ? onboardingGender.value : "Male";
       let academicDetail = "";
       let userGroup = "grp1";
+      let userClassId = "2ang-aff";
+      let userClassName = "2nd Year Business English";
+      let userGroupName = "Group 1";
+      let teachingClasses = [];
+      let teachingSubjects = [];
+
+      const onboardingClassSelect = document.getElementById("onboarding-class-select");
+      const onboardingGroupSelect = document.getElementById("onboarding-group-select");
+
       if (isAdminAccount) {
         academicDetail = "Super Admin";
         userGroup = "grp1";
+        userClassId = "2ang-aff";
+        userClassName = "2nd Year Business English";
+        userGroupName = "Group 1";
+        teachingClasses = window.AcademicRegistry ? window.AcademicRegistry.getAllClasses().map(c => c.id) : ["2ang-aff", "2ang-trad"];
       } else if (selectedRole === "teacher") {
-        academicDetail = (onboardingTeacherSubjectVal && onboardingTeacherSubjectVal.value.trim()) || "Teaching Faculty";
+        const subjectVal = (onboardingTeacherSubjectVal && onboardingTeacherSubjectVal.value.trim()) || "Teaching Faculty";
+        teachingClasses = (window.ProfileManager && window.ProfileManager.getSelectedTeacherClasses()) || ["2ang-aff"];
+        teachingSubjects = [subjectVal];
+        const classCount = teachingClasses.length;
+        academicDetail = `${subjectVal} • ${classCount} ${classCount === 1 ? "Class" : "Classes"}`;
         userGroup = "grp1";
+        userClassId = teachingClasses[0] || "2ang-aff";
+        const clsObj = window.AcademicRegistry ? window.AcademicRegistry.getClassById(userClassId) : null;
+        userClassName = clsObj ? clsObj.name : "Class";
       } else {
-        academicDetail = onboardingAcademicSelect ? onboardingAcademicSelect.value : "2ANG-AFF 1 (Grp 1)";
-        userGroup = (academicDetail.includes("2ANG-AFF 2") || academicDetail.includes("Grp 2") || academicDetail.includes("Group 2")) ? "grp2" : "grp1";
+        // Student
+        userClassId = (onboardingClassSelect && onboardingClassSelect.value) || "2ang-aff";
+        const clsObj = window.AcademicRegistry ? window.AcademicRegistry.getClassById(userClassId) : null;
+        userClassName = clsObj ? clsObj.name : "2nd Year Business English";
+        const classCode = clsObj ? clsObj.code : "2ANG-AFF";
+
+        userGroup = (onboardingGroupSelect && onboardingGroupSelect.value) || "grp1";
+        const grpObj = (window.AcademicRegistry && typeof window.AcademicRegistry.getGroup === "function") ? window.AcademicRegistry.getGroup(userClassId, userGroup) : null;
+        userGroupName = grpObj ? grpObj.name : (userGroup === "grp2" ? "Group 2" : "Group 1");
+
+        academicDetail = `${classCode} (${userGroupName})`;
       }
 
       const userStatus = isAdminAccount ? "approved" : "pending";
@@ -3875,7 +4075,12 @@ function initFirebaseAuthAndProfile() {
         photoURL: currentUser.photoURL || "assets/avatar.jpg",
         role: selectedRole,
         gender: gender,
+        classId: userClassId,
+        className: userClassName,
         group: userGroup,
+        groupName: userGroupName,
+        teachingClasses: teachingClasses,
+        teachingSubjects: teachingSubjects,
         academicDetail: academicDetail,
         status: userStatus,
         profileCompleted: true,
@@ -3892,6 +4097,19 @@ function initFirebaseAuthAndProfile() {
           } catch (dbErr) {
             console.warn("Firestore save warning (cached locally):", dbErr);
           }
+        }
+
+        if (userStatus === "pending" && typeof broadcastPushNotification === "function") {
+          const roleLabel = profilePayload.role === "teacher" ? "Teacher" : "Student";
+          const academicInfo = profilePayload.role === "teacher"
+            ? "Teaching Faculty"
+            : `${profilePayload.className || "Class"} (${profilePayload.groupName || (profilePayload.group === "grp2" ? "Group 2" : "Group 1")})`;
+          broadcastPushNotification({
+            title: `🎓 New ${roleLabel} Registration Request`,
+            body: `${profilePayload.displayName || "Someone"} requested approval for ${academicInfo}. Tap to review.`,
+            targetView: "approvals",
+            tag: `approval-request-${currentUser.uid}`
+          });
         }
 
         currentProfile = profilePayload;
@@ -4149,6 +4367,393 @@ function renderProfileView() {
     } else {
       adminPanel.classList.add("view-hidden");
     }
+  }
+}
+
+let teacherApprovalsFilterClass = "all";
+let teacherApprovalsUnsubscribe = null;
+let isFirstApprovalsSnapshot = true;
+
+function updateTeacherApprovalsBadgeUI(count) {
+  const badge = document.getElementById("nav-approvals-badge");
+  const mobileDot = document.getElementById("mobile-approvals-dot");
+  if (badge) {
+    if (count > 0) {
+      badge.textContent = count > 99 ? "99+" : String(count);
+      badge.classList.remove("view-hidden");
+      badge.classList.add("badge-live-pulse");
+    } else {
+      badge.classList.add("view-hidden");
+      badge.classList.remove("badge-live-pulse");
+      badge.textContent = "0";
+    }
+  }
+  if (mobileDot) {
+    if (count > 0) {
+      mobileDot.classList.remove("view-hidden");
+    } else {
+      mobileDot.classList.add("view-hidden");
+    }
+  }
+}
+
+async function updateTeacherApprovalsBadge(profile) {
+  if (!profile || !db) return;
+  if (!isSuperAdminUser(profile) && profile.role !== "teacher") {
+    updateTeacherApprovalsBadgeUI(0);
+    return;
+  }
+  try {
+    const pending = window.ProfileManager ? await window.ProfileManager.fetchTeacherPendingStudents(db, profile) : [];
+    updateTeacherApprovalsBadgeUI(pending.length);
+  } catch (e) {
+    console.warn("Approvals badge error:", e);
+  }
+}
+
+function bindTeacherApprovalsListener(user, profile) {
+  if (teacherApprovalsUnsubscribe) {
+    try { teacherApprovalsUnsubscribe(); } catch (e) {}
+    teacherApprovalsUnsubscribe = null;
+  }
+
+  if (!user || !profile || !db) {
+    updateTeacherApprovalsBadgeUI(0);
+    return;
+  }
+
+  const isTeacher = profile.role === "teacher";
+  const isAdmin = isSuperAdminUser(profile);
+
+  if (!isAdmin && !isTeacher) {
+    updateTeacherApprovalsBadgeUI(0);
+    return;
+  }
+
+  isFirstApprovalsSnapshot = true;
+
+  try {
+    teacherApprovalsUnsubscribe = db.collection("users")
+      .where("status", "==", "pending")
+      .onSnapshot((snapshot) => {
+        const pendingForMe = [];
+
+        snapshot.forEach((doc) => {
+          const student = { id: doc.id, ...doc.data() };
+          if (isSuperAdminUser(student)) return;
+
+          if (isAdmin) {
+            pendingForMe.push(student);
+          } else if (isTeacher) {
+            const teacherClasses = Array.isArray(profile.teachingClasses) && profile.teachingClasses.length > 0
+              ? profile.teachingClasses
+              : (profile.classId ? [profile.classId] : ["business_2"]);
+            const studentClass = student.classId || "business_2";
+            if (student.role !== "teacher" && teacherClasses.includes(studentClass)) {
+              pendingForMe.push(student);
+            }
+          }
+        });
+
+        updateTeacherApprovalsBadgeUI(pendingForMe.length);
+
+        // Notify on live real-time additions (brand new registrations)
+        if (!isFirstApprovalsSnapshot && snapshot.docChanges) {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+              const uData = change.doc.data();
+              if (uData && uData.status === "pending" && !isSuperAdminUser(uData)) {
+                const isRelevant = isAdmin || (
+                  isTeacher &&
+                  uData.role !== "teacher" &&
+                  (Array.isArray(profile.teachingClasses) && profile.teachingClasses.length > 0
+                    ? profile.teachingClasses.includes(uData.classId || "business_2")
+                    : (profile.classId || "business_2") === (uData.classId || "business_2"))
+                );
+
+                if (isRelevant) {
+                  // 1. Play audible chime
+                  playNotificationChime();
+
+                  // 2. Class & student display names
+                  const studentName = uData.displayName || uData.firstName || "A student";
+                  const clsObj = window.AcademicRegistry ? window.AcademicRegistry.getClassById(uData.classId) : null;
+                  const grpObj = (window.AcademicRegistry && typeof window.AcademicRegistry.getGroup === "function") ? window.AcademicRegistry.getGroup(uData.classId, uData.group) : null;
+                  const classDisplayName = clsObj ? clsObj.name : (uData.className || "Class");
+                  const groupDisplayName = grpObj ? grpObj.name : (uData.group === "grp2" ? "Group 2" : "Group 1");
+
+                  // 3. In-App Toast
+                  showInAppToast({
+                    type: "approval",
+                    targetView: "approvals",
+                    title: "🎓 New Approval Request",
+                    message: `${studentName} requested approval for ${classDisplayName} (${groupDisplayName}). Tap to review.`
+                  });
+
+                  // 4. System / Browser Desktop Notification
+                  sendSystemNotification("🎓 New Student Approval Request", {
+                    body: `${studentName} requested approval for ${classDisplayName} (${groupDisplayName}). Tap to review.`,
+                    tag: `approval-${change.doc.id}`
+                  }, () => {
+                    const items = document.querySelectorAll(".nav-item");
+                    items.forEach((i) => i.classList.remove("active"));
+                    const navAppr = document.getElementById("nav-approvals");
+                    if (navAppr) navAppr.classList.add("active");
+                    switchView("approvals");
+                  });
+                }
+              }
+            }
+          });
+        }
+
+        isFirstApprovalsSnapshot = false;
+
+        // If currently on the Approvals tab, refresh its data in real time
+        const activeNav = document.querySelector(".nav-item.active");
+        if (activeNav && activeNav.dataset.page === "approvals") {
+          renderTeacherApprovalsView();
+        }
+      }, (err) => {
+        console.warn("Teacher approvals live listener error:", err);
+      });
+  } catch (err) {
+    console.error("bindTeacherApprovalsListener error:", err);
+  }
+}
+
+async function renderTeacherApprovalsView() {
+  const profile = currentProfile;
+  if (!profile) return;
+  const isTeacherOrAdmin = isSuperAdminUser(profile) || profile.role === "teacher";
+  if (!isTeacherOrAdmin) return;
+
+  const tabsContainer = document.getElementById("teacher-approval-class-tabs");
+  const pendingCountEl = document.getElementById("teacher-pending-count");
+  const pendingListEl = document.getElementById("teacher-pending-students-list");
+  const enrolledCountEl = document.getElementById("teacher-enrolled-count");
+  const enrolledListEl = document.getElementById("teacher-enrolled-students-list");
+  const btnRefresh = document.getElementById("btn-refresh-teacher-approvals");
+
+  if (btnRefresh && !btnRefresh.dataset.bound) {
+    btnRefresh.dataset.bound = "true";
+    btnRefresh.addEventListener("click", () => renderTeacherApprovalsView());
+  }
+
+  // Render Class Filter Tabs
+  if (tabsContainer && window.AcademicRegistry) {
+    const allClasses = window.AcademicRegistry.getAllClasses();
+    const classes = isSuperAdminUser(profile) ? allClasses : allClasses.filter(c => window.ProfileManager ? window.ProfileManager.teacherTeachesClass(profile, c.id) : true);
+
+    let tabsHtml = `<button type="button" class="group-tab-btn ${teacherApprovalsFilterClass === "all" ? "active" : ""}" data-class-filter="all">All Classes</button>`;
+    classes.forEach(c => {
+      tabsHtml += `<button type="button" class="group-tab-btn ${teacherApprovalsFilterClass === c.id ? "active" : ""}" data-class-filter="${c.id}">${c.shortName || c.name}</button>`;
+    });
+    tabsContainer.innerHTML = tabsHtml;
+
+    tabsContainer.querySelectorAll(".group-tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        teacherApprovalsFilterClass = btn.dataset.classFilter || "all";
+        renderTeacherApprovalsView();
+      });
+    });
+  }
+
+  if (pendingListEl) {
+    pendingListEl.innerHTML = `<div style="padding: 20px; text-align: center; color: #72685d; font-size: 14px;">Loading pending students...</div>`;
+  }
+
+  try {
+    const pendingStudents = window.ProfileManager ? await window.ProfileManager.fetchTeacherPendingStudents(db, profile) : [];
+    const enrolledStudents = window.ProfileManager ? await window.ProfileManager.fetchTeacherEnrolledStudents(db, profile) : [];
+
+    // Filter by selected tab
+    const filteredPending = teacherApprovalsFilterClass === "all" ? pendingStudents : pendingStudents.filter(s => s.classId === teacherApprovalsFilterClass);
+    const filteredEnrolled = teacherApprovalsFilterClass === "all" ? enrolledStudents : enrolledStudents.filter(s => s.classId === teacherApprovalsFilterClass);
+
+    // Update counts & badges
+    if (pendingCountEl) pendingCountEl.textContent = String(filteredPending.length);
+    if (enrolledCountEl) enrolledCountEl.textContent = String(filteredEnrolled.length);
+    updateTeacherApprovalsBadge(profile);
+
+    // Render Pending List
+    if (pendingListEl) {
+      if (filteredPending.length === 0) {
+        pendingListEl.innerHTML = `
+          <div style="padding: 30px 20px; text-align: center; background: #faf6ee; border: 2px dashed #ded6c5; border-radius: 14px;">
+            <div style="font-size: 28px; margin-bottom: 6px;">🎉</div>
+            <p style="margin: 0; font-weight: 700; color: #1a1816; font-size: 15px;">All clear! No pending student registrations.</p>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #72685d;">When new students register for your classes, they will appear here for your review.</p>
+          </div>
+        `;
+      } else {
+        pendingListEl.innerHTML = filteredPending.map(student => {
+          const clsObj = window.AcademicRegistry ? window.AcademicRegistry.getClassById(student.classId) : null;
+          const grpObj = (window.AcademicRegistry && typeof window.AcademicRegistry.getGroup === "function") ? window.AcademicRegistry.getGroup(student.classId, student.group) : null;
+          const classDisplayName = clsObj ? clsObj.name : (student.className || "Class");
+          const groupDisplayName = grpObj ? grpObj.name : (student.groupName || (student.group === "grp2" ? "Group 2" : "Group 1"));
+          const initials = (student.displayName || student.firstName || "S").trim().charAt(0).toUpperCase();
+
+          return `
+            <div class="pending-student-card" style="
+              display: flex; align-items: center; justify-content: space-between; gap: 14px;
+              background: #fffdf8; border: 2px solid #1a1816; border-radius: 14px; padding: 14px 18px;
+              box-shadow: 2px 3px 0px #1a1816; flex-wrap: wrap;
+            ">
+              <div style="display: flex; align-items: center; gap: 12px; min-width: 220px;">
+                <div style="
+                  width: 44px; height: 44px; border-radius: 50%; border: 2px solid #1a1816;
+                  background: #fdf2d8; display: flex; align-items: center; justify-content: center;
+                  font-family: 'Patrick Hand', cursive; font-size: 22px; font-weight: 700; color: #1a1816;
+                  overflow: hidden; flex-shrink: 0;
+                ">
+                  ${student.photoURL ? `<img src="${escapeHtml(student.photoURL)}" alt="Avatar" style="width:100%; height:100%; object-fit:cover;" />` : initials}
+                </div>
+                <div>
+                  <h4 style="margin: 0; font-size: 15.5px; font-weight: 800; color: #1a1816;">${escapeHtml(student.displayName || `${student.firstName || ""} ${student.surname || ""}`.trim() || "Student")}</h4>
+                  <p style="margin: 2px 0 0; font-size: 12.5px; color: #72685d;">${escapeHtml(student.email || "")}</p>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 10px; border: 1.5px solid #1a1816; background: #e0f2fe; color: #0369a1;">
+                  📚 ${escapeHtml(classDisplayName)}
+                </span>
+                <span style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 10px; border: 1.5px solid #1a1816; background: #fef3c7; color: #92400e;">
+                  👥 ${escapeHtml(groupDisplayName)}
+                </span>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <button type="button" class="btn-approve-student" data-id="${student.id}" data-name="${escapeHtml(student.displayName || "Student")}" style="
+                  display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px;
+                  background: #dcfce7; color: #15803d; border: 2px solid #1a1816; border-radius: 10px;
+                  font-weight: 800; font-size: 13px; cursor: pointer; box-shadow: 2px 2px 0px #1a1816;
+                  transition: transform 0.1s ease;
+                ">
+                  <span>Approve</span> <span>✓</span>
+                </button>
+                <button type="button" class="btn-decline-student" data-id="${student.id}" data-name="${escapeHtml(student.displayName || "Student")}" style="
+                  display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px;
+                  background: #fee2e2; color: #b91c1c; border: 2px solid #1a1816; border-radius: 10px;
+                  font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 2px 2px 0px #1a1816;
+                  transition: transform 0.1s ease;
+                ">
+                  <span>Decline</span> <span>✕</span>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        // Bind Approve buttons
+        pendingListEl.querySelectorAll(".btn-approve-student").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const studentId = btn.dataset.id;
+            const studentName = btn.dataset.name;
+            btn.disabled = true;
+            btn.innerHTML = `<span>Approving...</span>`;
+            try {
+              if (window.ProfileManager) {
+                await window.ProfileManager.approveStudent(db, studentId, currentProfile);
+              }
+              await showCustomAlert(`${studentName} has been approved and enrolled in class!`, "Student Approved", '<i class="fi fi-rr-badge-check"></i>');
+              renderTeacherApprovalsView();
+            } catch (err) {
+              console.error("Approve student error:", err);
+              await showCustomAlert("Could not approve student: " + (err.message || "Permission denied"), "Error", '<i class="fi fi-rr-cross-circle"></i>');
+              btn.disabled = false;
+              btn.innerHTML = `<span>Approve</span> <span>✓</span>`;
+            }
+          });
+        });
+
+        // Bind Decline buttons
+        pendingListEl.querySelectorAll(".btn-decline-student").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const studentId = btn.dataset.id;
+            const studentName = btn.dataset.name;
+            const confirmed = await showCustomConfirm(
+              `Decline registration request from ${studentName}?`,
+              "Decline Student",
+              '<i class="fi fi-rr-cross-circle"></i>',
+              "Decline",
+              "Cancel",
+              true
+            );
+            if (!confirmed) return;
+            btn.disabled = true;
+            try {
+              if (window.ProfileManager) {
+                await window.ProfileManager.declineStudent(db, studentId, currentProfile);
+              }
+              renderTeacherApprovalsView();
+            } catch (err) {
+              console.error("Decline student error:", err);
+              await showCustomAlert("Could not decline student: " + (err.message || "Permission denied"), "Error");
+              btn.disabled = false;
+            }
+          });
+        });
+      }
+    }
+
+    // Render Enrolled List
+    if (enrolledListEl) {
+      if (filteredEnrolled.length === 0) {
+        enrolledListEl.innerHTML = `
+          <div style="padding: 20px; text-align: center; color: #72685d; font-size: 14px;">
+            No enrolled students yet for the selected class.
+          </div>
+        `;
+      } else {
+        enrolledListEl.innerHTML = filteredEnrolled.map(student => {
+          const clsObj = window.AcademicRegistry ? window.AcademicRegistry.getClassById(student.classId) : null;
+          const grpObj = (window.AcademicRegistry && typeof window.AcademicRegistry.getGroup === "function") ? window.AcademicRegistry.getGroup(student.classId, student.group) : null;
+          const classDisplayName = clsObj ? clsObj.name : (student.className || "Class");
+          const groupDisplayName = grpObj ? grpObj.name : (student.groupName || (student.group === "grp2" ? "Group 2" : "Group 1"));
+          const initials = (student.displayName || student.firstName || "S").trim().charAt(0).toUpperCase();
+
+          return `
+            <div style="
+              display: flex; align-items: center; justify-content: space-between; gap: 12px;
+              background: #fffdf8; border: 2px solid #1a1816; border-radius: 12px; padding: 12px 16px;
+              box-shadow: 1.5px 2px 0px #1a1816; flex-wrap: wrap;
+            ">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="
+                  width: 38px; height: 38px; border-radius: 50%; border: 2px solid #1a1816;
+                  background: #dcfce7; display: flex; align-items: center; justify-content: center;
+                  font-family: 'Patrick Hand', cursive; font-size: 18px; font-weight: 700; color: #15803d;
+                  overflow: hidden; flex-shrink: 0;
+                ">
+                  ${student.photoURL ? `<img src="${escapeHtml(student.photoURL)}" alt="Avatar" style="width:100%; height:100%; object-fit:cover;" />` : initials}
+                </div>
+                <div>
+                  <h4 style="margin: 0; font-size: 14.5px; font-weight: 700; color: #1a1816;">${escapeHtml(student.displayName || "Student")}</h4>
+                  <p style="margin: 1px 0 0; font-size: 12px; color: #72685d;">${escapeHtml(student.email || "")}</p>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <span style="font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; border: 1.5px solid #1a1816; background: #e0f2fe; color: #0369a1;">
+                  ${escapeHtml(classDisplayName)}
+                </span>
+                <span style="font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; border: 1.5px solid #1a1816; background: #fdfaf3; color: #1a1816;">
+                  ${escapeHtml(groupDisplayName)}
+                </span>
+                <span style="font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 6px; background: #dcfce7; color: #15803d; border: 1px solid #15803d;">
+                  Active
+                </span>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+  } catch (err) {
+    console.error("renderTeacherApprovalsView error:", err);
+    if (pendingListEl) pendingListEl.innerHTML = `<div style="padding: 20px; color: #b91c1c;">Could not load pending students: ${escapeHtml(err.message)}</div>`;
   }
 }
 
