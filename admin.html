@@ -1018,6 +1018,97 @@
     </div>
   </div>
 
+  <!-- MODAL: Manage Class Subjects -->
+  <div class="admin-modal-backdrop view-hidden" id="modal-manage-subjects">
+    <div class="admin-modal-box" style="max-width: 580px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px dashed #ded6c5; padding-bottom: 12px; margin-bottom: 16px;">
+        <div>
+          <h3 style="margin: 0; font-family: 'Patrick Hand', cursive; font-size: 26px; color: #1a1816;" id="modal-subjects-class-title">Manage Class Subjects</h3>
+          <p style="margin: 2px 0 0; font-size: 13.5px; color: #72685d;">Add, edit, or remove subjects and courses taught in this class</p>
+        </div>
+        <button type="button" class="btn-slot-move" id="btn-close-manage-subjects-modal" style="width: 28px; height: 28px; font-size: 14px;">✕</button>
+      </div>
+
+      <!-- Current Subjects in this class -->
+      <div style="margin-bottom: 18px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+          <strong style="font-size: 13.5px; color: #1a1816;">Current Subjects (<span id="modal-subjects-count">0</span>):</strong>
+          <button type="button" class="btn-create-account" id="btn-show-add-subject-form" style="background: #e89838; padding: 4px 10px; font-size: 12px;">
+            + Add New Subject
+          </button>
+        </div>
+        <div id="modal-class-subjects-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; padding-right: 4px;">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Add/Edit Subject Sub-form (collapsible) -->
+      <form id="form-class-subject" style="display: none; background: #fffdf8; border: 2px solid #1a1816; border-radius: 14px; padding: 14px; margin-top: 10px; box-shadow: 2px 3px 0px #1a1816;">
+        <input type="hidden" id="subject-target-class-id" />
+        <input type="hidden" id="subject-edit-id" />
+        <h4 style="margin: 0 0 10px; font-family: 'Patrick Hand', cursive; font-size: 19px; color: #1a1816;" id="form-subject-title">Add New Subject</h4>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div class="admin-form-group" style="margin: 0;">
+            <label class="admin-form-label" for="input-subject-name">Subject Name *</label>
+            <input type="text" class="admin-form-input" id="input-subject-name" placeholder="e.g. Translation Techniques" required />
+          </div>
+          <div class="admin-form-group" style="margin: 0;">
+            <label class="admin-form-label" for="input-subject-code">Subject Code</label>
+            <input type="text" class="admin-form-input" id="input-subject-code" placeholder="e.g. TRAD-201" />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 10px;">
+          <div class="admin-form-group" style="margin: 0;">
+            <label class="admin-form-label" for="input-subject-room">Classroom / Lab (Optional)</label>
+            <input type="text" class="admin-form-input" id="input-subject-room" placeholder="e.g. Salle 14 / Lab 3" />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div class="admin-form-group" style="margin: 0;">
+            <label class="admin-form-label" for="select-subject-icon">Icon Style</label>
+            <select class="admin-form-select" id="select-subject-icon">
+              <option value="language">Language / Translation</option>
+              <option value="writing">Writing / Essay</option>
+              <option value="literature">Literature</option>
+              <option value="theater">Theater / Drama</option>
+              <option value="poetry">Poetry / Quill</option>
+              <option value="novel">Novel / Book</option>
+              <option value="history">History</option>
+              <option value="law">Law / Droit</option>
+              <option value="finance">Finance</option>
+              <option value="business">Business / Commercial</option>
+              <option value="linguistics">Linguistics</option>
+              <option value="grammar">Grammar</option>
+              <option value="tefl">TEFL Practicum</option>
+            </select>
+          </div>
+          <div class="admin-form-group" style="margin: 0;">
+            <label class="admin-form-label" for="select-subject-color">Theme Color</label>
+            <select class="admin-form-select" id="select-subject-color">
+              <option value="card-peach">Warm Peach</option>
+              <option value="card-yellow">Sunny Yellow</option>
+              <option value="card-green">Sage Green</option>
+              <option value="card-blue">Sky Blue</option>
+              <option value="card-purple">Soft Lavender</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
+          <button type="button" class="btn-create-account" id="btn-cancel-subject-form" style="background: #fdf6e2; color: #1a1816; padding: 6px 12px; font-size: 12.5px;">Cancel</button>
+          <button type="submit" class="btn-create-account" id="btn-save-subject-submit" style="background: #e89838; padding: 6px 14px; font-size: 12.5px;">Save Subject</button>
+        </div>
+      </form>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 16px; border-top: 2px dashed #ded6c5; padding-top: 12px;">
+        <button type="button" class="btn-create-account" id="btn-done-manage-subjects" style="background: #1a1816; color: #ffffff; padding: 7px 18px; font-size: 13.5px;">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- In-app Toasts -->
   <div class="inapp-toast-container" id="inapp-toast-container" aria-live="polite" aria-atomic="true"></div>
 

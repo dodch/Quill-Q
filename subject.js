@@ -10,6 +10,7 @@
   let currentUser = null;
   let currentProfile = null;
   let currentSubjectId = "writing";
+  let currentClassId = "";
   let documentsUnsubscribe = null;
   let allDocumentsCache = [];
   let isFirstDocsSnapshot = true;
@@ -67,8 +68,12 @@
   }
 
   function initSubjectDropdown() {
-    if (!subjectSelect || typeof getAllSubjects !== "function") return;
-    const subjects = getAllSubjects();
+    if (!subjectSelect) return;
+    const targetClass = currentClassId || (currentProfile ? currentProfile.classId : "2ang-aff") || "2ang-aff";
+    const subjects = (window.AcademicRegistry && typeof window.AcademicRegistry.getSubjectsForClass === "function")
+      ? window.AcademicRegistry.getSubjectsForClass(targetClass)
+      : (typeof getAllSubjects === "function" ? getAllSubjects() : []);
+
     subjectSelect.innerHTML = "";
 
     subjects.forEach((s) => {
@@ -79,13 +84,19 @@
       subjectSelect.appendChild(opt);
     });
 
-    subjectSelect.addEventListener("change", (e) => {
-      switchSubject(e.target.value);
-    });
+    if (!subjectSelect.dataset.bound) {
+      subjectSelect.dataset.bound = "true";
+      subjectSelect.addEventListener("change", (e) => {
+        switchSubject(e.target.value);
+      });
+    }
   }
 
   function renderSubjectHero(subjectId) {
-    const subject = typeof getSubjectById === "function" ? getSubjectById(subjectId) : null;
+    const targetClass = currentClassId || (currentProfile ? currentProfile.classId : "2ang-aff") || "2ang-aff";
+    const subject = (typeof getSubjectById === "function")
+      ? getSubjectById(subjectId, targetClass)
+      : ((window.AcademicRegistry && window.AcademicRegistry.findSubjectById) ? window.AcademicRegistry.findSubjectById(subjectId, targetClass) : null);
     if (!subject) return;
 
     currentSubjectId = subject.id;
@@ -116,7 +127,8 @@
   function updateCreateBtn() {
     if (!btnCreateDoc) return;
     const isExercise = activeTab === "exercises";
-    btnCreateDoc.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}&action=new&type=${isExercise ? "exercise" : "doc"}`;
+    const classParam = currentClassId ? `&class=${encodeURIComponent(currentClassId)}` : "";
+    btnCreateDoc.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}${classParam}&action=new&type=${isExercise ? "exercise" : "doc"}`;
     if (btnCreateLabel) {
       btnCreateLabel.textContent = isExercise ? "Create Exercise" : "Create Document";
     }
@@ -148,6 +160,9 @@
     // Update URL query parameter without full reload
     const url = new URL(window.location.href);
     url.searchParams.set("id", newSubjectId);
+    if (currentClassId) {
+      url.searchParams.set("class", currentClassId);
+    }
     window.history.replaceState({}, "", url.toString());
 
     renderSubjectHero(newSubjectId);
@@ -157,6 +172,7 @@
   function renderDocumentCards(docs) {
     if (!docsGrid) return;
     docsGrid.innerHTML = "";
+    const classParam = currentClassId ? `&class=${encodeURIComponent(currentClassId)}` : "";
 
     if (!docs || docs.length === 0) {
       const isSearch = searchInput && searchInput.value.trim().length > 0;
@@ -173,7 +189,7 @@
             ${isSearch ? "Try searching with different keywords." : (isExerciseTab ? "Create interactive worksheets and practice tasks for students to answer!" : "Be the first to capture lecture notes, study guides, and summaries!")}
           </p>
           ${!isSearch ? `
-            <a href="editor.html?subject=${encodeURIComponent(currentSubjectId)}&action=new&type=${isExerciseTab ? 'exercise' : 'doc'}" class="btn-create-doc" style="margin-top: 8px;">
+            <a href="editor.html?subject=${encodeURIComponent(currentSubjectId)}${classParam}&action=new&type=${isExerciseTab ? 'exercise' : 'doc'}" class="btn-create-doc" style="margin-top: 8px;">
               <i class="fi fi-sr-add"></i>
               <span>${isExerciseTab ? 'Create First Exercise' : 'Create First Document'}</span>
             </a>
@@ -210,7 +226,7 @@
             <span>${isExercise ? 'Exercise' : 'Notes'}</span>
           </span>
           <div class="doc-card-actions">
-            <a href="editor.html?subject=${encodeURIComponent(currentSubjectId)}&docId=${encodeURIComponent(doc.id)}" 
+            <a href="editor.html?subject=${encodeURIComponent(currentSubjectId)}${classParam}&docId=${encodeURIComponent(doc.id)}" 
                class="doc-btn-icon" title="Open in Full-Page Editor" aria-label="Open editor">
               <i class="fi fi-rr-arrow-up-right"></i>
             </a>
@@ -249,7 +265,7 @@
       // Entire card clicks open the editor (unless clicking the delete button)
       card.addEventListener("click", (e) => {
         if (e.target.closest(".doc-btn-delete")) return;
-        window.location.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}&docId=${encodeURIComponent(doc.id)}`;
+        window.location.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}${classParam}&docId=${encodeURIComponent(doc.id)}`;
       });
 
       // Handle delete
@@ -290,11 +306,17 @@
       confirmed = window.confirm(`Are you sure you want to delete "${docTitle}"? This cannot be undone.`);
     }
 
+    function getSubjectDocPath() {
+      return (currentClassId && currentClassId !== "2ang-aff")
+        ? `${currentClassId}_${currentSubjectId}`
+        : currentSubjectId;
+    }
+
     if (!confirmed) return;
 
     try {
       if (!db) return;
-      await db.collection("subjects").doc(currentSubjectId).collection("documents").doc(docId).delete();
+      await db.collection("subjects").doc(getSubjectDocPath()).collection("documents").doc(docId).delete();
       showToast("Document deleted successfully");
     } catch (err) {
       console.error("Error deleting document:", err);
@@ -345,7 +367,10 @@
       `;
     }
 
-    const docRef = db.collection("subjects").doc(currentSubjectId).collection("documents");
+    const docPath = (currentClassId && currentClassId !== "2ang-aff")
+      ? `${currentClassId}_${currentSubjectId}`
+      : currentSubjectId;
+    const docRef = db.collection("subjects").doc(docPath).collection("documents");
 
     documentsUnsubscribe = docRef.onSnapshot(
       (snapshot) => {
@@ -397,7 +422,8 @@
                   `;
                   toast.addEventListener("click", (e) => {
                     if (e.target.closest(".inapp-toast-close")) return;
-                    window.location.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}&docId=${encodeURIComponent(change.doc.id)}`;
+                    const cParam = currentClassId ? `&class=${encodeURIComponent(currentClassId)}` : "";
+                    window.location.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}${cParam}&docId=${encodeURIComponent(change.doc.id)}`;
                   });
                   const closeBtn = toast.querySelector(".inapp-toast-close");
                   if (closeBtn) {
@@ -518,10 +544,11 @@
       tabBtnExercises.addEventListener("click", () => switchTab("exercises"));
     }
 
-    // 1. Determine subject from query parameter
+    // 1. Determine class and subject from query parameters
+    currentClassId = getQueryParam("class") || "";
     const querySub = getQueryParam("id") || getQueryParam("subject");
-    if (querySub && typeof getSubjectById === "function" && getSubjectById(querySub)) {
-      currentSubjectId = getSubjectById(querySub).id;
+    if (querySub && typeof getSubjectById === "function" && getSubjectById(querySub, currentClassId)) {
+      currentSubjectId = getSubjectById(querySub, currentClassId).id;
     }
 
     initSubjectDropdown();
@@ -561,6 +588,13 @@
         } catch (e) {
           console.warn("Could not load user profile:", e);
           currentProfile = { email: user.email, role: "student", status: "pending" };
+        }
+
+        // If class wasn't explicitly provided in the URL query, use the student's profile class
+        if (!currentClassId && currentProfile && currentProfile.classId) {
+          currentClassId = currentProfile.classId;
+          initSubjectDropdown();
+          renderSubjectHero(currentSubjectId);
         }
 
         // Update nav bar user info

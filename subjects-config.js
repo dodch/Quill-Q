@@ -9,8 +9,6 @@ const SUBJECTS_REGISTRY = {
     name: "Drama",
     shortName: "Drama",
     code: "LIT-201A",
-    prof: "بن شهيدة مريم",
-    secondaryProfs: ["غمامي سناء", "كلثوم بالوافي"],
     room: "Lab 3",
     color: "#e0835f",
     bgClass: "card-peach",
@@ -23,8 +21,6 @@ const SUBJECTS_REGISTRY = {
     name: "Poetry",
     shortName: "Poetry",
     code: "LIT-201B",
-    prof: "غمامي سناء",
-    secondaryProfs: ["بن شهيدة مريم"],
     room: "Salle 15",
     color: "#f6cf7c",
     bgClass: "card-yellow",
@@ -37,8 +33,6 @@ const SUBJECTS_REGISTRY = {
     name: "Novel",
     shortName: "Novel",
     code: "LIT-201C",
-    prof: "كلثوم بالوافي",
-    secondaryProfs: [],
     room: "Salle 16",
     color: "#5bae86",
     bgClass: "card-green",
@@ -51,8 +45,6 @@ const SUBJECTS_REGISTRY = {
     name: "Drama / Poetry / Novel",
     shortName: "Drama & Poetry",
     code: "LIT-201",
-    prof: "بن شهيدة مريم",
-    secondaryProfs: ["غمامي سناء", "كلثوم بالوافي"],
     room: "Lab 3 / Salle 15 / Salle 16",
     color: "#e0835f",
     bgClass: "card-peach",
@@ -65,8 +57,6 @@ const SUBJECTS_REGISTRY = {
     name: "Writing",
     shortName: "Writing",
     code: "ENG-202",
-    prof: "نسرين بن الصادق",
-    secondaryProfs: [],
     room: "Salle 15",
     color: "#f6cf7c",
     bgClass: "card-blue",
@@ -79,8 +69,6 @@ const SUBJECTS_REGISTRY = {
     name: "British History",
     shortName: "British History",
     code: "HIS-203",
-    prof: "عيادي روضة",
-    secondaryProfs: [],
     room: "Amphi 1 / Salle 13",
     color: "#a9c6ec",
     bgClass: "card-green",
@@ -93,8 +81,6 @@ const SUBJECTS_REGISTRY = {
     name: "Financial English 1",
     shortName: "Financial English",
     code: "FIN-204",
-    prof: "غربي إيمان",
-    secondaryProfs: ["غربي أحمد عبد العزيز"],
     room: "Amphi 6 / Salle 15",
     color: "#5bae86",
     bgClass: "card-purple",
@@ -107,8 +93,6 @@ const SUBJECTS_REGISTRY = {
     name: "Entrepreneurial Skills (Droit)",
     shortName: "Entrepreneurship",
     code: "LAW-205",
-    prof: "شابي علي صلاح",
-    secondaryProfs: ["الغندري أحلام"],
     room: "Salle 14 / Salle 12",
     color: "#e8987a",
     bgClass: "card-peach",
@@ -121,8 +105,6 @@ const SUBJECTS_REGISTRY = {
     name: "Commercial English 1",
     shortName: "Commercial English",
     code: "COM-206",
-    prof: "الشرقي سهلة",
-    secondaryProfs: [],
     room: "Amphi 4 / Salle 10",
     color: "#7ab8ea",
     bgClass: "card-blue",
@@ -135,8 +117,6 @@ const SUBJECTS_REGISTRY = {
     name: "Introduction to Linguistics",
     shortName: "Linguistics",
     code: "LIN-207",
-    prof: "رانية الدريسي",
-    secondaryProfs: [],
     room: "Amphi 3 / Salle 10",
     color: "#f6cf7c",
     bgClass: "card-green",
@@ -149,8 +129,6 @@ const SUBJECTS_REGISTRY = {
     name: "Literary Trends",
     shortName: "Literary Trends",
     code: "LIT-208",
-    prof: "منيف حافظ",
-    secondaryProfs: [],
     room: "Amphi 1",
     color: "#ba90e8",
     bgClass: "card-purple",
@@ -163,8 +141,6 @@ const SUBJECTS_REGISTRY = {
     name: "US History",
     shortName: "US History",
     code: "HIS-209",
-    prof: "كعمون وسيم",
-    secondaryProfs: [],
     room: "Amphi 4 / Salle 12",
     color: "#e0835f",
     bgClass: "card-peach",
@@ -177,8 +153,6 @@ const SUBJECTS_REGISTRY = {
     name: "Grammar in Context",
     shortName: "Grammar",
     code: "GRM-210",
-    prof: "العفاس نجلاء",
-    secondaryProfs: [],
     room: "Amphi 4 / Salle 18",
     color: "#5bae86",
     bgClass: "card-blue",
@@ -191,8 +165,6 @@ const SUBJECTS_REGISTRY = {
     name: "Other Languages (French & Arabic)",
     shortName: "Other Languages",
     code: "LANG-211",
-    prof: "بن علي حافظ / جهاد معلى",
-    secondaryProfs: [],
     room: "Salle 14 / Lab 3",
     color: "#f6cf7c",
     bgClass: "card-green",
@@ -205,8 +177,6 @@ const SUBJECTS_REGISTRY = {
     name: "Activités pratiques (TEFL)",
     shortName: "TEFL Practicum",
     code: "TEFL-212",
-    prof: "رانية الدريسي",
-    secondaryProfs: [],
     room: "Salle 11",
     color: "#e8987a",
     bgClass: "card-purple",
@@ -310,9 +280,16 @@ const SUBJECT_ICONS = {
   </svg>`
 };
 
-function getSubjectById(id) {
+function getSubjectById(id, classId) {
   if (!id) return null;
   const normalized = id.toLowerCase().trim();
+
+  // 1. Check dynamic subjects registry if available
+  if (typeof window !== "undefined" && window.AcademicRegistry && typeof window.AcademicRegistry.findSubjectById === "function") {
+    const dyn = window.AcademicRegistry.findSubjectById(normalized, classId);
+    if (dyn) return dyn;
+  }
+
   if (SUBJECTS_REGISTRY[normalized]) return SUBJECTS_REGISTRY[normalized];
 
   // Try matching by alias or fuzzy key

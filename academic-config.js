@@ -7,6 +7,24 @@
   "use strict";
 
   // Default seed classes (offline fallback & initial setup)
+  const BUSINESS_SUBJECTS = [
+    { id: "drama", name: "Drama", code: "LIT-201A", room: "Lab 3", color: "#e0835f", bgClass: "card-peach", icon: "theater", description: "Classical and modern dramatic literature, theatrical performance analysis, and play scripts." },
+    { id: "poetry", name: "Poetry", code: "LIT-201B", room: "Salle 15", color: "#f6cf7c", bgClass: "card-yellow", icon: "poetry", description: "Poetic forms, meter, verse analysis, and critical appreciation of English poetry across eras." },
+    { id: "novel", name: "Novel", code: "LIT-201C", room: "Salle 16", color: "#5bae86", bgClass: "card-green", icon: "novel", description: "Foundational English and world novels, narrative structures, thematic depth, and prose fiction." },
+    { id: "writing", name: "Writing", code: "ENG-202", room: "Salle 15", color: "#f6cf7c", bgClass: "card-blue", icon: "writing", description: "Academic and professional essay construction, thesis formulation, and rhetoric." },
+    { id: "british-history", name: "British History", code: "HIS-203", room: "Amphi 1 / Salle 13", color: "#a9c6ec", bgClass: "card-green", icon: "history", description: "Political, cultural, and constitutional evolution of the British Isles from monarchy to empire." },
+    { id: "financial-english-1", name: "Financial English 1", code: "FIN-204", room: "Amphi 6 / Salle 15", color: "#5bae86", bgClass: "card-purple", icon: "finance", description: "Financial terminology, corporate accounting narratives, banking communication, and fiscal analysis." },
+    { id: "entrepreneurial-skills", name: "Entrepreneurial Skills (Droit)", code: "LAW-205", room: "Salle 14 / Salle 12", color: "#e8987a", bgClass: "card-peach", icon: "law", description: "Legal foundations of business creation, contracts, IP, and venture development." },
+    { id: "commercial-english-1", name: "Commercial English 1", code: "COM-206", room: "Amphi 4 / Salle 10", color: "#7ab8ea", bgClass: "card-blue", icon: "business", description: "Global business correspondence, negotiation registers, trade terminology, and executive briefings." },
+    { id: "introduction-to-linguistics", name: "Introduction to Linguistics", code: "LIN-207", room: "Amphi 3 / Salle 10", color: "#f6cf7c", bgClass: "card-green", icon: "linguistics", description: "Phonetics, morphology, syntax, semantic structures, and linguistic cognition." },
+    { id: "literary-trends", name: "Literary Trends", code: "LIT-208", room: "Amphi 1", color: "#ba90e8", bgClass: "card-purple", icon: "literature", description: "Critical survey of major literary movements: Romanticism, Realism, Modernism, and Postmodernism." },
+    { id: "us-history", name: "US History", code: "HIS-209", room: "Amphi 4 / Salle 12", color: "#e0835f", bgClass: "card-peach", icon: "history", description: "From colonial revolutions and the Civil War to 20th century civil rights and geopolitical hegemony." },
+    { id: "grammar-in-context", name: "Grammar in Context", code: "GRM-210", room: "Amphi 4 / Salle 18", color: "#5bae86", bgClass: "card-blue", icon: "grammar", description: "Advanced structural analysis, syntactic cohesion, complex sentence crafting, and discourse syntax." },
+    { id: "other-languages", name: "Other Languages (French & Arabic)", code: "LANG-211", room: "Salle 14 / Lab 3", color: "#f6cf7c", bgClass: "card-green", icon: "language", description: "Comparative translation, cross-linguistic semantics, and advanced bilingual expression." },
+    { id: "activites-pratiques-tefl", name: "Activités pratiques (TEFL)", code: "TEFL-212", room: "Salle 11", color: "#e8987a", bgClass: "card-purple", icon: "tefl", description: "Practical methodology for teaching English as a foreign language: lesson planning and classroom tactics." }
+  ];
+
+  // Default seed classes (offline fallback & initial setup)
   const DEFAULT_ACADEMIC_CLASSES = [
     {
       id: "2ang-aff",
@@ -18,7 +36,8 @@
       groups: [
         { id: "grp1", name: "Group 1", code: "2ANG-AFF 1" },
         { id: "grp2", name: "Group 2", code: "2ANG-AFF 2" }
-      ]
+      ],
+      subjects: BUSINESS_SUBJECTS
     },
     {
       id: "2ang-trad",
@@ -30,7 +49,8 @@
       groups: [
         { id: "grp1", name: "Group 1", code: "2ANG-TRAD 1" },
         { id: "grp2", name: "Group 2", code: "2ANG-TRAD 2" }
-      ]
+      ],
+      subjects: []
     }
   ];
 
@@ -47,6 +67,15 @@
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
           activeClasses = parsed;
+          // Ensure 2ang-aff has subjects if old cache didn't have subjects property
+          const affCls = activeClasses.find((c) => c.id === "2ang-aff");
+          if (affCls && (!Array.isArray(affCls.subjects) || affCls.subjects.length === 0)) {
+            affCls.subjects = JSON.parse(JSON.stringify(BUSINESS_SUBJECTS));
+          }
+          const tradCls = activeClasses.find((c) => c.id === "2ang-trad");
+          if (tradCls && !Array.isArray(tradCls.subjects)) {
+            tradCls.subjects = [];
+          }
           return;
         }
       }
@@ -216,13 +245,109 @@
     };
   }
 
+  // Get subjects for a specific class ID
+  function getSubjectsForClass(classId) {
+    const cls = getClassById(classId);
+    if (cls && Array.isArray(cls.subjects)) {
+      return cls.subjects;
+    }
+    // Backward compatibility: 2ang-aff defaults to BUSINESS_SUBJECTS
+    if (!cls || cls.id === "2ang-aff") {
+      return BUSINESS_SUBJECTS;
+    }
+    return [];
+  }
+
+  // Find a subject by ID in a class or across all classes
+  function findSubjectById(subjectId, classId) {
+    if (!subjectId) return null;
+    const cleanId = String(subjectId).toLowerCase().trim();
+    if (classId) {
+      const subs = getSubjectsForClass(classId);
+      const found = subs.find((s) => s.id.toLowerCase() === cleanId || s.name.toLowerCase() === cleanId);
+      if (found) return found;
+    }
+    // Search across all classes
+    for (const cls of activeClasses) {
+      if (Array.isArray(cls.subjects)) {
+        const found = cls.subjects.find((s) => s.id.toLowerCase() === cleanId || s.name.toLowerCase() === cleanId);
+        if (found) return found;
+      }
+    }
+    // Fallback to BUSINESS_SUBJECTS
+    return BUSINESS_SUBJECTS.find((s) => s.id.toLowerCase() === cleanId || s.name.toLowerCase() === cleanId) || null;
+  }
+
+  // Add subject to a class (Admin action)
+  async function addSubjectToClass(db, classId, subjectObj) {
+    const cls = getClassById(classId);
+    if (!cls) throw new Error("Class not found: " + classId);
+    if (!Array.isArray(cls.subjects)) cls.subjects = [];
+
+    const baseId = (subjectObj.name || "subject").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    let sId = subjectObj.id || baseId;
+    let count = 1;
+    while (cls.subjects.some((s) => s.id === sId)) {
+      sId = `${baseId}-${count++}`;
+    }
+    const newSubject = { ...subjectObj, id: sId };
+    cls.subjects.push(newSubject);
+    saveToLocalCache();
+    notifyListeners();
+
+    if (db) {
+      await saveAcademicStructureToServer(db, activeClasses);
+    }
+    return newSubject;
+  }
+
+  // Update subject in a class (Admin action)
+  async function updateSubjectInClass(db, classId, subjectId, updatedObj) {
+    const cls = getClassById(classId);
+    if (!cls) throw new Error("Class not found: " + classId);
+    if (!Array.isArray(cls.subjects)) cls.subjects = [];
+
+    const idx = cls.subjects.findIndex((s) => s.id === subjectId);
+    if (idx === -1) throw new Error("Subject not found: " + subjectId);
+
+    cls.subjects[idx] = { ...cls.subjects[idx], ...updatedObj, id: subjectId };
+    saveToLocalCache();
+    notifyListeners();
+
+    if (db) {
+      await saveAcademicStructureToServer(db, activeClasses);
+    }
+    return cls.subjects[idx];
+  }
+
+  // Delete subject from a class (Admin action)
+  async function deleteSubjectFromClass(db, classId, subjectId) {
+    const cls = getClassById(classId);
+    if (!cls) throw new Error("Class not found: " + classId);
+    if (!Array.isArray(cls.subjects)) return;
+
+    cls.subjects = cls.subjects.filter((s) => s.id !== subjectId);
+    saveToLocalCache();
+    notifyListeners();
+
+    if (db) {
+      await saveAcademicStructureToServer(db, activeClasses);
+    }
+  }
+
   const AcademicRegistry = {
     DEFAULT_CLASSES: DEFAULT_ACADEMIC_CLASSES,
+    BUSINESS_SUBJECTS,
     getAllClasses,
     getClass: getClassById,
     getClassById,
     getGroupsForClass,
     getGroup,
+    getSubjectsForClass,
+    findSubjectById,
+    addSubjectToClass,
+    updateSubjectInClass,
+    deleteSubjectFromClass,
     normalizeProfileAcademic,
     bindFirestoreAcademicStructure,
     saveAcademicStructureToServer,

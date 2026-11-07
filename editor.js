@@ -10,6 +10,7 @@
   let currentUser = null;
   let currentProfile = null;
   let currentSubject = null;
+  let currentClassId = "";
   let currentDocId = null;
   let loadedDocumentData = null;
   let reactEditorBridge = null;
@@ -22,6 +23,13 @@
   let reviewingStudent = null;
   let masterExerciseBlocks = null;
   let submissionsUnsubscribe = null;
+
+  function getSubjectCollectionDocRef() {
+    if (!currentClassId || currentClassId === "2ang-aff") {
+      return db.collection("subjects").doc(currentSubject.id);
+    }
+    return db.collection("subjects").doc(`${currentClassId}_${currentSubject.id}`);
+  }
 
   function escapeHtml(str) {
     if (!str) return "";
@@ -182,7 +190,7 @@
       const excerpt = extractExcerpt(blocks, 150) || "Empty document...";
       const pageCount = pages.length || 1;
 
-      const collectionRef = db.collection("subjects").doc(currentSubject.id).collection("documents");
+      const collectionRef = getSubjectCollectionDocRef().collection("documents");
 
       // 1. If student is working on an exercise worksheet, save to their personal submission subcollection!
       if (isStudentWorksheet) {
@@ -246,6 +254,7 @@
         : {};
 
       const docPayload = {
+        classId: currentClassId || "2ang-aff",
         subjectId: currentSubject.id,
         subjectName: currentSubject.name,
         title: docTitle,
@@ -277,10 +286,11 @@
         // Broadcast background push notification to all class devices
         if (typeof broadcastPushNotification === "function") {
           const isEx = (docPayload.docType === "exercise");
+          const classQ = currentClassId ? `&class=${encodeURIComponent(currentClassId)}` : "";
           broadcastPushNotification({
             title: isEx ? `✏️ New Exercise: ${docTitle}` : `📄 New Notes: ${docTitle}`,
             body: `${docPayload.subjectName} • Added by ${docPayload.authorName}`,
-            url: `subject.html?subject=${encodeURIComponent(currentSubject.id)}`,
+            url: `subject.html?subject=${encodeURIComponent(currentSubject.id)}${classQ}`,
             targetView: "subject"
           });
         }
@@ -343,7 +353,7 @@
 
   async function loadExistingDocument(docId) {
     try {
-      const docRef = db.collection("subjects").doc(currentSubject.id).collection("documents").doc(docId);
+      const docRef = getSubjectCollectionDocRef().collection("documents").doc(docId);
       const snapshot = await docRef.get();
 
       if (!snapshot.exists) {
@@ -356,6 +366,9 @@
 
       const data = snapshot.data();
       loadedDocumentData = { id: snapshot.id, ...data };
+      if (!currentClassId && data.classId) {
+        currentClassId = data.classId;
+      }
       currentDocType = data.docType || "document";
 
       const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
@@ -369,7 +382,7 @@
       if (currentDocType === "exercise" && !isTeacher && !isAuthor) {
         isStudentWorksheet = true;
 
-        const subDocRef = db.collection("subjects").doc(currentSubject.id).collection("documents").doc(docId).collection("submissions").doc(currentUser.uid);
+        const subDocRef = getSubjectCollectionDocRef().collection("documents").doc(docId).collection("submissions").doc(currentUser.uid);
         const subSnap = await subDocRef.get();
 
         let initialContent = data.content;
@@ -676,7 +689,7 @@
       submissionsUnsubscribe = null;
     }
 
-    const subCol = db.collection("subjects").doc(currentSubject.id).collection("documents").doc(currentDocId).collection("submissions");
+    const subCol = getSubjectCollectionDocRef().collection("documents").doc(currentDocId).collection("submissions");
     submissionsUnsubscribe = subCol.onSnapshot((snap) => {
       const count = snap.size;
       const btnText = document.getElementById("submissions-btn-text");
@@ -712,18 +725,21 @@
     listContainer.innerHTML = '<div style="text-align:center; padding: 20px; color: #8c8275;">Loading submissions...</div>';
 
     try {
-      // 1. Fetch approved students
+      // 1. Fetch approved students belonging to the current class
       const usersSnap = await db.collection("users").get();
       const students = [];
+      const targetClass = currentClassId || "2ang-aff";
       usersSnap.forEach((u) => {
         const uData = u.data();
-        if (uData.role === "student" || uData.role === "Student") {
+        const role = (uData.role || "").toLowerCase();
+        const userClass = uData.classId || "2ang-aff";
+        if (role === "student" && userClass === targetClass) {
           students.push({ uid: u.id, ...uData });
         }
       });
 
       // 2. Fetch submissions for this exercise
-      const subSnap = await db.collection("subjects").doc(currentSubject.id).collection("documents").doc(currentDocId).collection("submissions").get();
+      const subSnap = await getSubjectCollectionDocRef().collection("documents").doc(currentDocId).collection("submissions").get();
       const submissionsMap = {};
       subSnap.forEach((s) => {
         submissionsMap[s.id] = s.data();
@@ -806,7 +822,7 @@
     const combinedAnnotations = {};
 
     try {
-      const subSnap = await db.collection("subjects").doc(currentSubject.id).collection("documents").doc(currentDocId).collection("submissions").doc(student.id).get();
+      const subSnap = await getSubjectCollectionDocRef().collection("documents").doc(currentDocId).collection("submissions").doc(student.id).get();
       if (subSnap.exists) {
         const sData = subSnap.data();
         const teacherA = sData.teacherAnnotations || {};
@@ -894,7 +910,7 @@
     if (!currentDocId || !isSuperAdminUser(currentProfile, currentUser) || !currentSubject) return;
     const newType = currentDocType === "exercise" ? "document" : "exercise";
     try {
-      await db.collection("subjects").doc(currentSubject.id).collection("documents").doc(currentDocId).update({
+      await getSubjectCollectionDocRef().collection("documents").doc(currentDocId).update({
         docType: newType,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -1077,20 +1093,24 @@
   }
 
   function setupSubjectContext() {
+    if (!currentClassId) {
+      currentClassId = getQueryParam("class") || (currentProfile && currentProfile.classId) || "";
+    }
     const subjectParam = getQueryParam("subject") || getQueryParam("id") || "writing";
-    currentSubject = typeof getSubjectById === "function" ? getSubjectById(subjectParam) : null;
+    currentSubject = typeof getSubjectById === "function" ? getSubjectById(subjectParam, currentClassId) : null;
 
     if (!currentSubject) {
       currentSubject = {
-        id: "writing",
-        name: "Writing",
-        code: "ENG-202",
+        id: subjectParam || "writing",
+        name: (subjectParam ? (subjectParam.charAt(0).toUpperCase() + subjectParam.slice(1)) : "Writing"),
+        code: "SUB-101",
         bgClass: "card-blue"
       };
     }
 
     if (backBtn) {
-      backBtn.href = `subject.html?id=${encodeURIComponent(currentSubject.id)}`;
+      const classQ = currentClassId ? `&class=${encodeURIComponent(currentClassId)}` : "";
+      backBtn.href = `subject.html?id=${encodeURIComponent(currentSubject.id)}${classQ}`;
     }
     if (subjectBadge) {
       subjectBadge.className = `editor-subject-badge ${currentSubject.bgClass || "card-peach"}`;
@@ -2022,6 +2042,12 @@
             role: isSuperAdminUser(null, user) ? "admin" : "student",
             status: isSuperAdminUser(null, user) ? "approved" : "pending"
           };
+        }
+
+        // If class wasn't explicitly provided in the URL query, use the profile class
+        if (!currentClassId && currentProfile && currentProfile.classId) {
+          currentClassId = currentProfile.classId;
+          setupSubjectContext();
         }
 
         // Load document if docId is provided, otherwise initialize fresh editor

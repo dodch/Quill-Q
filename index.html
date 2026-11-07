@@ -279,22 +279,37 @@
 
           <!-- Teacher Academic Fields: Course & Multi-select Classes -->
           <div class="onboarding-group view-hidden" id="onboarding-group-teacher-section">
-            <div class="onboarding-row" style="margin-bottom: 12px;">
-              <div class="onboarding-group flex-1">
-                <label class="onboarding-label" for="onboarding-teacher-subject-val">
-                  Subject / Course Taught <span class="required-star">*</span>
-                </label>
-                <input type="text" class="modal-form-input" id="onboarding-teacher-subject-val" placeholder="e.g. British History, Translation, Writing..." />
-              </div>
-            </div>
-
-            <div class="onboarding-group" style="margin-bottom: 8px;">
+            <div class="onboarding-group" style="margin-bottom: 12px;">
               <label class="onboarding-label" style="display: flex; justify-content: space-between; align-items: center;">
                 <span>Classes You Teach <span class="required-star">*</span></span>
-                <span style="font-size: 11.5px; font-weight: 400; color: #72685d;">Click to toggle one or multiple classes</span>
+                <span style="font-size: 11.5px; font-weight: 400; color: #72685d;">Click to toggle classes you teach</span>
               </label>
               <div id="onboarding-teacher-classes-chips" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
                 <!-- Dynamically populated chips from AcademicRegistry -->
+              </div>
+            </div>
+
+            <div class="onboarding-row" style="margin-bottom: 12px;">
+              <div class="onboarding-group flex-1">
+                <label class="onboarding-label" for="onboarding-teacher-subject-trigger">
+                  Subject / Course You Teach <span class="required-star">*</span>
+                </label>
+                <div class="searchable-dropdown-wrap" id="onboarding-subject-dropdown-wrap">
+                  <input type="hidden" id="onboarding-teacher-subject-val" value="" required />
+                  <button type="button" class="searchable-dropdown-trigger" id="onboarding-teacher-subject-trigger" aria-haspopup="listbox" aria-expanded="false">
+                    <span id="onboarding-teacher-subject-label">Select from curriculum subjects...</span>
+                    <svg viewBox="0 0 24 24" class="dropdown-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </button>
+                  <div class="searchable-dropdown-menu" id="onboarding-teacher-subject-menu" role="listbox">
+                    <div class="searchable-input-wrap">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#72685d" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
+                      <input type="text" class="searchable-filter-input" id="onboarding-teacher-subject-search" placeholder="Type to filter subjects..." autocomplete="off" />
+                    </div>
+                    <div class="searchable-options-list" id="onboarding-teacher-subject-options">
+                      <!-- Dynamically populated from subjects of selected classes -->
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -945,259 +960,22 @@
 
         <!-- DEDICATED SUBJECTS VIEW (Matches Reference Photo Exactly) -->
         <div class="view-panel view-hidden" id="view-subjects">
-          <div class="subjects-view-header">
+          <div class="subjects-view-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
             <div class="subjects-view-title-wrap">
               <h2 class="subjects-view-title">Subjects</h2>
             </div>
+            <!-- Class switcher for teachers & admins -->
+            <div id="subjects-class-switcher-wrap" style="display: none; align-items: center; gap: 8px;">
+              <label for="subjects-class-select" style="font-size: 13px; font-weight: 700; color: #1a1816; font-family: 'Plus Jakarta Sans', sans-serif;">Class:</label>
+              <select id="subjects-class-select" class="modal-form-select" style="padding: 6px 12px; font-size: 13px; border-radius: 10px; border: 2px solid #1a1816; background: #fffdf8; box-shadow: 2px 2px 0px #1a1816; cursor: pointer;">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
           </div>
 
-          <!-- 2x2 Bento Grid of Subjects with Hand-Drawn Imperfect Style & Exact Schedule Data -->
+          <!-- Dynamic Bento Grid of Subjects (Rendered per class by renderSubjectsView in app.js) -->
           <div class="subjects-bento-grid" id="subjects-bento-grid">
-            <!-- 1. Drama -->
-            <a href="subject.html?id=drama" class="bento-subject-card card-peach">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">Drama</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-theater" fill="none">
-                    <path d="M7 8 C7 5 11 5 17 5 C23 5 27 5 27 8 C27 15 24 23 17 26 C10 23 7 15 7 8 Z" fill="#faeee9" stroke="#25211e" stroke-width="1.8" stroke-linejoin="round"/>
-                    <ellipse cx="13" cy="12" rx="2" ry="3" fill="#25211e"/>
-                    <ellipse cx="21" cy="12" rx="2" ry="3" fill="#25211e"/>
-                    <path d="M12 18 C14 22 20 22 22 18" stroke="#25211e" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- 2. Poetry -->
-            <a href="subject.html?id=poetry" class="bento-subject-card card-yellow">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">Poetry</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-poetry" fill="none">
-                    <path d="M9 25 C12 25 15 23 18 20 C22 16 26 10 27 5 C23 7 17 11 14 15 C11 19 9 22 9 25 Z" fill="#faeee9" stroke="#25211e" stroke-width="1.8" stroke-linejoin="round"/>
-                    <path d="M12 22 L24 10" stroke="#f6cf7c" stroke-width="1.6" stroke-linecap="round"/>
-                    <path d="M6 28 C6 26 8 25 11 25 C14 25 16 26 16 28 Z" fill="#25211e"/>
-                    <path d="M7 29 H15" stroke="#25211e" stroke-width="1.8" stroke-linecap="round"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- 3. Novel -->
-            <a href="subject.html?id=novel" class="bento-subject-card card-green">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">Novel</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-novel" fill="none">
-                    <path d="M7 7 C7 5.5 8.5 4 10.5 4 H25 C26.5 4 27.5 5 27.5 6.5 V24 C27.5 25.5 26.5 26.5 25 26.5 H10.5 C8.5 26.5 7 28 7 28 Z" fill="#dcf2e3" stroke="#25211e" stroke-width="1.8" stroke-linejoin="round"/>
-                    <path d="M7 7 V28 H25" stroke="#25211e" stroke-width="1.8" stroke-linecap="round"/>
-                    <path d="M11 4 V15 L14 12 L17 15 V4" fill="#e0835f" stroke="#25211e" stroke-width="1.3" stroke-linejoin="round"/>
-                    <line x1="12" y1="20" x2="22" y2="20" stroke="#25211e" stroke-width="1.5" stroke-linecap="round"/>
-                    <line x1="12" y1="23.5" x2="19" y2="23.5" stroke="#25211e" stroke-width="1.5" stroke-linecap="round"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- 2. Writing -->
-            <a href="subject.html?id=writing" class="bento-subject-card card-blue">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">Writing</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-writing" fill="none">
-                    <g transform="rotate(-45 17 15)">
-                      <path d="M12 24 H22 V28 C22 29.5 20.5 30 17 30 C13.5 30 12 29.5 12 28 Z" fill="#e88971" stroke="#25211e" stroke-width="1.6" stroke-linejoin="round" />
-                      <rect x="12" y="21" width="10" height="3" fill="#cfcbc0" stroke="#25211e" stroke-width="1.4" />
-                      <rect x="12" y="7" width="10" height="14" fill="#f8cd62" stroke="#25211e" stroke-width="1.6" />
-                      <line x1="15.5" y1="7" x2="15.5" y2="21" stroke="#e0a936" stroke-width="1.2" />
-                      <line x1="18.5" y1="7" x2="18.5" y2="21" stroke="#e0a936" stroke-width="1.2" />
-                      <polygon points="12,7 22,7 17,-1" fill="#fdf2d8" stroke="#25211e" stroke-width="1.6" stroke-linejoin="round" />
-                      <polygon points="15.2,1.8 18.8,1.8 17,-1" fill="#25211e" />
-                    </g>
-                    <line x1="8" y1="28" x2="28" y2="28" stroke="#25211e" stroke-width="1.6" stroke-linecap="round" />
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- 3. British History -->
-            <a href="subject.html?id=british-history" class="bento-subject-card card-green">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">British History</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-history" fill="none">
-                    <path d="M6 7 H28 V10 H6 Z" fill="#faf6ed" stroke="#25211e" stroke-width="1.7" stroke-linejoin="round"/>
-                    <path d="M9 10 V24 M14.3 10 V24 M19.7 10 V24 M25 10 V24" stroke="#25211e" stroke-width="1.5" stroke-linecap="round"/>
-                    <path d="M5 24 H29 V28 H5 Z" fill="#faf6ed" stroke="#25211e" stroke-width="1.7" stroke-linejoin="round"/>
-                    <circle cx="17" cy="8.5" r="1.2" fill="#5b8fc9"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- 4. Financial English 1 -->
-            <a href="subject.html?id=financial-english-1" class="bento-subject-card card-purple">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">Financial English 1</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-finance" fill="none">
-                    <circle cx="17" cy="17" r="11" fill="#fcfaf2" stroke="#25211e" stroke-width="1.8"/>
-                    <circle cx="17" cy="17" r="8" stroke="#5bae86" stroke-width="1.4" stroke-dasharray="2 2"/>
-                    <path d="M17 11 V23 M14 14 H19.5 C20.5 14 21 14.8 21 15.5 C21 16.5 20 17 17 17 C14 17 13 17.5 13 18.5 C13 19.5 14 20 15 20 H20" stroke="#25211e" stroke-width="1.7" stroke-linecap="round"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- 5. Entrepreneurial Skills (Droit) -->
-            <a href="subject.html?id=entrepreneurial-skills" class="bento-subject-card card-peach">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">Entrepreneurial Skills (Droit)</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-law" fill="none">
-                    <path d="M8 8 C8 6 10 5 13 5 H23 C26 5 28 6.5 28 9 C28 11.5 26 12 24 12 H10 C8 12 7 13 7 15 V25 C7 27 8.5 28 11 28 H21 C24 28 26 27 26 25" stroke="#25211e" stroke-width="1.7" stroke-linecap="round" fill="#fcf8f0"/>
-                    <line x1="11" y1="17" x2="21" y2="17" stroke="#25211e" stroke-width="1.3" stroke-linecap="round"/>
-                    <line x1="11" y1="21" x2="18" y2="21" stroke="#25211e" stroke-width="1.3" stroke-linecap="round"/>
-                    <circle cx="21" cy="24" r="3" fill="#e0835f" stroke="#25211e" stroke-width="1.3"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- 6. Commercial English 1 -->
-            <a href="subject.html?id=commercial-english-1" class="bento-subject-card card-blue">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">Commercial English 1</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-business" fill="none">
-                    <rect x="5" y="11" width="24" height="17" rx="3" fill="#faf6ed" stroke="#25211e" stroke-width="1.8"/>
-                    <path d="M12 11 V8 C12 7 13 6 14 6 H20 C21 6 22 7 22 8 V11" stroke="#25211e" stroke-width="1.7"/>
-                    <line x1="5" y1="17" x2="29" y2="17" stroke="#25211e" stroke-width="1.3"/>
-                    <rect x="15" y="15" width="4" height="4" rx="1" fill="#f8cd62" stroke="#25211e" stroke-width="1.2"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- 7. Introduction to Linguistics -->
-            <a href="subject.html?id=introduction-to-linguistics" class="bento-subject-card card-green">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">Introduction to Linguistics</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-linguistics" fill="none">
-                    <circle cx="17" cy="17" r="12" fill="#faf6ed" stroke="#25211e" stroke-width="1.7"/>
-                    <line x1="8" y1="17" x2="10" y2="17" stroke="#25211e" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="12" y1="13" x2="12" y2="21" stroke="#e0835f" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="16" y1="9" x2="16" y2="25" stroke="#25211e" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="20" y1="12" x2="20" y2="22" stroke="#e0835f" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="24" y1="15" x2="24" y2="19" stroke="#25211e" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- 8. Literary Trends -->
-            <a href="subject.html?id=literary-trends" class="bento-subject-card card-purple">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">Literary Trends</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-literature" fill="none">
-                    <path d="M17 10 C19 8 23 8 28 9 V23 C23 22 19 23 17 25 C15 23 11 22 6 23 V9 C11 8 15 8 17 10 Z" fill="#faf5ec" stroke="#25211e" stroke-width="1.8" stroke-linejoin="round"/>
-                    <line x1="17" y1="10" x2="17" y2="25" stroke="#25211e" stroke-width="1.6"/>
-                    <path d="M20 13 H25 M20 17 H24" stroke="#7a6fc4" stroke-width="1.2" stroke-linecap="round"/>
-                    <path d="M9 13 H14 M10 17 H14" stroke="#7a6fc4" stroke-width="1.2" stroke-linecap="round"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- 9. US History -->
-            <a href="subject.html?id=us-history" class="bento-subject-card card-peach">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">US History</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-history" fill="none">
-                    <path d="M6 7 H28 V10 H6 Z" fill="#faf6ed" stroke="#25211e" stroke-width="1.7" stroke-linejoin="round"/>
-                    <path d="M9 10 V24 M14.3 10 V24 M19.7 10 V24 M25 10 V24" stroke="#25211e" stroke-width="1.5" stroke-linecap="round"/>
-                    <path d="M5 24 H29 V28 H5 Z" fill="#faf6ed" stroke="#25211e" stroke-width="1.7" stroke-linejoin="round"/>
-                    <circle cx="17" cy="8.5" r="1.2" fill="#5b8fc9"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- 10. Grammar in Context -->
-            <a href="subject.html?id=grammar-in-context" class="bento-subject-card card-blue">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">Grammar in Context</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-grammar" fill="none">
-                    <rect x="5" y="6" width="24" height="22" rx="3.5" fill="#f4f9f7" stroke="#25211e" stroke-width="1.7"/>
-                    <path d="M10 13 C10 11 11.5 10 13.5 10 C14.5 10 15 11 15 12 C15 14.5 12 16.5 10.5 17" stroke="#5bae86" stroke-width="2" stroke-linecap="round"/>
-                    <path d="M17 13 C17 11 18.5 10 20.5 10 C21.5 10 22 11 22 12 C22 14.5 19 16.5 17.5 17" stroke="#5bae86" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="10" y1="21" x2="24" y2="21" stroke="#25211e" stroke-width="1.4" stroke-linecap="round"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- 11. Other Languages (French & Arabic) -->
-            <a href="subject.html?id=other-languages" class="bento-subject-card card-green">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">Other Languages (French &amp; Arabic)</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-language" fill="none">
-                    <path d="M5 8 C5 6 7 4 10 4 H21 C24 4 26 6 26 8 V16 C26 18 24 20 21 20 H12 L6 24 V20 C5 20 5 19 5 18 Z" fill="#fdfaf2" stroke="#25211e" stroke-width="1.7" stroke-linejoin="round"/>
-                    <path d="M10 11 H21 M10 15 H17" stroke="#5b8fc9" stroke-width="1.6" stroke-linecap="round"/>
-                    <circle cx="25" cy="23" r="4.5" fill="#e8987a" stroke="#25211e" stroke-width="1.4"/>
-                    <text x="23" y="25" font-size="6" font-weight="bold" fill="#fff" font-family="sans-serif">A</text>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- 12. Activités pratiques (TEFL) -->
-            <a href="subject.html?id=activites-pratiques-tefl" class="bento-subject-card card-purple">
-              <div class="bento-card-top">
-                <div class="bento-card-text">
-                  <h3 class="bento-card-title">Activités pratiques (TEFL)</h3>
-                </div>
-                <div class="bento-card-art">
-                  <svg viewBox="0 0 34 34" class="sched-subject-icon icon-tefl" fill="none">
-                    <polygon points="17,6 29,12 17,18 5,12" fill="#faf6ed" stroke="#25211e" stroke-width="1.8" stroke-linejoin="round"/>
-                    <path d="M9 14.5 V21 C9 23 12 25 17 25 C22 25 25 23 25 21 V14.5" stroke="#25211e" stroke-width="1.6"/>
-                    <path d="M29 12 V20" stroke="#e0835f" stroke-width="1.6" stroke-linecap="round"/>
-                    <circle cx="29" cy="21" r="1.3" fill="#e0835f"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
+            <!-- Dynamically populated by renderSubjectsView() -->
           </div>
         </div>
 
@@ -1525,31 +1303,40 @@
       <form class="task-modal-form" id="task-modal-form">
         <input type="hidden" id="modal-task-type" value="homework" />
         
-        <div class="modal-form-group" id="modal-group-subject">
-          <label class="modal-form-label" for="modal-task-subject">Subject</label>
-          <select class="modal-form-select" id="modal-task-subject" required>
-            <option value="Writing">Writing</option>
-            <option value="British History">British History</option>
-            <option value="Financial English 1">Financial English 1</option>
-            <option value="Drama / Poetry / Novel">Drama / Poetry / Novel</option>
-            <option value="Commercial English 1">Commercial English 1</option>
-            <option value="Entrepreneurial Skills (Droit)">Entrepreneurial Skills (Droit)</option>
-            <option value="Introduction to Linguistics">Introduction to Linguistics</option>
-            <option value="Literary Trends">Literary Trends</option>
-            <option value="US History">US History</option>
-            <option value="Grammar in Context">Grammar in Context</option>
-            <option value="Other Languages">Other Languages</option>
-            <option value="Activités pratiques (TEFL)">Activités pratiques (TEFL)</option>
-            <option value="General">General / Study</option>
+        <!-- Target Class Selection (for teachers & admins) -->
+        <div class="modal-form-group" id="modal-class-target-wrap" style="display: none;">
+          <label class="modal-form-label" for="modal-task-class">Class</label>
+          <select class="modal-form-select" id="modal-task-class">
+            <!-- Populated dynamically -->
           </select>
         </div>
 
         <div class="modal-form-group" id="modal-group-target-wrap" style="display: none;">
           <label class="modal-form-label" for="modal-task-group">Assign To Group</label>
           <select class="modal-form-select" id="modal-task-group">
-            <option value="grp1">Group 1 (2ANG-AFF 1)</option>
-            <option value="grp2">Group 2 (2ANG-AFF 2)</option>
+            <option value="grp1">Group 1</option>
+            <option value="grp2">Group 2</option>
           </select>
+        </div>
+
+        <div class="modal-form-group" id="modal-group-subject">
+          <label class="modal-form-label" for="modal-task-subject-trigger">Subject</label>
+          <div class="searchable-dropdown-wrap" id="modal-subject-dropdown-wrap">
+            <input type="hidden" id="modal-task-subject" name="subject" required />
+            <button type="button" class="searchable-dropdown-trigger" id="modal-task-subject-trigger" aria-haspopup="listbox" aria-expanded="false">
+              <span id="modal-task-subject-label">Select Subject...</span>
+              <svg viewBox="0 0 24 24" class="dropdown-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="searchable-dropdown-menu" id="modal-task-subject-menu" role="listbox">
+              <div class="searchable-input-wrap">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#72685d" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
+                <input type="text" class="searchable-filter-input" id="modal-task-subject-search" placeholder="Type to filter subjects..." autocomplete="off" />
+              </div>
+              <div class="searchable-options-list" id="modal-task-subject-options">
+                <!-- Dynamically populated subjects for current class -->
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="modal-form-group">

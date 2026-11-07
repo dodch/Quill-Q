@@ -1189,6 +1189,25 @@
                   `).join("")}
                 </div>
               </div>
+
+              <!-- Subjects inside this class -->
+              <div style="border-top: 2px dashed #ded6c5; padding-top: 12px; margin-bottom: 14px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                  <strong style="font-size: 13px; color: #1a1816; text-transform: uppercase; letter-spacing: 0.5px;">Subjects (${(c.subjects || []).length}):</strong>
+                  <button type="button" class="btn-create-account btn-manage-subjects" data-id="${c.id}" style="background: #fef08a; color: #1a1816; padding: 3px 8px; font-size: 11.5px; box-shadow: 1px 2px 0px #1a1816;">
+                    ⚙️ Manage Subjects
+                  </button>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                  ${(!c.subjects || c.subjects.length === 0) 
+                    ? `<span style="font-size: 12px; color: #8c7e71; font-style: italic;">No subjects added yet.</span>` 
+                    : c.subjects.map((s) => `
+                    <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; background: #fffdf8; border: 1.5px solid #1a1816; border-radius: 8px; padding: 3px 8px; box-shadow: 1px 1px 0px #1a1816;">
+                      <span>${escapeHtml(s.name)}</span>
+                    </span>
+                  `).join("")}
+                </div>
+              </div>
             </div>
 
             <div style="display: flex; gap: 8px; margin-top: 10px; border-top: 1.5px solid #eee; padding-top: 12px;">
@@ -1248,6 +1267,12 @@
         });
       });
 
+      grid.querySelectorAll(".btn-manage-subjects").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          openManageSubjectsModal(btn.dataset.id);
+        });
+      });
+
       grid.querySelectorAll(".btn-delete-class").forEach((btn) => {
         btn.addEventListener("click", async () => {
           const id = btn.dataset.id;
@@ -1268,6 +1293,188 @@
             bindClassAndGroupSelectors();
           }
         });
+      });
+    }
+
+    // Modal: Manage Class Subjects
+    const modalSubjects = document.getElementById("modal-manage-subjects");
+    const subjectsListEl = document.getElementById("modal-class-subjects-list");
+    const subjectsCountEl = document.getElementById("modal-subjects-count");
+    const subjectsTitleEl = document.getElementById("modal-subjects-class-title");
+    const btnCloseSubjects = document.getElementById("btn-close-manage-subjects-modal");
+    const btnDoneSubjects = document.getElementById("btn-done-manage-subjects");
+    const btnShowAddSubject = document.getElementById("btn-show-add-subject-form");
+    const formSubject = document.getElementById("form-class-subject");
+    const btnCancelSubjectForm = document.getElementById("btn-cancel-subject-form");
+
+    let currentManagingClassId = null;
+
+    function renderModalSubjectsList() {
+      if (!currentManagingClassId || !subjectsListEl) return;
+      const subjects = window.AcademicRegistry ? window.AcademicRegistry.getSubjectsForClass(currentManagingClassId) : [];
+      if (subjectsCountEl) subjectsCountEl.textContent = subjects.length;
+
+      if (subjects.length === 0) {
+        subjectsListEl.innerHTML = `
+          <div style="padding: 20px; text-align: center; color: #72685d; font-size: 13.5px; background: #fffdf8; border: 1.5px dashed #ded6c5; border-radius: 10px;">
+            No subjects added to this class yet. Click "+ Add New Subject" to create one.
+          </div>
+        `;
+        return;
+      }
+
+      subjectsListEl.innerHTML = subjects.map((s) => {
+        return `
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #ffffff; border: 1.5px solid #1a1816; border-radius: 10px; padding: 8px 12px; box-shadow: 1.5px 1.5px 0px #1a1816;">
+            <div>
+              <div style="font-size: 14px; font-weight: 800; color: #1a1816; display: flex; align-items: center; gap: 6px;">
+                <span>${escapeHtml(s.name)}</span>
+                ${s.code ? `<span style="font-size: 10.5px; font-weight: 700; background: #e0f2fe; color: #0369a1; border: 1px solid #1a1816; border-radius: 5px; padding: 1px 5px;">${escapeHtml(s.code)}</span>` : ""}
+              </div>
+              <div style="font-size: 12px; color: #72685d; margin-top: 2px;">
+                ${s.prof ? `<span>Prof: ${escapeHtml(s.prof)}</span> • ` : ""}${s.room ? `<span>Room: ${escapeHtml(s.room)}</span>` : ""}
+              </div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn-slot-move btn-edit-subject" data-id="${s.id}" title="Edit Subject" style="width: 28px; height: 28px; font-size: 12px;">
+                <i class="fi fi-rr-edit"></i>
+              </button>
+              <button type="button" class="btn-slot-delete btn-delete-subject" data-id="${s.id}" data-name="${escapeHtml(s.name)}" title="Delete Subject" style="width: 28px; height: 28px; font-size: 12px;">
+                <i class="fi fi-rr-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      // Bind edit subject
+      subjectsListEl.querySelectorAll(".btn-edit-subject").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const sId = btn.dataset.id;
+          const subjects = window.AcademicRegistry ? window.AcademicRegistry.getSubjectsForClass(currentManagingClassId) : [];
+          const subj = subjects.find((s) => s.id === sId);
+          if (!subj) return;
+
+          document.getElementById("subject-target-class-id").value = currentManagingClassId;
+          document.getElementById("subject-edit-id").value = subj.id;
+          document.getElementById("input-subject-name").value = subj.name || "";
+          document.getElementById("input-subject-code").value = subj.code || "";
+          document.getElementById("input-subject-room").value = subj.room || "";
+          document.getElementById("select-subject-icon").value = subj.icon || "writing";
+          document.getElementById("select-subject-color").value = subj.bgClass || "card-peach";
+          document.getElementById("form-subject-title").textContent = "Edit Subject: " + subj.name;
+          formSubject.style.display = "block";
+        });
+      });
+
+      // Bind delete subject
+      subjectsListEl.querySelectorAll(".btn-delete-subject").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const sId = btn.dataset.id;
+          const sName = btn.dataset.name;
+          const confirmed = await showCustomConfirm(
+            `Remove subject "${sName}" from this class?`,
+            "Delete Subject",
+            '<i class="fi fi-rr-trash"></i>',
+            "Delete",
+            "Cancel",
+            true
+          );
+          if (confirmed) {
+            try {
+              if (window.AcademicRegistry) {
+                await window.AcademicRegistry.deleteSubjectFromClass(db, currentManagingClassId, sId);
+              }
+              showToast(`Subject "${sName}" removed!`, "info");
+              renderModalSubjectsList();
+              renderClassesGrid();
+            } catch (err) {
+              showToast("Could not delete subject: " + err.message, "error");
+            }
+          }
+        });
+      });
+    }
+
+    function openManageSubjectsModal(classId) {
+      currentManagingClassId = classId;
+      const cls = window.AcademicRegistry ? window.AcademicRegistry.getClassById(classId) : null;
+      if (subjectsTitleEl) subjectsTitleEl.textContent = `Manage Subjects: ${cls ? cls.name : classId}`;
+      if (formSubject) formSubject.style.display = "none";
+      renderModalSubjectsList();
+      if (modalSubjects) modalSubjects.classList.remove("view-hidden");
+    }
+
+    if (btnCloseSubjects) btnCloseSubjects.addEventListener("click", () => modalSubjects.classList.add("view-hidden"));
+    if (btnDoneSubjects) btnDoneSubjects.addEventListener("click", () => modalSubjects.classList.add("view-hidden"));
+
+    if (btnShowAddSubject) {
+      btnShowAddSubject.addEventListener("click", () => {
+        document.getElementById("subject-target-class-id").value = currentManagingClassId;
+        document.getElementById("subject-edit-id").value = "";
+        document.getElementById("input-subject-name").value = "";
+        document.getElementById("input-subject-code").value = "";
+        document.getElementById("input-subject-room").value = "";
+        document.getElementById("select-subject-icon").value = "language";
+        document.getElementById("select-subject-color").value = "card-peach";
+        document.getElementById("form-subject-title").textContent = "Add New Subject";
+        formSubject.style.display = "block";
+      });
+    }
+
+    if (btnCancelSubjectForm) {
+      btnCancelSubjectForm.addEventListener("click", () => {
+        if (formSubject) formSubject.style.display = "none";
+      });
+    }
+
+    if (formSubject) {
+      formSubject.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const classId = document.getElementById("subject-target-class-id").value;
+        const editId = document.getElementById("subject-edit-id").value;
+        const name = document.getElementById("input-subject-name").value.trim();
+        const code = document.getElementById("input-subject-code").value.trim();
+        const room = document.getElementById("input-subject-room").value.trim();
+        const icon = document.getElementById("select-subject-icon").value;
+        const bgClass = document.getElementById("select-subject-color").value;
+
+        if (!name) {
+          showToast("Subject Name is required", "error");
+          return;
+        }
+
+        const colorMap = {
+          "card-peach": "#e0835f",
+          "card-yellow": "#f6cf7c",
+          "card-green": "#5bae86",
+          "card-blue": "#5b8fc9",
+          "card-purple": "#ba90e8"
+        };
+
+        const subjectPayload = {
+          name,
+          code,
+          room,
+          icon,
+          bgClass,
+          color: colorMap[bgClass] || "#5bae86"
+        };
+
+        try {
+          if (editId) {
+            await window.AcademicRegistry.updateSubjectInClass(db, classId, editId, subjectPayload);
+            showToast(`Subject "${name}" updated!`, "success");
+          } else {
+            await window.AcademicRegistry.addSubjectToClass(db, classId, subjectPayload);
+            showToast(`Subject "${name}" added to class!`, "success");
+          }
+          formSubject.style.display = "none";
+          renderModalSubjectsList();
+          renderClassesGrid();
+        } catch (err) {
+          showToast("Failed to save subject: " + err.message, "error");
+        }
       });
     }
 
