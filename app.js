@@ -2025,7 +2025,7 @@ async function requestNotificationAccess() {
 }
 
 // Universal background push notification dispatcher
-async function broadcastPushNotification({ title, body, url, targetView, tag, targetGroup }) {
+async function broadcastPushNotification({ title, body, url, targetView, tag, targetGroup, targetRole }) {
   const endpoint = (typeof firebaseConfig !== "undefined" && firebaseConfig.pushEndpoint)
     ? firebaseConfig.pushEndpoint
     : "https://quill-push-dispatcher.dodchadam.workers.dev";
@@ -2036,12 +2036,14 @@ async function broadcastPushNotification({ title, body, url, targetView, tag, ta
     const user = currentUser || (typeof firebase !== "undefined" && firebase.auth && firebase.auth().currentUser);
     const profile = currentProfile;
     const defaultGroup = targetGroup || (profile ? getUserGroup(profile) : "grp1");
+    const isApproval = (targetView === "approvals");
     const payload = {
       title: title || "Quill-Q Notification",
       body: body || "",
       url: url || "./index.html",
       targetView: targetView || "home",
-      targetGroup: defaultGroup,
+      targetGroup: isApproval ? null : defaultGroup,
+      targetRole: targetRole || (isApproval ? "teacher" : null),
       tag: tag || ("quill-" + Date.now()),
       senderId: user ? user.uid : null,
       senderName: user ? (user.displayName || null) : null
@@ -4448,14 +4450,16 @@ function initFirebaseAuthAndProfile() {
         }
 
         if (userStatus === "pending" && typeof broadcastPushNotification === "function") {
-          const roleLabel = profilePayload.role === "teacher" ? "Teacher" : "Student";
-          const academicInfo = profilePayload.role === "teacher"
+          const isTeacherReg = profilePayload.role === "teacher";
+          const roleLabel = isTeacherReg ? "Teacher" : "Student";
+          const academicInfo = isTeacherReg
             ? "Teaching Faculty"
             : `${profilePayload.className || "Class"} (${profilePayload.groupName || (profilePayload.group === "grp2" ? "Group 2" : "Group 1")})`;
           broadcastPushNotification({
             title: `🎓 New ${roleLabel} Registration Request`,
             body: `${profilePayload.displayName || "Someone"} requested approval for ${academicInfo}. Tap to review.`,
             targetView: "approvals",
+            targetRole: isTeacherReg ? "admin" : "teacher",
             tag: `approval-request-${currentUser.uid}`
           });
         }

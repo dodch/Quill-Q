@@ -35,7 +35,7 @@ function initFirebase() {
  * Sends payload to Cloudflare Worker, which delivers to Google FCM
  * even when users have closed their browser tabs and locked devices.
  */
-async function broadcastPushNotification({ title, body, url, targetView, tag }) {
+async function broadcastPushNotification({ title, body, url, targetView, tag, targetGroup, targetRole }) {
   const endpoint = (typeof firebaseConfig !== "undefined" && firebaseConfig.pushEndpoint)
     ? firebaseConfig.pushEndpoint
     : (typeof localStorage !== "undefined" ? (localStorage.getItem("quill_push_endpoint") || "") : "");
@@ -54,11 +54,14 @@ async function broadcastPushNotification({ title, body, url, targetView, tag }) 
       senderName = u.displayName || null;
     }
 
+    const isApproval = (targetView === "approvals");
     const payload = {
       title: title || "Quill-Q Notification",
       body: body || "",
       url: url || "./index.html",
       targetView: targetView || "home",
+      targetGroup: isApproval ? null : (targetGroup || null),
+      targetRole: targetRole || (isApproval ? "teacher" : null),
       tag: tag || ("quill-" + Date.now()),
       senderId,
       senderName

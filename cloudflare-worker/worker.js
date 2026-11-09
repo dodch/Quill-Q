@@ -159,7 +159,7 @@ export default {
     // 3. FCM Push Notifications (Existing Dispatcher)
     try {
       const payload = await request.json();
-      const { title, body, url: notifUrl, targetView, tag, senderId, targetGroup } = payload;
+      const { title, body, url: notifUrl, targetView, tag, senderId, targetGroup, targetRole } = payload;
 
       if (!title) {
         return new Response(JSON.stringify({ error: "Missing notification title" }), {
@@ -187,8 +187,8 @@ export default {
       // 1. Get or reuse OAuth2 Google Access Token
       const accessToken = await getGoogleOAuth2Token(clientEmail, rawPrivateKey);
 
-      // 2. Fetch all registered subscriber device tokens from Firestore matching group isolation
-      const tokens = await fetchSubscriberTokens(projectId, accessToken, senderId, targetGroup);
+      // 2. Fetch all registered subscriber device tokens from Firestore matching role and group isolation
+      const tokens = await fetchSubscriberTokens(projectId, accessToken, senderId, targetGroup, targetRole, targetView);
 
       if (tokens.length === 0) {
         return new Response(JSON.stringify({ success: true, message: "No registered device tokens found.", delivered: 0 }), {
@@ -293,7 +293,7 @@ async function getGoogleOAuth2Token(clientEmail, privateKeyPem) {
  * - If targetGroup is specified, students from other groups are filtered out.
  * - Teachers and Admins receive all group notifications.
  */
-async function fetchSubscriberTokens(projectId, accessToken, excludeUserId, targetGroup) {
+async function fetchSubscriberTokens(projectId, accessToken, excludeUserId, targetGroup, targetRole, targetView) {
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
   const query = {
     structuredQuery: {
@@ -317,19 +317,35 @@ async function fetchSubscriberTokens(projectId, accessToken, excludeUserId, targ
   const list = await res.json();
   const tokenSet = new Set();
 
+  const isApprovalNotification = (targetView === "approvals" || targetRole === "teacher" || targetRole === "admin");
+  const normalizedTargetRole = (targetRole || "").toLowerCase();
+
   for (const item of list) {
     const doc = item.document;
     if (!doc || !doc.fields) continue;
     
     const tokenVal = doc.fields.token?.stringValue;
     const userIdVal = doc.fields.userId?.stringValue;
-    const userRole = doc.fields.userRole?.stringValue || "student";
+    const userRole = (doc.fields.userRole?.stringValue || "student").toLowerCase();
     const tokenGroup = doc.fields.group?.stringValue || "grp1";
 
-    // Don't send push notification to the author that created the item
+    // 1. Don't send push notification to the author that created the item
     if (excludeUserId && userIdVal === excludeUserId) continue;
 
-    // Group isolation filter:
+    // 2. Strict Role & Approvals Filter:
+    // If targetRole is "admin": ONLY admins receive it!
+    if (normalizedTargetRole === "admin") {
+      if (userRole !== "admin") continue;
+    }
+    // If targetView === "approvals" or targetRole === "teacher":
+    // ONLY teachers and admins receive it! Students are STRICTLY excluded!
+    else if (isApprovalNotification || normalizedTargetRole === "teacher") {
+      if (userRole !== "teacher" && userRole !== "admin") {
+        continue;
+      }
+    }
+
+    // 3. Group isolation filter for students:
     // If targetGroup is provided and recipient is a student whose group differs, skip!
     // Teachers and Admins always receive notifications across both groups.
     if (targetGroup && userRole === "student" && tokenGroup !== targetGroup) {
