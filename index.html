@@ -43,7 +43,28 @@
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css" />
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
   </noscript>
-  <link rel="stylesheet" href="styles.min.css?v=75" />
+  <link rel="stylesheet" href="styles.min.css?v=76" />
+
+  <!-- Speculation Rules API for instant 0ms pre-rendering of subject & editor pages -->
+  <script type="speculationrules">
+  {
+    "prerender": [
+      {
+        "source": "list",
+        "urls": ["./subject.html", "./editor.html"],
+        "eagerness": "moderate"
+      }
+    ],
+    "prefetch": [
+      {
+        "source": "list",
+        "urls": ["./subject.html", "./editor.html"],
+        "eagerness": "conservative"
+      }
+    ]
+  }
+  </script>
+
   <script>
     try {
       var p = JSON.parse(localStorage.getItem("quill_q_profile") || "null");
@@ -160,7 +181,7 @@
       <!-- Step 1: Sign In with Google -->
       <div class="auth-screen-card" id="auth-step-signin">
         <div class="auth-card-badge">
-          <img src="assets/quill_q_logo_face_clean.png" alt="Quill-Q Logo" class="auth-card-badge-logo" />
+          <img src="assets/quill_q_logo_face_clean.png" alt="Quill-Q Logo" class="auth-card-badge-logo" decoding="async" />
         </div>
         <h2 class="auth-card-title">Welcome to Quill-Q</h2>
         <p class="auth-card-subtitle">Log in or create your academic account with Google to access your personalized timetable, homework, and study reminders.</p>
@@ -202,6 +223,7 @@
                 class="onboarding-avatar-img" 
                 id="onboarding-preview-avatar" 
                 referrerpolicy="no-referrer"
+                decoding="async"
                 onerror="this.style.display='none'; const init = document.getElementById('onboarding-avatar-initial'); if(init) init.style.display='flex';" 
               />
               <span class="onboarding-avatar-initial" id="onboarding-avatar-initial" style="display: none;">Q</span>
@@ -347,7 +369,7 @@
         </p>
 
         <div class="pending-user-summary-card" style="background: #faf6ed; border: 2px dashed #ded6c5; border-radius: 14px; padding: 14px 18px; margin-bottom: 24px; text-align: left; display: flex; align-items: center; gap: 14px;">
-          <img src="assets/avatar.jpg" id="pending-user-avatar" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #1a1816;" alt="User avatar" />
+          <img src="assets/avatar.jpg" id="pending-user-avatar" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #1a1816;" alt="User avatar" decoding="async" />
           <div>
             <div id="pending-user-fullname" style="font-weight: 700; color: #1a1816; font-size: 15px;">Student</div>
             <div id="pending-user-role-badge" style="font-size: 13px; color: #7a7063;">Student • English Business Grp 1</div>
@@ -461,7 +483,7 @@
 
       <!-- Sidebar User Profile Widget (Clickable: opens Profile & Admin section) -->
       <div class="sidebar-user-card" id="sidebar-user-card" title="Click to view Profile & Admin" style="cursor: pointer;">
-        <img src="assets/avatar.jpg" alt="User avatar" class="sidebar-user-avatar" id="sidebar-user-avatar" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
+        <img src="assets/avatar.jpg" alt="User avatar" class="sidebar-user-avatar" id="sidebar-user-avatar" referrerpolicy="no-referrer" decoding="async" onerror="this.src='assets/avatar.jpg'" />
         <div class="sidebar-user-info" id="sidebar-user-info-click" style="flex: 1; cursor: pointer;">
           <span class="sidebar-user-name" id="sidebar-user-name">Student</span>
           <span class="sidebar-user-role" id="sidebar-user-role">Student</span>
@@ -514,7 +536,7 @@
         <!-- HOME VIEW -->
         <div class="view-panel" id="view-home">
           <header class="greeting">
-            <img src="assets/avatar.jpg" alt="Profile picture" class="avatar" id="home-greeting-avatar" referrerpolicy="no-referrer" onerror="this.src='assets/avatar.jpg'" />
+            <img src="assets/avatar.jpg" alt="Profile picture" class="avatar" id="home-greeting-avatar" referrerpolicy="no-referrer" decoding="async" onerror="this.src='assets/avatar.jpg'" />
             <div class="greeting-user-meta">
               <h2>Hello,<br /><strong id="home-greeting-name">Student</strong></h2>
               <div class="user-role-chip" id="home-user-role-chip">
@@ -1022,7 +1044,7 @@
           <div class="profile-cards-grid">
             <div class="profile-hero-card" style="background: #fdfaf3; border: 2.5px solid #1a1816; border-radius: 20px; padding: 24px; box-shadow: 4px 6px 0px #1a1816; margin-bottom: 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
               <div style="position: relative;">
-                <img src="assets/avatar.jpg" alt="User avatar" id="profile-page-avatar" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #1a1816; object-fit: cover; box-shadow: 2px 3px 0px #1a1816;" />
+                <img src="assets/avatar.jpg" alt="User avatar" id="profile-page-avatar" decoding="async" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #1a1816; object-fit: cover; box-shadow: 2px 3px 0px #1a1816;" />
                 <span id="profile-page-badge" style="position: absolute; bottom: 0; right: 0; background: #e89838; color: #1a1816; width: 28px; height: 28px; border-radius: 50%; border: 2px solid #1a1816; display: flex; align-items: center; justify-content: center; font-size: 14px;">👑</span>
               </div>
               <div style="flex: 1; min-width: 200px;">
@@ -1485,6 +1507,6 @@
 
   <script defer src="academic-config.js?v=63"></script>
   <script defer src="profile-manager.js?v=63"></script>
-  <script defer src="app.min.js?v=65"></script>
+  <script defer src="app.min.js?v=66"></script>
 </body>
 </html>

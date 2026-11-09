@@ -10698,6 +10698,94 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   font-style: italic;
 }
 
+/* ==========================================================================
+   Modern Web App Performance & Responsiveness Optimizations (2025/2026 Spec)
+   ========================================================================== */
+
+/* 1. Touch-Action: Eliminate 300ms mobile tap delay across all interactive components */
+button,
+a,
+input,
+select,
+textarea,
+.nav-item,
+.bento-subject-card,
+.btn,
+.chip,
+.quick-tab,
+.filter-pill,
+.modal-close,
+.task-modal-close,
+.homework-card,
+.chat-send-btn,
+.chat-tab,
+.sched-day-pill,
+.subj-filter-pill,
+.action-btn,
+.task-btn-save,
+.task-btn-cancel {
+  touch-action: manipulation;
+}
+
+/* 2. Content-Visibility: Defer offscreen layout & rendering calculations */
+.bento-subject-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 160px;
+}
+
+.homework-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 90px;
+}
+
+.schedule-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 80px;
+}
+
+.chat-message-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 60px;
+}
+
+.notification-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 70px;
+}
+
+/* 3. GPU Hardware Acceleration & Layer Promotion for Modals & Drawers */
+.sidebar,
+.mobile-sidebar,
+.task-modal-card,
+.pinned-notes-sidebar,
+.inapp-toast-container,
+.chat-seen-modal-card {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* 4. Native View Transitions (Chrome 111+, Edge, Safari 18+) */
+@supports (view-transition-name: none) {
+  ::view-transition-old(root) {
+    animation: 140ms cubic-bezier(0.2, 0, 0, 1) both modern-view-fade-out;
+  }
+  ::view-transition-new(root) {
+    animation: 140ms cubic-bezier(0.2, 0, 0, 1) both modern-view-fade-in;
+  }
+}
+
+@keyframes modern-view-fade-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.995); }
+}
+
+@keyframes modern-view-fade-in {
+  from { opacity: 0; transform: scale(1.005); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+
 
 
 

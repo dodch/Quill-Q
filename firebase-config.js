@@ -15,6 +15,8 @@ var firebaseConfig = window.firebaseConfig || {
 };
 window.firebaseConfig = firebaseConfig;
 
+var _firestorePersistenceInitialized = false;
+
 function initFirebase() {
   if (typeof firebase !== "undefined" && !firebase.apps.length) {
     try {
@@ -23,9 +25,27 @@ function initFirebase() {
       console.warn("Firebase initialization warning:", e);
     }
   }
+
+  const firestoreDb = (typeof firebase !== "undefined" && typeof firebase.firestore === "function")
+    ? firebase.firestore()
+    : null;
+
+  if (firestoreDb && !_firestorePersistenceInitialized && typeof window !== "undefined") {
+    _firestorePersistenceInitialized = true;
+    try {
+      firestoreDb.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+        if (err.code === "failed-precondition") {
+          console.log("Firestore persistence: active in primary tab.");
+        } else if (err.code === "unimplemented") {
+          console.log("Firestore persistence: browser does not support persistence.");
+        }
+      });
+    } catch (pErr) {}
+  }
+
   return {
     auth: typeof firebase !== "undefined" ? firebase.auth() : null,
-    db: typeof firebase !== "undefined" ? firebase.firestore() : null,
+    db: firestoreDb,
     storage: typeof firebase !== "undefined" && typeof firebase.storage === "function" ? firebase.storage() : null
   };
 }

@@ -1275,116 +1275,124 @@ function renderDate() {
 
 // --- Sidebar navigation & View switching ---
 function switchView(page) {
-  const viewHome = document.getElementById("view-home");
-  const viewSchedule = document.getElementById("view-schedule");
-  const viewSubjects = document.getElementById("view-subjects");
-  const viewHomeworks = document.getElementById("view-homeworks");
-  const viewProfile = document.getElementById("view-profile");
-  const viewChat = document.getElementById("view-chat");
-  const viewApprovals = document.getElementById("view-approvals");
-  const hwNote = document.getElementById("sticky-homework-note");
-  const subjectsSide = document.getElementById("subjects-side-wrap");
-  const homeworksSide = document.getElementById("homeworks-side-wrap");
-  const mainEl = document.querySelector(".main");
-
-  // Hide all view panels first
-  if (viewHome) viewHome.classList.add("view-hidden");
-  if (viewSchedule) viewSchedule.classList.add("view-hidden");
-  if (viewSubjects) viewSubjects.classList.add("view-hidden");
-  if (viewHomeworks) viewHomeworks.classList.add("view-hidden");
-  if (viewProfile) viewProfile.classList.add("view-hidden");
-  if (viewChat) viewChat.classList.add("view-hidden");
-  if (viewApprovals) viewApprovals.classList.add("view-hidden");
-
-  if (mainEl) {
-    mainEl.setAttribute("data-current-page", page || "home");
-  }
-
-  // Toggle Subjects icon between regular outline and solid filled
-  const subjIcon = document.querySelector("#nav-subjects i");
-  if (subjIcon) {
-    if (page === "subjects") {
-      subjIcon.classList.remove("fi-rr-books");
-      subjIcon.classList.add("fi-sr-books");
-    } else {
-      subjIcon.classList.remove("fi-sr-books");
-      subjIcon.classList.add("fi-rr-books");
-    }
-  }
-
-  // Toggle Chat icon between regular outline and solid filled
-  const chatIcon = document.getElementById("nav-chat-icon");
-  if (chatIcon) {
-    if (page === "chat") {
-      chatIcon.classList.remove("fi-rr-comment-alt-dots");
-      chatIcon.classList.add("fi-sr-comment-alt-dots");
-    } else {
-      chatIcon.classList.remove("fi-sr-comment-alt-dots");
-      chatIcon.classList.add("fi-rr-comment-alt-dots");
-    }
-  }
-
-  if (page === "schedule") {
-    if (viewSchedule) viewSchedule.classList.remove("view-hidden");
-    if (mainEl) mainEl.classList.add("on-schedule-view");
-    if (hwNote) hwNote.classList.remove("view-hidden");
-    if (subjectsSide) subjectsSide.classList.add("view-hidden");
-    if (homeworksSide) homeworksSide.classList.add("view-hidden");
-    renderDetailedSchedule(currentSelectedDay);
-  } else if (page === "subjects") {
-    if (viewSubjects) viewSubjects.classList.remove("view-hidden");
-    if (mainEl) mainEl.classList.remove("on-schedule-view");
-    // In subjects view: show notes.png paperclip note & hide homework pin note
-    if (hwNote) hwNote.classList.add("view-hidden");
-    if (subjectsSide) subjectsSide.classList.remove("view-hidden");
-    if (homeworksSide) homeworksSide.classList.add("view-hidden");
-    renderSubjectsView();
-  } else if (page === "homeworks") {
-    if (viewHomeworks) viewHomeworks.classList.remove("view-hidden");
-    if (mainEl) mainEl.classList.remove("on-schedule-view");
-    if (hwNote) hwNote.classList.add("view-hidden");
-    if (subjectsSide) subjectsSide.classList.add("view-hidden");
-    if (homeworksSide) homeworksSide.classList.remove("view-hidden");
-    renderHomeworksView();
-  } else if (page === "profile") {
+  const performSwitch = () => {
+    const viewHome = document.getElementById("view-home");
+    const viewSchedule = document.getElementById("view-schedule");
+    const viewSubjects = document.getElementById("view-subjects");
+    const viewHomeworks = document.getElementById("view-homeworks");
     const viewProfile = document.getElementById("view-profile");
-    if (viewProfile) viewProfile.classList.remove("view-hidden");
-    if (mainEl) mainEl.classList.remove("on-schedule-view");
-    if (hwNote) hwNote.classList.remove("view-hidden");
-    if (subjectsSide) subjectsSide.classList.add("view-hidden");
-    if (homeworksSide) homeworksSide.classList.add("view-hidden");
-    renderProfileView();
-  } else if (page === "approvals") {
-    if (viewApprovals) viewApprovals.classList.remove("view-hidden");
-    if (mainEl) mainEl.classList.remove("on-schedule-view");
-    if (hwNote) hwNote.classList.add("view-hidden");
-    if (subjectsSide) subjectsSide.classList.add("view-hidden");
-    if (homeworksSide) homeworksSide.classList.add("view-hidden");
-    renderTeacherApprovalsView();
-  } else if (page === "chat") {
-    if (viewChat) viewChat.classList.remove("view-hidden");
-    if (mainEl) mainEl.classList.remove("on-schedule-view");
-    // Completely hide homework note, search bar, and side cards in Chat view
-    if (hwNote) hwNote.classList.add("view-hidden");
-    if (subjectsSide) subjectsSide.classList.add("view-hidden");
-    if (homeworksSide) homeworksSide.classList.add("view-hidden");
-    if (typeof onChatViewOpened === "function") {
-      onChatViewOpened();
-    }
-  } else {
-    // Default Home view: homework note stays as is
-    if (viewHome) viewHome.classList.remove("view-hidden");
-    if (mainEl) mainEl.classList.remove("on-schedule-view");
-    if (hwNote) hwNote.classList.remove("view-hidden");
-    if (subjectsSide) subjectsSide.classList.add("view-hidden");
-    if (homeworksSide) homeworksSide.classList.add("view-hidden");
-    updateTodayStatus();
-    renderSchedule();
-  }
+    const viewChat = document.getElementById("view-chat");
+    const viewApprovals = document.getElementById("view-approvals");
+    const hwNote = document.getElementById("sticky-homework-note");
+    const subjectsSide = document.getElementById("subjects-side-wrap");
+    const homeworksSide = document.getElementById("homeworks-side-wrap");
+    const mainEl = document.querySelector(".main");
 
-  // Re-apply any active search filter to freshly displayed view
-  if (typeof reapplySearchFilter === "function") {
-    reapplySearchFilter();
+    // Hide all view panels first
+    if (viewHome) viewHome.classList.add("view-hidden");
+    if (viewSchedule) viewSchedule.classList.add("view-hidden");
+    if (viewSubjects) viewSubjects.classList.add("view-hidden");
+    if (viewHomeworks) viewHomeworks.classList.add("view-hidden");
+    if (viewProfile) viewProfile.classList.add("view-hidden");
+    if (viewChat) viewChat.classList.add("view-hidden");
+    if (viewApprovals) viewApprovals.classList.add("view-hidden");
+
+    if (mainEl) {
+      mainEl.setAttribute("data-current-page", page || "home");
+    }
+
+    // Toggle Subjects icon between regular outline and solid filled
+    const subjIcon = document.querySelector("#nav-subjects i");
+    if (subjIcon) {
+      if (page === "subjects") {
+        subjIcon.classList.remove("fi-rr-books");
+        subjIcon.classList.add("fi-sr-books");
+      } else {
+        subjIcon.classList.remove("fi-sr-books");
+        subjIcon.classList.add("fi-rr-books");
+      }
+    }
+
+    // Toggle Chat icon between regular outline and solid filled
+    const chatIcon = document.getElementById("nav-chat-icon");
+    if (chatIcon) {
+      if (page === "chat") {
+        chatIcon.classList.remove("fi-rr-comment-alt-dots");
+        chatIcon.classList.add("fi-sr-comment-alt-dots");
+      } else {
+        chatIcon.classList.remove("fi-sr-comment-alt-dots");
+        chatIcon.classList.add("fi-rr-comment-alt-dots");
+      }
+    }
+
+    if (page === "schedule") {
+      if (viewSchedule) viewSchedule.classList.remove("view-hidden");
+      if (mainEl) mainEl.classList.add("on-schedule-view");
+      if (hwNote) hwNote.classList.remove("view-hidden");
+      if (subjectsSide) subjectsSide.classList.add("view-hidden");
+      if (homeworksSide) homeworksSide.classList.add("view-hidden");
+      renderDetailedSchedule(currentSelectedDay);
+    } else if (page === "subjects") {
+      if (viewSubjects) viewSubjects.classList.remove("view-hidden");
+      if (mainEl) mainEl.classList.remove("on-schedule-view");
+      // In subjects view: show notes.png paperclip note & hide homework pin note
+      if (hwNote) hwNote.classList.add("view-hidden");
+      if (subjectsSide) subjectsSide.classList.remove("view-hidden");
+      if (homeworksSide) homeworksSide.classList.add("view-hidden");
+      renderSubjectsView();
+    } else if (page === "homeworks") {
+      if (viewHomeworks) viewHomeworks.classList.remove("view-hidden");
+      if (mainEl) mainEl.classList.remove("on-schedule-view");
+      if (hwNote) hwNote.classList.add("view-hidden");
+      if (subjectsSide) subjectsSide.classList.add("view-hidden");
+      if (homeworksSide) homeworksSide.classList.remove("view-hidden");
+      renderHomeworksView();
+    } else if (page === "profile") {
+      const viewProfile = document.getElementById("view-profile");
+      if (viewProfile) viewProfile.classList.remove("view-hidden");
+      if (mainEl) mainEl.classList.remove("on-schedule-view");
+      if (hwNote) hwNote.classList.remove("view-hidden");
+      if (subjectsSide) subjectsSide.classList.add("view-hidden");
+      if (homeworksSide) homeworksSide.classList.add("view-hidden");
+      renderProfileView();
+    } else if (page === "approvals") {
+      if (viewApprovals) viewApprovals.classList.remove("view-hidden");
+      if (mainEl) mainEl.classList.remove("on-schedule-view");
+      if (hwNote) hwNote.classList.add("view-hidden");
+      if (subjectsSide) subjectsSide.classList.add("view-hidden");
+      if (homeworksSide) homeworksSide.classList.add("view-hidden");
+      renderTeacherApprovalsView();
+    } else if (page === "chat") {
+      if (viewChat) viewChat.classList.remove("view-hidden");
+      if (mainEl) mainEl.classList.remove("on-schedule-view");
+      // Completely hide homework note, search bar, and side cards in Chat view
+      if (hwNote) hwNote.classList.add("view-hidden");
+      if (subjectsSide) subjectsSide.classList.add("view-hidden");
+      if (homeworksSide) homeworksSide.classList.add("view-hidden");
+      if (typeof onChatViewOpened === "function") {
+        onChatViewOpened();
+      }
+    } else {
+      // Default Home view: homework note stays as is
+      if (viewHome) viewHome.classList.remove("view-hidden");
+      if (mainEl) mainEl.classList.remove("on-schedule-view");
+      if (hwNote) hwNote.classList.remove("view-hidden");
+      if (subjectsSide) subjectsSide.classList.add("view-hidden");
+      if (homeworksSide) homeworksSide.classList.add("view-hidden");
+      updateTodayStatus();
+      renderSchedule();
+    }
+
+    // Re-apply any active search filter to freshly displayed view
+    if (typeof reapplySearchFilter === "function") {
+      reapplySearchFilter();
+    }
+  };
+
+  if (document.startViewTransition) {
+    document.startViewTransition(() => performSwitch());
+  } else {
+    performSwitch();
   }
 }
 
@@ -4021,6 +4029,18 @@ function initFirebaseAuthAndProfile() {
       }
       auth = firebase.auth();
       db = firebase.firestore();
+      if (db && typeof window !== "undefined" && !window._firestorePersistenceInitialized) {
+        window._firestorePersistenceInitialized = true;
+        try {
+          db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+            if (err.code === "failed-precondition") {
+              console.log("Firestore persistence: active in primary tab.");
+            } else if (err.code === "unimplemented") {
+              console.log("Firestore persistence: browser does not support persistence.");
+            }
+          });
+        } catch (pErr) {}
+      }
       if (window.AcademicRegistry && typeof window.AcademicRegistry.bindFirestoreAcademicStructure === "function") {
         window.AcademicRegistry.bindFirestoreAcademicStructure(db);
       }
@@ -6261,7 +6281,15 @@ function initChatManager() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+const yieldToMain = () => {
+  if (typeof window !== "undefined" && window.scheduler && typeof window.scheduler.yield === "function") {
+    return window.scheduler.yield();
+  }
+  return new Promise((resolve) => setTimeout(resolve, 0));
+};
+
+document.addEventListener("DOMContentLoaded", async () => {
+  // Phase 1: Critical layout & primary render (immediate synchronous paint)
   initPageNavigation();
   initFirebaseAuthAndProfile();
   syncDefaultDay();
@@ -6270,6 +6298,11 @@ document.addEventListener("DOMContentLoaded", () => {
   renderSchedule();
   renderDate();
   initNav();
+
+  // Yield to main thread so UI renders immediately without blocking FCP / INP
+  await yieldToMain();
+
+  // Phase 2: Secondary managers & event listeners
   initHomeworksManager();
   initQuickNotesManager();
   initChatManager();
@@ -6277,7 +6310,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initSearch();
   initSubjectFilters();
 
-  // Mobile device notification & audio preparation
+  await yieldToMain();
+
+  // Phase 3: Background services & worker registration
   unlockAudioOnMobile();
   registerServiceWorker();
 
