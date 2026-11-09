@@ -28,8 +28,13 @@
   <!-- Web App Manifest for Chrome / Android Add to Home Screen -->
   <link rel="manifest" href="manifest.json" />
 
+  <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
+  <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://quill-push-dispatcher.dodchadam.workers.dev" crossorigin />
+  <link rel="preload" href="assets/landingpageuni.webp" as="image" type="image/webp" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css" media="print" onload="this.media='all'" />
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" media="print" onload="this.media='all'" />
@@ -116,7 +121,7 @@
       <div class="landing-hero-right">
         <picture>
           <source srcset="assets/landingpageuni.webp" type="image/webp" />
-          <img src="assets/landingpageuni.png" alt="Quill-Q illustration featuring notebooks, stationery, reminders, and doodles" class="landing-hero-illustration" decoding="async" fetchpriority="high" width="540" height="360" />
+          <img src="assets/landingpageuni.webp" alt="Quill-Q illustration featuring notebooks, stationery, reminders, and doodles" class="landing-hero-illustration" decoding="async" fetchpriority="high" width="540" height="360" />
         </picture>
       </div>
     </div>
@@ -1473,13 +1478,13 @@
   <div class="inapp-toast-container" id="inapp-toast-container" aria-live="polite" aria-atomic="true"></div>
 
   <!-- Firebase SDKs (Compat) -->
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js"></script>
 
-  <script src="academic-config.js?v=63"></script>
-  <script src="profile-manager.js?v=63"></script>
-  <script src="app.min.js?v=65"></script>
+  <script defer src="academic-config.js?v=63"></script>
+  <script defer src="profile-manager.js?v=63"></script>
+  <script defer src="app.min.js?v=65"></script>
 </body>
 </html>

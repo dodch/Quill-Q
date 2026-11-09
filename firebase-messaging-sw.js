@@ -4,12 +4,80 @@
 importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js');
 
+const CACHE_NAME = 'quill-q-static-v2';
+const PRECACHE_ASSETS = [
+  './',
+  './index.html',
+  './styles.min.css',
+  './academic-config.js',
+  './profile-manager.js',
+  './app.min.js',
+  './manifest.json',
+  './assets/favicon.svg',
+  './assets/icon-192.png',
+  './assets/landingpageuni.webp'
+];
+
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(PRECACHE_ASSETS).catch((err) => {
+        console.warn('PWA Precache partial note:', err);
+      });
+    }).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+// Stale-While-Revalidate caching: 0ms instant loads from local cache + background updates
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+
+  const url = new URL(req.url);
+
+  // Never cache Firestore / Firebase Auth / Cloudflare Worker / Analytics / SW itself
+  if (
+    url.hostname.includes('googleapis.com') ||
+    url.hostname.includes('firebaseio.com') ||
+    url.hostname.includes('identitytoolkit') ||
+    url.hostname.includes('workers.dev') ||
+    url.pathname.endsWith('firebase-messaging-sw.js') ||
+    url.pathname.endsWith('sw.js') ||
+    url.protocol.startsWith('chrome-extension')
+  ) {
+    return;
+  }
+
+  event.respondWith(
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const cached = await cache.match(req);
+
+      const fetchPromise = fetch(req).then((networkRes) => {
+        if (networkRes && networkRes.status === 200) {
+          cache.put(req, networkRes.clone());
+        }
+        return networkRes;
+      }).catch(() => {
+        return cached;
+      });
+
+      return cached || fetchPromise;
+    })
+  );
 });
 
 // Initialize Firebase in worker context
