@@ -185,6 +185,7 @@
     try {
       const docTitle = (titleInput ? titleInput.value : "").trim() || "Untitled Document";
       const pages = reactEditorBridge && typeof reactEditorBridge.getPages === "function" ? reactEditorBridge.getPages() : [];
+      const blocks = reactEditorBridge && typeof reactEditorBridge.getAllBlocks === "function" ? reactEditorBridge.getAllBlocks() : (reactEditorBridge ? reactEditorBridge.getJSON() : []);
       let jsonString = reactEditorBridge && typeof reactEditorBridge.getJSONString === "function" ? reactEditorBridge.getJSONString() : "{}";
       jsonString = await sanitizeDocPayloadImages(pages, jsonString);
       const excerpt = extractExcerpt(blocks, 150) || "Empty document...";
