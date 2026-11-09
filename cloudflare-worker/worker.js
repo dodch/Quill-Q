@@ -365,6 +365,8 @@ async function fetchSubscriberTokens(projectId, accessToken, excludeUserId, targ
  */
 async function sendFcmPush(projectId, accessToken, token, { title, body, url, targetView, tag }) {
   const fcmUrl = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
+  const isHttpsLink = (typeof url === "string" && url.startsWith("https://"));
+
   const payload = {
     message: {
       token: token,
@@ -373,9 +375,9 @@ async function sendFcmPush(projectId, accessToken, token, { title, body, url, ta
         body: body
       },
       data: {
-        url: url,
-        targetView: targetView,
-        tag: tag
+        url: url || "./index.html",
+        targetView: targetView || "home",
+        tag: tag || ("quill-" + Date.now())
       },
       webpush: {
         headers: {
@@ -386,7 +388,8 @@ async function sendFcmPush(projectId, accessToken, token, { title, body, url, ta
           badge: "assets/favicon-32x32-light.png",
           tag: tag,
           renotify: true
-        }
+        },
+        ...(isHttpsLink ? { fcm_options: { link: url } } : {})
       }
     }
   };

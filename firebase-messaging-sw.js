@@ -29,14 +29,28 @@ function formatAndShowNotification(payload) {
   const notification = (payload && payload.notification) || {};
   const data = (payload && payload.data) || {};
   const notificationTitle = notification.title || data.title || 'Quill-Q Notification';
+  const targetView = data.targetView || 'home';
+  const baseScope = self.registration ? self.registration.scope : self.location.href;
+  let resolvedUrl = data.url || './index.html';
+
+  try {
+    const parsed = new URL(resolvedUrl, baseScope);
+    if (targetView && targetView !== 'home' && !parsed.searchParams.has('view')) {
+      parsed.searchParams.set('view', targetView);
+    }
+    resolvedUrl = parsed.href;
+  } catch (e) {
+    resolvedUrl = baseScope;
+  }
+
   const notificationOptions = {
     body: notification.body || data.body || data.desc || data.message || '',
     icon: notification.icon || data.icon || 'assets/icon-192.png',
     badge: notification.badge || data.badge || 'assets/favicon-32x32-light.png',
     tag: data.tag || ('quill-bg-' + Date.now()),
     data: {
-      url: data.url || './index.html',
-      targetView: data.targetView || 'home'
+      url: resolvedUrl,
+      targetView: targetView
     },
     vibrate: [150, 80, 150],
     renotify: true
@@ -74,7 +88,18 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const notifData = event.notification.data || {};
   const targetView = notifData.targetView || 'home';
-  const targetUrl = new URL(notifData.url || './index.html', self.location.origin).href;
+  const baseScope = self.registration ? self.registration.scope : self.location.href;
+  let targetUrl = notifData.url || './index.html';
+
+  try {
+    const parsed = new URL(targetUrl, baseScope);
+    if (targetView && targetView !== 'home' && !parsed.searchParams.has('view')) {
+      parsed.searchParams.set('view', targetView);
+    }
+    targetUrl = parsed.href;
+  } catch (e) {
+    targetUrl = baseScope;
+  }
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
@@ -82,7 +107,8 @@ self.addEventListener('notificationclick', (event) => {
         if ('focus' in client) {
           client.postMessage({
             type: 'NAVIGATE_VIEW',
-            view: targetView
+            view: targetView,
+            url: targetUrl
           });
           return client.focus();
         }

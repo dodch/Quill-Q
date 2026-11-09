@@ -2037,10 +2037,26 @@ async function broadcastPushNotification({ title, body, url, targetView, tag, ta
     const profile = currentProfile;
     const defaultGroup = targetGroup || (profile ? getUserGroup(profile) : "grp1");
     const isApproval = (targetView === "approvals");
+
+    // Resolve full absolute URL with subpath so GitHub Pages never 404s
+    let resolvedUrl = url || "./index.html";
+    if (typeof window !== "undefined" && window.location) {
+      try {
+        const base = window.location.href.split("?")[0].split("#")[0];
+        const parsed = new URL(resolvedUrl, base);
+        if (targetView && targetView !== "home" && !parsed.searchParams.has("view") && !parsed.pathname.includes(".html#")) {
+          parsed.searchParams.set("view", targetView);
+        }
+        resolvedUrl = parsed.href;
+      } catch (e) {
+        resolvedUrl = window.location.href;
+      }
+    }
+
     const payload = {
       title: title || "Quill-Q Notification",
       body: body || "",
-      url: url || "./index.html",
+      url: resolvedUrl,
       targetView: targetView || "home",
       targetGroup: isApproval ? null : defaultGroup,
       targetRole: targetRole || (isApproval ? "teacher" : null),
@@ -3813,6 +3829,20 @@ function navigateToDashboard() {
     setTimeout(() => {
       checkTimelineMarquees();
       updateTodayStatus();
+
+      // Auto-switch to view specified in URL query param (e.g. ?view=chat, ?view=homeworks, ?view=approvals)
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetViewParam = urlParams.get("view") || urlParams.get("targetView");
+        if (targetViewParam && typeof switchView === "function") {
+          const navItem = document.getElementById(`nav-${targetViewParam}`);
+          if (navItem) {
+            document.querySelectorAll(".nav-item").forEach((i) => i.classList.remove("active"));
+            navItem.classList.add("active");
+          }
+          switchView(targetViewParam);
+        }
+      } catch (e) {}
     }, 50);
   }
 }

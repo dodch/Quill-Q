@@ -55,10 +55,24 @@ async function broadcastPushNotification({ title, body, url, targetView, tag, ta
     }
 
     const isApproval = (targetView === "approvals");
+    let resolvedUrl = url || "./index.html";
+    if (typeof window !== "undefined" && window.location) {
+      try {
+        const base = window.location.href.split("?")[0].split("#")[0];
+        const parsed = new URL(resolvedUrl, base);
+        if (targetView && targetView !== "home" && !parsed.searchParams.has("view")) {
+          parsed.searchParams.set("view", targetView);
+        }
+        resolvedUrl = parsed.href;
+      } catch (e) {
+        resolvedUrl = window.location.href;
+      }
+    }
+
     const payload = {
       title: title || "Quill-Q Notification",
       body: body || "",
-      url: url || "./index.html",
+      url: resolvedUrl,
       targetView: targetView || "home",
       targetGroup: isApproval ? null : (targetGroup || null),
       targetRole: targetRole || (isApproval ? "teacher" : null),
