@@ -16,33 +16,155 @@ let tokenExpiresAt = 0;
 
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Action, X-Filename",
+      "Access-Control-Max-Age": "86400"
+    };
+
     // Enable CORS for Quill-Q domain
     if (request.method === "OPTIONS") {
       return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-          "Access-Control-Max-Age": "86400"
-        }
+        headers: corsHeaders
       });
+    }
+
+    // 1. Serve Media directly from Cloudflare R2: GET /media/*
+    if (request.method === "GET" && url.pathname.startsWith("/media/")) {
+      const key = decodeURIComponent(url.pathname.replace(/^\/media\//, ""));
+      if (!key) {
+        return new Response("Media key missing", { status: 400, headers: corsHeaders });
+      }
+      if (!env.MEDIA_BUCKET) {
+        return new Response("MEDIA_BUCKET R2 binding is not configured in Cloudflare.", { status: 500, headers: corsHeaders });
+      }
+
+      const object = await env.MEDIA_BUCKET.get(key);
+      if (!object) {
+        return new Response("File not found", { status: 404, headers: corsHeaders });
+      }
+
+      const headers = new Headers();
+      if (typeof object.writeHttpMetadata === "function") {
+        object.writeHttpMetadata(headers);
+      } else if (object.httpMetadata?.contentType) {
+        headers.set("Content-Type", object.httpMetadata.contentType);
+      }
+      headers.set("Access-Control-Allow-Origin", "*");
+      headers.set("Cache-Control", "public, max-age=31536000, immutable");
+      if (object.httpEtag) headers.set("ETag", object.httpEtag);
+      return new Response(object.body, { headers });
+    }
+
+    // 2. Upload Media to Cloudflare R2: POST /upload
+    if (request.method === "POST" && (url.pathname === "/upload" || url.pathname.endsWith("/upload"))) {
+      if (!env.MEDIA_BUCKET) {
+        return new Response(JSON.stringify({
+          error: "Cloudflare R2 MEDIA_BUCKET binding missing. Please bind R2 bucket 'quill-media' to variable 'MEDIA_BUCKET'."
+        }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      }
+
+      try {
+        let fileBuffer = null;
+        let mimeType = "image/webp";
+        let fileName = "upload.webp";
+
+        const contentType = request.headers.get("content-type") || "";
+
+        if (contentType.includes("multipart/form-data")) {
+          const formData = await request.formData();
+          const file = formData.get("file");
+          if (!file || typeof file === "string") {
+            return new Response(JSON.stringify({ error: "No file found in form data" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json", ...corsHeaders }
+            });
+          }
+          fileBuffer = await file.arrayBuffer();
+          mimeType = file.type || "application/octet-stream";
+          fileName = file.name || "upload";
+        } else if (contentType.includes("application/json")) {
+          const body = await request.json();
+          if (body.dataUrl) {
+            const match = body.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+            if (!match) throw new Error("Invalid dataUrl format");
+            mimeType = match[1];
+            const binary = atob(match[2]);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            fileBuffer = bytes.buffer;
+          } else {
+            throw new Error("Missing dataUrl in JSON body");
+          }
+          fileName = body.filename || `image.${mimeType.split("/")[1] || "webp"}`;
+        } else {
+          fileBuffer = await request.arrayBuffer();
+          mimeType = contentType || "application/octet-stream";
+          fileName = request.headers.get("x-filename") || "upload";
+        }
+
+        if (!fileBuffer || fileBuffer.byteLength === 0) {
+          return new Response(JSON.stringify({ error: "Empty file received" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json", ...corsHeaders }
+          });
+        }
+
+        const ext = fileName.includes(".") ? fileName.substring(fileName.lastIndexOf(".")) : ("." + (mimeType.split("/")[1] || "bin"));
+        const randomId = Math.random().toString(36).substring(2, 10);
+        const key = `uploads/${Date.now()}-${randomId}${ext.toLowerCase()}`;
+
+        await env.MEDIA_BUCKET.put(key, fileBuffer, {
+          httpMetadata: {
+            contentType: mimeType,
+            cacheControl: "public, max-age=31536000, immutable"
+          }
+        });
+
+        const publicUrl = env.MEDIA_PUBLIC_URL 
+          ? `${env.MEDIA_PUBLIC_URL.replace(/\/+$/, '')}/${key}` 
+          : `${url.origin}/media/${key}`;
+
+        return new Response(JSON.stringify({
+          success: true,
+          url: publicUrl,
+          key: key,
+          size: fileBuffer.byteLength,
+          mimeType: mimeType
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      } catch (uploadErr) {
+        return new Response(JSON.stringify({ error: uploadErr.message || "Upload failed" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      }
     }
 
     if (request.method !== "POST") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
         status: 405,
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        headers: { "Content-Type": "application/json", ...corsHeaders }
       });
     }
 
+    // 3. FCM Push Notifications (Existing Dispatcher)
     try {
       const payload = await request.json();
-      const { title, body, url, targetView, tag, senderId, targetGroup } = payload;
+      const { title, body, url: notifUrl, targetView, tag, senderId, targetGroup } = payload;
 
       if (!title) {
         return new Response(JSON.stringify({ error: "Missing notification title" }), {
           status: 400,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          headers: { "Content-Type": "application/json", ...corsHeaders }
         });
       }
 
@@ -58,7 +180,7 @@ export default {
           error: "Cloudflare Worker environment variables missing. Please set FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY."
         }), {
           status: 500,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          headers: { "Content-Type": "application/json", ...corsHeaders }
         });
       }
 
@@ -71,7 +193,7 @@ export default {
       if (tokens.length === 0) {
         return new Response(JSON.stringify({ success: true, message: "No registered device tokens found.", delivered: 0 }), {
           status: 200,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          headers: { "Content-Type": "application/json", ...corsHeaders }
         });
       }
 
@@ -80,7 +202,7 @@ export default {
         tokens.map((token) => sendFcmPush(projectId, accessToken, token, {
           title,
           body,
-          url: url || "./index.html",
+          url: notifUrl || "./index.html",
           targetView: targetView || "home",
           tag: tag || ("quill-" + Date.now())
         }))
@@ -94,13 +216,13 @@ export default {
         delivered: deliveredCount
       }), {
         status: 200,
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        headers: { "Content-Type": "application/json", ...corsHeaders }
       });
 
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message || "Push dispatch failed" }), {
         status: 500,
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        headers: { "Content-Type": "application/json", ...corsHeaders }
       });
     }
   }
