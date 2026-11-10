@@ -2069,15 +2069,39 @@
     const closeDrawerBtn = document.getElementById("btn-close-pinned-drawer");
     const backdrop = document.getElementById("pinned-drawer-backdrop");
 
+    // Guarantee drawer is closed on load
+    closeMobilePinnedDrawer();
+
     if (mobileTrigger) {
-      mobileTrigger.addEventListener("click", openMobilePinnedDrawer);
+      mobileTrigger.addEventListener("click", (e) => {
+        e.preventDefault();
+        openMobilePinnedDrawer();
+      });
     }
     if (closeDrawerBtn) {
-      closeDrawerBtn.addEventListener("click", closeMobilePinnedDrawer);
+      closeDrawerBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        closeMobilePinnedDrawer();
+      });
     }
     if (backdrop) {
-      backdrop.addEventListener("click", closeMobilePinnedDrawer);
+      backdrop.addEventListener("click", (e) => {
+        e.preventDefault();
+        closeMobilePinnedDrawer();
+      });
     }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeMobilePinnedDrawer();
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 1220) {
+        closeMobilePinnedDrawer();
+      }
+    });
 
     // Live word count updater
     function updateWordCounter() {

@@ -9759,14 +9759,18 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     padding: 24px 20px;
     box-sizing: border-box;
     z-index: 99995;
-    pointer-events: auto;
     overflow-y: auto;
-    transform: translateX(-105%);
+    transform: translateX(-105%) !important;
     transition: transform 0.28s cubic-bezier(0.34, 1.3, 0.64, 1);
   }
 
+  .pinned-notes-sidebar:not(.drawer-open) {
+    pointer-events: none !important;
+  }
+
   .pinned-notes-sidebar.drawer-open {
-    transform: translateX(0);
+    transform: translateX(0) !important;
+    pointer-events: auto !important;
   }
 
   .pinned-notes-drawer-header {
@@ -10716,6 +10720,10 @@ textarea,
 .filter-pill,
 .modal-close,
 .task-modal-close,
+.btn-close-pinned-drawer,
+.btn-close-submissions-drawer,
+.mobile-pinned-notes-trigger,
+.pinned-note-delete,
 .homework-card,
 .chat-send-btn,
 .chat-tab,
@@ -10758,10 +10766,10 @@ textarea,
 .mobile-sidebar,
 .task-modal-card,
 .pinned-notes-sidebar,
+.submissions-drawer,
 .inapp-toast-container,
 .chat-seen-modal-card {
   will-change: transform, opacity;
-  transform: translateZ(0);
   backface-visibility: hidden;
 }
 
