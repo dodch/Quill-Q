@@ -1545,6 +1545,65 @@ function initNav() {
   }
 }
 
+// --- Mobile-First Home Quick Navigation Hub & Expandable Schedule Controller ---
+function initMobileHomeHub() {
+  // 1. Mobile Home Quick Navigation Cards
+  const hubCards = document.querySelectorAll(".mobile-nav-hub-card");
+  hubCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      const page = card.getAttribute("data-target-page");
+      if (page) {
+        // Sync active nav item in sidebar
+        const navItems = document.querySelectorAll(".nav-item");
+        navItems.forEach((i) => {
+          if (i.dataset.page === page) {
+            i.classList.add("active");
+          } else {
+            i.classList.remove("active");
+          }
+        });
+        switchView(page);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+  });
+
+  // 2. Expand/Collapse Today's Schedule on Mobile
+  const toggleBar = document.getElementById("btn-toggle-today-schedule");
+  const toggleIcon = document.getElementById("btn-toggle-today-schedule-icon");
+  const schedSection = document.getElementById("home-schedule-section");
+  const schedActionText = document.getElementById("sched-expand-action");
+  const schedDot = document.getElementById("sched-expand-dot");
+
+  const toggleTodayScheduleMobile = (e) => {
+    if (e) e.preventDefault();
+    if (!schedSection) return;
+
+    const isExpanded = schedSection.classList.toggle("mobile-expanded");
+    if (toggleBar) {
+      toggleBar.classList.toggle("is-expanded", isExpanded);
+      toggleBar.setAttribute("aria-expanded", String(isExpanded));
+    }
+    if (toggleIcon) {
+      toggleIcon.classList.toggle("is-active", isExpanded);
+      toggleIcon.setAttribute("aria-expanded", String(isExpanded));
+    }
+    if (schedActionText) {
+      schedActionText.textContent = isExpanded ? "Collapse" : "Expand";
+    }
+    if (schedDot) {
+      schedDot.style.background = isExpanded ? "#2fb35a" : "#e07a5f";
+    }
+  };
+
+  if (toggleBar) {
+    toggleBar.addEventListener("click", toggleTodayScheduleMobile);
+  }
+  if (toggleIcon) {
+    toggleIcon.addEventListener("click", toggleTodayScheduleMobile);
+  }
+}
+
 // --- Homework & Reminders Manager (Server-Synced via Firestore, Auth-Protected, No Hardcoded Tasks) ---
 const HW_KEY = "quill-q-homework-reminders-v8";
 const DEFAULT_TASKS = [];
@@ -2852,6 +2911,19 @@ function syncHomeHomeworkNote() {
       return tClass === userClass && tGroup === myGroup;
     });
   }
+
+  // Sync badge on mobile quick navigation hub
+  const hubHwBadge = document.getElementById("mobile-hub-hw-badge");
+  if (hubHwBadge) {
+    if (allTasks.length > 0) {
+      hubHwBadge.textContent = allTasks.length > 99 ? "99+" : String(allTasks.length);
+      hubHwBadge.classList.remove("view-hidden");
+    } else {
+      hubHwBadge.classList.add("view-hidden");
+      hubHwBadge.textContent = "0";
+    }
+  }
+
   const tasks = allTasks.slice(0, 5); // top 5
   if (!tasks.length) {
     const grpLabel = (isTeacherOrAdmin ? currentActiveScheduleGroup : myGroup) === "grp2" ? "Group 2" : "Group 1";
@@ -3955,7 +4027,9 @@ function applyProfileToUI(profile) {
     const navAdmin = document.getElementById("nav-admin");
     if (navAdmin) navAdmin.classList.add("view-hidden");
     const navApprovals = document.getElementById("nav-approvals");
+    const hubApprovals = document.getElementById("mobile-hub-card-approvals");
     if (navApprovals) navApprovals.classList.add("view-hidden");
+    if (hubApprovals) hubApprovals.classList.add("view-hidden");
     if (typeof bindTeacherApprovalsListener === "function") {
       bindTeacherApprovalsListener(null, null);
     }
@@ -3995,14 +4069,17 @@ function applyProfileToUI(profile) {
 
   // Update Teacher Student Approvals nav item & live notifications listener
   const navApprovals = document.getElementById("nav-approvals");
+  const hubApprovals = document.getElementById("mobile-hub-card-approvals");
   if (navApprovals) {
     if ((isAdmin || isTeacher) && (profile.status === "approved" || isAdmin)) {
       navApprovals.classList.remove("view-hidden");
+      if (hubApprovals) hubApprovals.classList.remove("view-hidden");
       if (typeof bindTeacherApprovalsListener === "function") {
         bindTeacherApprovalsListener(currentUser, profile);
       }
     } else {
       navApprovals.classList.add("view-hidden");
+      if (hubApprovals) hubApprovals.classList.add("view-hidden");
       if (typeof bindTeacherApprovalsListener === "function") {
         bindTeacherApprovalsListener(null, null);
       }
@@ -4786,6 +4863,7 @@ let isFirstApprovalsSnapshot = true;
 
 function updateTeacherApprovalsBadgeUI(count) {
   const badge = document.getElementById("nav-approvals-badge");
+  const hubBadge = document.getElementById("mobile-hub-approvals-badge");
   const mobileDot = document.getElementById("mobile-approvals-dot");
   if (badge) {
     if (count > 0) {
@@ -4796,6 +4874,17 @@ function updateTeacherApprovalsBadgeUI(count) {
       badge.classList.add("view-hidden");
       badge.classList.remove("badge-live-pulse");
       badge.textContent = "0";
+    }
+  }
+  if (hubBadge) {
+    if (count > 0) {
+      hubBadge.textContent = count > 99 ? "99+" : String(count);
+      hubBadge.classList.remove("view-hidden");
+      hubBadge.classList.add("badge-live-pulse");
+    } else {
+      hubBadge.classList.add("view-hidden");
+      hubBadge.classList.remove("badge-live-pulse");
+      hubBadge.textContent = "0";
     }
   }
   if (mobileDot) {
@@ -5921,18 +6010,30 @@ function markMessagesAsSeen() {
   updateChatBadge(0);
 }
 
-// Update Chat Badge on Sidebar
+// Update Chat Badge on Sidebar and Mobile Hub
 function updateChatBadge(count) {
   chatUnreadCount = Math.max(0, count);
   const badge = document.getElementById("nav-chat-badge");
-  if (!badge) return;
+  const hubBadge = document.getElementById("mobile-hub-chat-badge");
 
-  if (chatUnreadCount > 0) {
-    badge.textContent = chatUnreadCount > 99 ? "99+" : String(chatUnreadCount);
-    badge.classList.remove("view-hidden");
-  } else {
-    badge.classList.add("view-hidden");
-    badge.textContent = "0";
+  if (badge) {
+    if (chatUnreadCount > 0) {
+      badge.textContent = chatUnreadCount > 99 ? "99+" : String(chatUnreadCount);
+      badge.classList.remove("view-hidden");
+    } else {
+      badge.classList.add("view-hidden");
+      badge.textContent = "0";
+    }
+  }
+
+  if (hubBadge) {
+    if (chatUnreadCount > 0) {
+      hubBadge.textContent = chatUnreadCount > 99 ? "99+" : String(chatUnreadCount);
+      hubBadge.classList.remove("view-hidden");
+    } else {
+      hubBadge.classList.add("view-hidden");
+      hubBadge.textContent = "0";
+    }
   }
 }
 
@@ -6298,6 +6399,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderSchedule();
   renderDate();
   initNav();
+  initMobileHomeHub();
 
   // Yield to main thread so UI renders immediately without blocking FCP / INP
   await yieldToMain();

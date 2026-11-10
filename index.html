@@ -43,7 +43,7 @@
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css" />
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
   </noscript>
-  <link rel="stylesheet" href="styles.min.css?v=77" />
+  <link rel="stylesheet" href="styles.min.css?v=78" />
 
   <!-- Speculation Rules API for instant 0ms pre-rendering of subject & editor pages -->
   <script type="speculationrules">
@@ -616,7 +616,14 @@
             <article class="card status-card" id="status-card">
               <span class="status-card-tag" id="status-card-tag">STATUS</span>
               <div class="status-now">
-                <h4 class="status-label" id="status-now-label">Happening Now</h4>
+                <div class="status-now-header">
+                  <h4 class="status-label" id="status-now-label">Happening Now</h4>
+                  <!-- Mobile Day Progress Expand Trigger Icon / Button -->
+                  <button type="button" class="mobile-status-expand-icon-btn" id="btn-toggle-today-schedule-icon" aria-label="Toggle today's schedule timeline" title="Toggle today's schedule timeline">
+                    <i class="fi fi-rr-calendar-clock"></i>
+                    <span class="expand-icon-badge" id="sched-expand-dot"></span>
+                  </button>
+                </div>
                 <div class="status-body">
                   <span class="live-dot" id="live-dot" aria-label="Live"><span></span></span>
                   <div>
@@ -648,13 +655,112 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Full-width mobile footer bar on status card for easy tap -->
+              <button type="button" class="status-schedule-expand-bar" id="btn-toggle-today-schedule" aria-expanded="false" aria-controls="home-schedule-section">
+                <span class="sched-expand-bar-left">
+                  <i class="fi fi-rr-calendar-lines-pen"></i>
+                  <span id="sched-expand-title">Today's Schedule</span>
+                </span>
+                <span class="sched-expand-bar-pill">
+                  <span id="sched-expand-action">Expand</span>
+                  <i class="fi fi-rr-angle-small-down" id="sched-expand-chevron"></i>
+                </span>
+              </button>
             </article>
           </section>
 
-          <section class="schedule home-schedule-section" aria-label="Today's Schedule">
+          <section class="schedule home-schedule-section" id="home-schedule-section" aria-label="Today's Schedule">
             <div class="card schedule-card">
               <h3 id="schedule-title" class="schedule-inner-title">Today's Schedule</h3>
               <ul class="timeline" id="timeline"></ul>
+            </div>
+          </section>
+
+          <!-- MOBILE-FIRST HOME NAVIGATION GRID -->
+          <section class="mobile-home-nav-section" id="mobile-home-nav-section" aria-label="Quick Navigation Hub">
+            <div class="mobile-nav-header">
+              <h3 class="mobile-nav-heading">
+                <i class="fi fi-rr-apps" style="color: #e07a5f; font-size: 16px;"></i>
+                <span>Quick Navigation</span>
+              </h3>
+              <span class="mobile-nav-sub">Tap any section to open</span>
+            </div>
+            <div class="mobile-nav-grid">
+              <!-- Subjects -->
+              <button type="button" class="mobile-nav-hub-card card-nav-subjects" data-target-page="subjects">
+                <div class="mobile-hub-icon-wrap icon-subjects">
+                  <i class="fi fi-sr-books"></i>
+                </div>
+                <div class="mobile-hub-details">
+                  <span class="mobile-hub-title">Subjects</span>
+                  <span class="mobile-hub-caption">Docs &amp; Lessons</span>
+                </div>
+                <i class="fi fi-rr-angle-small-right mobile-hub-arrow"></i>
+              </button>
+
+              <!-- Homeworks -->
+              <button type="button" class="mobile-nav-hub-card card-nav-homeworks" data-target-page="homeworks">
+                <div class="mobile-hub-icon-wrap icon-homeworks">
+                  <i class="fi fi-sr-edit"></i>
+                  <span class="mobile-hub-badge view-hidden" id="mobile-hub-hw-badge">0</span>
+                </div>
+                <div class="mobile-hub-details">
+                  <span class="mobile-hub-title">Homeworks</span>
+                  <span class="mobile-hub-caption">Tasks &amp; Pin</span>
+                </div>
+                <i class="fi fi-rr-angle-small-right mobile-hub-arrow"></i>
+              </button>
+
+              <!-- Weekly Schedule -->
+              <button type="button" class="mobile-nav-hub-card card-nav-schedule" data-target-page="schedule">
+                <div class="mobile-hub-icon-wrap icon-schedule">
+                  <i class="fi fi-sr-calendar"></i>
+                </div>
+                <div class="mobile-hub-details">
+                  <span class="mobile-hub-title">Timetable</span>
+                  <span class="mobile-hub-caption">Weekly Schedule</span>
+                </div>
+                <i class="fi fi-rr-angle-small-right mobile-hub-arrow"></i>
+              </button>
+
+              <!-- Class Chat -->
+              <button type="button" class="mobile-nav-hub-card card-nav-chat" data-target-page="chat">
+                <div class="mobile-hub-icon-wrap icon-chat">
+                  <i class="fi fi-sr-comment-alt-dots"></i>
+                  <span class="mobile-hub-badge view-hidden" id="mobile-hub-chat-badge">0</span>
+                </div>
+                <div class="mobile-hub-details">
+                  <span class="mobile-hub-title">Class Chat</span>
+                  <span class="mobile-hub-caption">Group Discussion</span>
+                </div>
+                <i class="fi fi-rr-angle-small-right mobile-hub-arrow"></i>
+              </button>
+
+              <!-- My Students (Teacher / Admin only) -->
+              <button type="button" class="mobile-nav-hub-card card-nav-approvals view-hidden" id="mobile-hub-card-approvals" data-target-page="approvals">
+                <div class="mobile-hub-icon-wrap icon-approvals">
+                  <i class="fi fi-sr-user-check"></i>
+                  <span class="mobile-hub-badge view-hidden" id="mobile-hub-approvals-badge">0</span>
+                </div>
+                <div class="mobile-hub-details">
+                  <span class="mobile-hub-title">My Students</span>
+                  <span class="mobile-hub-caption">Review Requests</span>
+                </div>
+                <i class="fi fi-rr-angle-small-right mobile-hub-arrow"></i>
+              </button>
+
+              <!-- Profile & Settings -->
+              <button type="button" class="mobile-nav-hub-card card-nav-profile" data-target-page="profile">
+                <div class="mobile-hub-icon-wrap icon-profile">
+                  <i class="fi fi-sr-user"></i>
+                </div>
+                <div class="mobile-hub-details">
+                  <span class="mobile-hub-title">My Profile</span>
+                  <span class="mobile-hub-caption">Role &amp; Details</span>
+                </div>
+                <i class="fi fi-rr-angle-small-right mobile-hub-arrow"></i>
+              </button>
             </div>
           </section>
         </div>
@@ -1507,6 +1613,6 @@
 
   <script defer src="academic-config.js?v=63"></script>
   <script defer src="profile-manager.js?v=63"></script>
-  <script defer src="app.min.js?v=66"></script>
+  <script defer src="app.min.js?v=67"></script>
 </body>
 </html>
