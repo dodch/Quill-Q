@@ -1550,8 +1550,8 @@ function initNav() {
 
     const onScroll = () => {
       const currentScrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-      const mobileSearchWrap = document.getElementById("mobile-search-expand-wrap");
-      const isSearchOpen = mobileSearchWrap && mobileSearchWrap.classList.contains("open");
+      const omniModal = document.getElementById("omni-search-modal");
+      const isSearchOpen = omniModal && !omniModal.classList.contains("view-hidden");
       const isSidebarOpen = sidebar && sidebar.classList.contains("mobile-open");
 
       // Always keep visible if drawer or search input is open
@@ -3908,20 +3908,14 @@ const GlobalOmniSearch = {
   },
 
   updateSpinners(show) {
-    const dSpinner = document.getElementById("desktop-search-spinner");
-    const mSpinner = document.getElementById("mobile-search-spinner");
-    if (dSpinner) dSpinner.classList.toggle("view-hidden", !show);
-    if (mSpinner) mSpinner.classList.toggle("view-hidden", !show);
+    const spinner = document.getElementById("omni-search-spinner");
+    if (spinner) spinner.classList.toggle("view-hidden", !show);
   },
 
   refreshActiveResults() {
-    const desktopDropdown = document.getElementById("desktop-search-dropdown");
-    const mobileWrap = document.getElementById("mobile-search-expand-wrap");
-    if (desktopDropdown && !desktopDropdown.classList.contains("view-hidden")) {
-      this.renderResults(currentSearchQuery, "desktop");
-    }
-    if (mobileWrap && mobileWrap.classList.contains("open")) {
-      this.renderResults(currentSearchQuery, "mobile");
+    const modal = document.getElementById("omni-search-modal");
+    if (modal && !modal.classList.contains("view-hidden")) {
+      this.renderResults(currentSearchQuery);
     }
   },
 
@@ -4085,12 +4079,14 @@ const GlobalOmniSearch = {
     return results;
   },
 
-  renderResults(query, target) {
-    const listEl = document.getElementById(target === "desktop" ? "desktop-search-results-list" : "mobile-search-results-list");
-    const countEl = document.getElementById(target === "desktop" ? "desktop-search-count" : "mobile-search-count");
+  renderResults(query) {
+    const listEl = document.getElementById("omni-search-results-list");
+    const countEl = document.getElementById("omni-search-count");
+    const clearBtn = document.getElementById("omni-search-clear-btn");
+    const q = (query || "").trim();
+    if (clearBtn) clearBtn.classList.toggle("view-hidden", !q);
     if (!listEl) return;
 
-    const q = (query || "").trim();
     const results = this.search(q, currentSearchFilterType);
 
     // Empty query state -> Shortcuts
@@ -4180,7 +4176,7 @@ const GlobalOmniSearch = {
       const match = results[idx];
       if (match) {
         itemEl.addEventListener("click", () => {
-          closeAllSearch();
+          closeOmniSearch();
           match.onSelect();
         });
       }
@@ -4196,13 +4192,31 @@ function setSearchFilterType(type) {
   GlobalOmniSearch.refreshActiveResults();
 }
 
+function openOmniSearch() {
+  const modal = document.getElementById("omni-search-modal");
+  const input = document.getElementById("omni-search-input");
+  if (!modal) return;
+  modal.classList.remove("view-hidden");
+  document.body.style.overflow = "hidden";
+  GlobalOmniSearch.lazyLoadServerDocs();
+  if (input) {
+    setTimeout(() => {
+      input.focus();
+      input.select();
+      GlobalOmniSearch.renderResults(input.value);
+    }, 40);
+  }
+}
+
+function closeOmniSearch() {
+  const modal = document.getElementById("omni-search-modal");
+  if (!modal) return;
+  modal.classList.add("view-hidden");
+  document.body.style.overflow = "";
+}
+
 function closeAllSearch() {
-  const desktopDropdown = document.getElementById("desktop-search-dropdown");
-  const mobileWrap = document.getElementById("mobile-search-expand-wrap");
-  const desktopClear = document.getElementById("desktop-search-clear-btn");
-  if (desktopDropdown) desktopDropdown.classList.add("view-hidden");
-  if (mobileWrap) mobileWrap.classList.remove("open");
-  if (desktopClear) desktopClear.classList.add("view-hidden");
+  closeOmniSearch();
 }
 
 function highlightHomeworkItem(taskId) {
@@ -4221,34 +4235,25 @@ function reapplySearchFilter() {
 }
 
 function initSearch() {
-  const desktopInput = document.getElementById("search-input");
-  const desktopClear = document.getElementById("desktop-search-clear-btn");
-  const desktopDropdown = document.getElementById("desktop-search-dropdown");
-  const desktopSearchRow = document.getElementById("desktop-search-row");
-
-  const mobileInput = document.getElementById("mobile-search-input");
-  const mobileSearchToggleBtn = document.getElementById("mobile-search-toggle-btn");
-  const mobileSearchCloseBtn = document.getElementById("mobile-search-close-btn");
-  const mobileSearchWrap = document.getElementById("mobile-search-expand-wrap");
-  const mobileTopBar = document.getElementById("mobile-top-bar");
+  const desktopSearchBtn = document.getElementById("desktop-search-pill-btn");
+  const mobileSearchBtn = document.getElementById("mobile-search-toggle-btn");
+  const omniModal = document.getElementById("omni-search-modal");
+  const omniDialog = document.getElementById("omni-search-dialog");
+  const omniInput = document.getElementById("omni-search-input");
+  const omniClearBtn = document.getElementById("omni-search-clear-btn");
+  const omniCloseBtn = document.getElementById("omni-search-close-btn");
 
   let debounceTimer = null;
 
-  const onSearchQueryChanged = (val, target) => {
+  const onSearchQueryChanged = (val) => {
     currentSearchQuery = val || "";
-    if (desktopClear) {
-      desktopClear.classList.toggle("view-hidden", !currentSearchQuery);
+    if (omniClearBtn) {
+      omniClearBtn.classList.toggle("view-hidden", !currentSearchQuery);
     }
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-      GlobalOmniSearch.renderResults(currentSearchQuery, target);
-      // Keep other input in sync
-      if (target === "desktop" && mobileInput && mobileInput.value !== currentSearchQuery) {
-        mobileInput.value = currentSearchQuery;
-      } else if (target === "mobile" && desktopInput && desktopInput.value !== currentSearchQuery) {
-        desktopInput.value = currentSearchQuery;
-      }
-    }, 110);
+      GlobalOmniSearch.renderResults(currentSearchQuery);
+    }, 90);
   };
 
   // --- Filter Pills Binding ---
@@ -4260,28 +4265,62 @@ function initSearch() {
     });
   });
 
-  // --- Desktop Search Interaction ---
-  if (desktopInput) {
-    desktopInput.addEventListener("focus", () => {
-      GlobalOmniSearch.lazyLoadServerDocs();
-      if (desktopDropdown) {
-        desktopDropdown.classList.remove("view-hidden");
-        GlobalOmniSearch.renderResults(desktopInput.value, "desktop");
+  // --- Trigger buttons ---
+  if (desktopSearchBtn) {
+    desktopSearchBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      openOmniSearch();
+    });
+  }
+
+  if (mobileSearchBtn) {
+    mobileSearchBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openOmniSearch();
+    });
+  }
+
+  if (omniCloseBtn) {
+    omniCloseBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeOmniSearch();
+    });
+  }
+
+  if (omniClearBtn) {
+    omniClearBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (omniInput) {
+        omniInput.value = "";
+        onSearchQueryChanged("");
+        omniInput.focus();
       }
     });
+  }
 
-    desktopInput.addEventListener("input", (e) => {
-      if (desktopDropdown) desktopDropdown.classList.remove("view-hidden");
-      onSearchQueryChanged(e.target.value, "desktop");
+  // Click outside dialog to close
+  if (omniModal) {
+    omniModal.addEventListener("click", (e) => {
+      if (omniDialog && !omniDialog.contains(e.target)) {
+        closeOmniSearch();
+      }
+    });
+  }
+
+  // Input listeners
+  if (omniInput) {
+    omniInput.addEventListener("input", (e) => {
+      onSearchQueryChanged(e.target.value);
     });
 
-    desktopInput.addEventListener("keydown", (e) => {
+    omniInput.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        closeAllSearch();
-        desktopInput.blur();
+        e.preventDefault();
+        closeOmniSearch();
       } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
-        const items = desktopDropdown ? Array.from(desktopDropdown.querySelectorAll(".search-result-item")) : [];
+        const items = omniModal ? Array.from(omniModal.querySelectorAll(".search-result-item")) : [];
         if (!items.length) return;
         const curIdx = items.findIndex(it => it.classList.contains("is-selected"));
         let nextIdx = 0;
@@ -4291,10 +4330,12 @@ function initSearch() {
           nextIdx = curIdx > 0 ? curIdx - 1 : items.length - 1;
         }
         items.forEach((it, i) => it.classList.toggle("is-selected", i === nextIdx));
-        items[nextIdx].scrollIntoView({ block: "nearest" });
+        if (items[nextIdx]) {
+          items[nextIdx].scrollIntoView({ block: "nearest" });
+        }
       } else if (e.key === "Enter") {
         e.preventDefault();
-        const selected = desktopDropdown ? desktopDropdown.querySelector(".search-result-item.is-selected") : null;
+        const selected = omniModal ? omniModal.querySelector(".search-result-item.is-selected") : null;
         if (selected) {
           selected.click();
         }
@@ -4302,95 +4343,19 @@ function initSearch() {
     });
   }
 
-  if (desktopClear) {
-    desktopClear.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (desktopInput) desktopInput.value = "";
-      if (mobileInput) mobileInput.value = "";
-      onSearchQueryChanged("", "desktop");
-      desktopInput.focus();
-    });
-  }
-
-  // Close desktop dropdown on outside click
-  document.addEventListener("click", (e) => {
-    if (desktopSearchRow && !desktopSearchRow.contains(e.target)) {
-      if (desktopDropdown && !desktopDropdown.classList.contains("view-hidden")) {
-        desktopDropdown.classList.add("view-hidden");
-      }
-    }
-  });
-
-  // --- Mobile Search Interaction ---
-  const openMobileSearch = () => {
-    if (!mobileSearchWrap) return;
-    mobileSearchWrap.classList.add("open");
-    if (mobileTopBar) mobileTopBar.classList.remove("nav-hidden");
-    GlobalOmniSearch.lazyLoadServerDocs();
-    setTimeout(() => {
-      if (mobileInput) {
-        mobileInput.focus();
-        GlobalOmniSearch.renderResults(mobileInput.value, "mobile");
-      }
-    }, 60);
-  };
-
-  const closeMobileSearch = () => {
-    if (!mobileSearchWrap) return;
-    mobileSearchWrap.classList.remove("open");
-  };
-
-  if (mobileSearchToggleBtn) {
-    mobileSearchToggleBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (mobileSearchWrap && mobileSearchWrap.classList.contains("open")) {
-        closeMobileSearch();
-      } else {
-        openMobileSearch();
-      }
-    });
-  }
-
-  if (mobileSearchCloseBtn) {
-    mobileSearchCloseBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      closeMobileSearch();
-    });
-  }
-
-  if (mobileSearchWrap) {
-    mobileSearchWrap.addEventListener("click", (e) => {
-      // If clicking on dark backdrop overlay outside content card
-      if (e.target === mobileSearchWrap) {
-        closeMobileSearch();
-      }
-    });
-  }
-
-  if (mobileInput) {
-    mobileInput.addEventListener("input", (e) => {
-      onSearchQueryChanged(e.target.value, "mobile");
-    });
-
-    mobileInput.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        closeMobileSearch();
-      } else if (e.key === "Enter") {
-        const selected = mobileSearchWrap.querySelector(".search-result-item.is-selected");
-        if (selected) {
-          selected.click();
-        } else {
-          mobileInput.blur();
-        }
-      }
-    });
-  }
-
-  // Global Escape key handler
+  // Global Keyboard Shortcuts (Ctrl+K, Cmd+K, and Escape)
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      closeAllSearch();
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      if (omniModal && !omniModal.classList.contains("view-hidden")) {
+        closeOmniSearch();
+      } else {
+        openOmniSearch();
+      }
+    } else if (e.key === "Escape") {
+      if (omniModal && !omniModal.classList.contains("view-hidden")) {
+        closeOmniSearch();
+      }
     }
   });
 }
