@@ -3502,10 +3502,57 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     padding: 0 !important;
   }
 
+  /* Remove "Hello user" Greeting Header on mobile to save vertical screen space and keep it simple */
+  .greeting {
+    display: none !important;
+  }
+
   /* Today's status & schedule cards */
   .qg-row {
     grid-template-columns: 1fr;
     gap: 14px;
+  }
+
+  /* Schedule Card & Title: Clean static pill header, no overflow clipping or negative top */
+  .schedule-card,
+  .home-schedule-section .schedule-card {
+    padding: 16px 14px 16px !important;
+    border-radius: 18px !important;
+    overflow: visible !important;
+    content-visibility: visible !important;
+    contain: none !important;
+  }
+
+  .schedule-inner-title,
+  .home-schedule-section .schedule-inner-title {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    background: #fbf5e8 !important;
+    color: #2c251e !important;
+    border: 1.5px solid #1a1816 !important;
+    border-radius: 999px !important;
+    padding: 5px 14px !important;
+    margin-bottom: 12px !important;
+    margin-top: 0 !important;
+    transform: none !important;
+    box-shadow: 2px 2px 0px #1a1816 !important;
+  }
+
+  .schedule-inner-title::before,
+  .schedule-inner-title::after,
+  .home-schedule-section .schedule-inner-title::before,
+  .home-schedule-section .schedule-inner-title::after {
+    display: none !important;
   }
 
   /* Search is now accessible directly at the top in navbar */
@@ -4055,13 +4102,35 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   }
 
   .home-schedule-section .schedule-card {
-    padding: 24px 14px 18px !important;
+    padding: 16px 14px 16px !important;
+    border-radius: 18px !important;
+    overflow: visible !important;
   }
 
   .home-schedule-section .schedule-inner-title {
-    font-size: 12px;
-    padding: 4px 10px;
-    left: 14px;
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    background: #fbf5e8 !important;
+    color: #2c251e !important;
+    border: 1.5px solid #1a1816 !important;
+    border-radius: 999px !important;
+    padding: 5px 14px !important;
+    margin-bottom: 12px !important;
+    transform: none !important;
+    box-shadow: 2px 2px 0px #1a1816 !important;
+  }
+
+  .home-schedule-section .schedule-inner-title::before,
+  .home-schedule-section .schedule-inner-title::after {
+    display: none !important;
   }
 
   .home-schedule-section .tl-item {
@@ -11041,11 +11110,6 @@ textarea,
 .homework-card {
   content-visibility: auto;
   contain-intrinsic-size: auto 90px;
-}
-
-.schedule-card {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 80px;
 }
 
 .chat-message-item {

@@ -889,8 +889,13 @@ function renderSchedule() {
     targetData = TIMETABLE[targetKey] || { dayName: targetKey, items: [] };
   }
 
+  const titleText = showingTomorrow ? "Tomorrow's Schedule" : "Today's Schedule";
   if (scheduleTitleEl) {
-    scheduleTitleEl.textContent = showingTomorrow ? "Tomorrow's Schedule" : "Today's Schedule";
+    scheduleTitleEl.innerHTML = `<i class="fi fi-rr-calendar-clock" style="font-size: 13px; color: #e07a5f;"></i> <span>${titleText}</span>`;
+  }
+  const schedExpandTitle = document.getElementById("sched-expand-title");
+  if (schedExpandTitle) {
+    schedExpandTitle.textContent = titleText;
   }
 
   const itemsToRender = targetData.items || [];
@@ -1383,13 +1388,39 @@ function switchView(page) {
       renderSchedule();
     }
 
-    // Toggle mobile back to home button (appears on sub-pages, hidden on Home)
+    // Toggle mobile back to home button (appears on sub-pages) & profile avatar (appears on Home)
     const mobileBackBtn = document.getElementById("mobile-nav-back-btn");
-    if (mobileBackBtn) {
-      if (page && page !== "home") {
-        mobileBackBtn.classList.remove("view-hidden");
+    const mobileAvatarBtn = document.getElementById("mobile-top-avatar-btn");
+    const mobileTitle = document.getElementById("mobile-bar-title");
+
+    if (page && page !== "home") {
+      if (mobileBackBtn) mobileBackBtn.classList.remove("view-hidden");
+      if (mobileAvatarBtn) mobileAvatarBtn.classList.add("view-hidden");
+    } else {
+      if (mobileBackBtn) mobileBackBtn.classList.add("view-hidden");
+      if (mobileAvatarBtn) mobileAvatarBtn.classList.remove("view-hidden");
+    }
+    if (mobileTitle) {
+      const pageTitles = {
+        subjects: "Subjects",
+        homeworks: "Homework",
+        schedule: "Schedule",
+        chat: "Class Chat",
+        profile: "My Profile",
+        approvals: "Approvals"
+      };
+      if (page && pageTitles[page]) {
+        mobileTitle.textContent = pageTitles[page];
+        mobileTitle.style.fontFamily = "'Plus Jakarta Sans', 'Outfit', sans-serif";
+        mobileTitle.style.fontSize = "17px";
+        mobileTitle.style.fontWeight = "700";
+        mobileTitle.style.letterSpacing = "0.2px";
       } else {
-        mobileBackBtn.classList.add("view-hidden");
+        mobileTitle.textContent = "Quill-Q";
+        mobileTitle.style.fontFamily = "'Patrick Hand', cursive";
+        mobileTitle.style.fontSize = "26px";
+        mobileTitle.style.fontWeight = "700";
+        mobileTitle.style.letterSpacing = "normal";
       }
     }
 
