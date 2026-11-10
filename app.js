@@ -4198,13 +4198,15 @@ function openOmniSearch() {
   if (!modal) return;
   modal.classList.remove("view-hidden");
   document.body.style.overflow = "hidden";
+  GlobalOmniSearch.renderResults(input ? input.value : "");
   GlobalOmniSearch.lazyLoadServerDocs();
   if (input) {
     setTimeout(() => {
-      input.focus();
-      input.select();
-      GlobalOmniSearch.renderResults(input.value);
-    }, 40);
+      try {
+        input.focus();
+        input.select();
+      } catch (err) {}
+    }, 30);
   }
 }
 
@@ -4269,6 +4271,7 @@ function initSearch() {
   if (desktopSearchBtn) {
     desktopSearchBtn.addEventListener("click", (e) => {
       e.preventDefault();
+      e.stopPropagation();
       openOmniSearch();
     });
   }
@@ -4299,10 +4302,15 @@ function initSearch() {
     });
   }
 
-  // Click outside dialog to close
+  // Prevent dialog click from closing modal, close when clicking backdrop overlay
+  if (omniDialog) {
+    omniDialog.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+  }
   if (omniModal) {
     omniModal.addEventListener("click", (e) => {
-      if (omniDialog && !omniDialog.contains(e.target)) {
+      if (e.target === omniModal) {
         closeOmniSearch();
       }
     });
