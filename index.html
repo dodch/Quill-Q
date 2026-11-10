@@ -43,7 +43,7 @@
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css" />
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
   </noscript>
-  <link rel="stylesheet" href="styles.min.css?v=81" />
+  <link rel="stylesheet" href="styles.min.css?v=82" />
 
   <!-- Speculation Rules API for instant 0ms pre-rendering of subject & editor pages -->
   <script type="speculationrules">
@@ -520,14 +520,31 @@
         </button>
       </div>
 
-      <!-- Expandable Mobile Search Field -->
+      <!-- Expandable Real-Time Mobile Search Overlay -->
       <div class="mobile-search-expand-wrap" id="mobile-search-expand-wrap">
-        <div class="mobile-search-inner">
-          <i class="fi fi-rr-search mobile-search-inline-icon"></i>
-          <input type="search" id="mobile-search-input" placeholder="Search courses, homework, rooms..." autocomplete="off" />
-          <button type="button" class="mobile-search-close-btn" id="mobile-search-close-btn" aria-label="Close search">
-            <i class="fi fi-rr-cross-small"></i>
-          </button>
+        <div class="mobile-search-content-card">
+          <div class="mobile-search-inner">
+            <i class="fi fi-rr-search mobile-search-inline-icon"></i>
+            <input type="search" id="mobile-search-input" placeholder="Search docs, exercises, subjects..." autocomplete="off" />
+            <button type="button" class="mobile-search-close-btn" id="mobile-search-close-btn" aria-label="Close search">
+              <i class="fi fi-rr-cross-small"></i>
+            </button>
+          </div>
+          <div class="search-meta-bar" id="mobile-search-meta-bar">
+            <span class="search-results-count" id="mobile-search-count">Real-time Search</span>
+            <span class="search-loading-indicator view-hidden" id="mobile-search-spinner">
+              <span class="search-spinner-dot"></span> Syncing server docs...
+            </span>
+          </div>
+          <div class="search-filters-bar" id="mobile-search-filters">
+            <button type="button" class="search-filter-pill active" data-type="all">All</button>
+            <button type="button" class="search-filter-pill" data-type="docs"><i class="fi fi-rr-document"></i> Docs</button>
+            <button type="button" class="search-filter-pill" data-type="exercises"><i class="fi fi-rr-edit"></i> Exercises</button>
+            <button type="button" class="search-filter-pill" data-type="subjects"><i class="fi fi-rr-books"></i> Subjects</button>
+            <button type="button" class="search-filter-pill" data-type="homework"><i class="fi fi-rr-list-check"></i> Homework</button>
+            <button type="button" class="search-filter-pill" data-type="schedule"><i class="fi fi-rr-calendar"></i> Schedule</button>
+          </div>
+          <div class="search-results-scroll" id="mobile-search-results-list"></div>
         </div>
       </div>
     </header>
@@ -1327,11 +1344,32 @@
           <div class="date-calendar-wrap">
             <span class="date-text" id="today-date">Saturday, Oct 24, 2026</span>
           </div>
-          <div class="search-row">
+          <div class="search-row" id="desktop-search-row">
             <label class="search-pill" for="search-input">
               <svg viewBox="0 0 24 24" class="search-icon" fill="none" stroke="#5d534b" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-              <input type="search" id="search-input" placeholder="Search courses..." autocomplete="off" />
+              <input type="search" id="search-input" placeholder="Search courses, docs, homework..." autocomplete="off" />
+              <button type="button" class="search-clear-btn view-hidden" id="desktop-search-clear-btn" aria-label="Clear search">
+                <i class="fi fi-rr-cross-small"></i>
+              </button>
             </label>
+            <!-- Real-Time Expanding Desktop Results Dropdown -->
+            <div class="desktop-search-dropdown view-hidden" id="desktop-search-dropdown">
+              <div class="search-meta-bar">
+                <span class="search-results-count" id="desktop-search-count">Real-time Search</span>
+                <span class="search-loading-indicator view-hidden" id="desktop-search-spinner">
+                  <span class="search-spinner-dot"></span> Syncing server docs...
+                </span>
+              </div>
+              <div class="search-filters-bar" id="desktop-search-filters">
+                <button type="button" class="search-filter-pill active" data-type="all">All</button>
+                <button type="button" class="search-filter-pill" data-type="docs"><i class="fi fi-rr-document"></i> Docs</button>
+                <button type="button" class="search-filter-pill" data-type="exercises"><i class="fi fi-rr-edit"></i> Exercises</button>
+                <button type="button" class="search-filter-pill" data-type="subjects"><i class="fi fi-rr-books"></i> Subjects</button>
+                <button type="button" class="search-filter-pill" data-type="homework"><i class="fi fi-rr-list-check"></i> Homework</button>
+                <button type="button" class="search-filter-pill" data-type="schedule"><i class="fi fi-rr-calendar"></i> Schedule</button>
+              </div>
+              <div class="search-results-scroll" id="desktop-search-results-list"></div>
+            </div>
           </div>
         </div>
 
@@ -1611,6 +1649,6 @@
 
   <script defer src="academic-config.js?v=63"></script>
   <script defer src="profile-manager.js?v=63"></script>
-  <script defer src="app.min.js?v=70"></script>
+  <script defer src="app.min.js?v=71"></script>
 </body>
 </html>
