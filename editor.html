@@ -185,7 +185,7 @@
 
     <div class="editor-bar-right">
       <!-- Undo / Redo Buttons -->
-      <div class="editor-history-group" id="editor-history-group" role="group" aria-label="Undo and redo history">
+      <div class="editor-history-group" id="editor-history-group" role="group" aria-label="Undo and redo history" style="display: none;">
         <button type="button" class="editor-btn-secondary btn-editor-history" id="btn-editor-undo" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
           <i class="fi fi-rr-undo"></i>
         </button>
@@ -207,7 +207,7 @@
       </button>
 
       <!-- Quick Highlighter Button -->
-      <button type="button" class="editor-btn-secondary btn-highlighter-mode" id="btn-highlighter-mode" title="Quick Highlighter: Select text to highlight instantly (or hold Ctrl to multi-select)" aria-label="Quick Highlighter">
+      <button type="button" class="editor-btn-secondary btn-highlighter-mode" id="btn-highlighter-mode" title="Quick Highlighter: Select text to highlight instantly (or hold Ctrl to multi-select)" aria-label="Quick Highlighter" style="display: none;">
         <i class="fi fi-rr-marker" style="color: #f59f00;"></i>
         <span id="highlighter-btn-label">Highlight</span>
       </button>
@@ -219,7 +219,7 @@
       </button>
 
       <!-- Add Pinned Note Button -->
-      <button type="button" class="editor-btn-secondary btn-create-pinned-note" id="btn-create-pinned-note" title="Pin a note to side (up to 3)">
+      <button type="button" class="editor-btn-secondary btn-create-pinned-note" id="btn-create-pinned-note" title="Pin a note to side (up to 3)" style="display: none;">
         <i class="fi fi-rr-plus"></i>
         <span>Note</span>
       </button>
@@ -242,7 +242,7 @@
       </div>
 
       <!-- Primary Save Document & Live Status Button -->
-      <button type="button" class="editor-btn-primary editor-btn-save state-saved" id="btn-save-doc" title="All changes saved (Ctrl+S)">
+      <button type="button" class="editor-btn-primary editor-btn-save state-saved" id="btn-save-doc" title="All changes saved (Ctrl+S)" style="display: none;">
         <i class="fi fi-rr-check" id="btn-save-icon"></i>
         <span id="btn-save-text">Saved</span>
       </button>
@@ -519,6 +519,6 @@
   <script src="libs/blocknote-react.bundle.js?v=10"></script>
 
   <!-- BlockNote Standalone Editor Controller -->
-  <script src="editor.js?v=29"></script>
+  <script src="editor.js?v=30"></script>
 </body>
 </html>

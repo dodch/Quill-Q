@@ -59,6 +59,10 @@
 
   function updateHistoryUI(status) {
     const isEditable = Boolean(canEditDocument && !reviewingStudent);
+    const historyGroup = document.getElementById("editor-history-group");
+    if (historyGroup) {
+      historyGroup.style.display = isEditable ? "inline-flex" : "none";
+    }
     if (btnUndo) {
       btnUndo.disabled = !isEditable || !status?.canUndo;
     }
@@ -388,6 +392,8 @@
       const isTeacher = currentProfile && (currentProfile.role === "teacher" || isSuperAdmin);
       const isAuthor = currentUser && data.authorId === currentUser.uid;
 
+      canEditDocument = Boolean(isSuperAdmin || isAuthor);
+
       setupDocTypeUI();
 
       // STUDENT EXERCISE FLOW:
@@ -502,9 +508,19 @@
   }
 
   function applyEditingPermissions(canEdit, authorName = "") {
+    const historyGroup = document.getElementById("editor-history-group");
+    const btnHighlighter = document.getElementById("btn-highlighter-mode");
+    const btnNavPen = document.getElementById("btn-teacher-pen");
+    const btnCreatePinnedNote = document.getElementById("btn-create-pinned-note");
+
     if (!canEdit) {
-      // Viewer Mode: Hide manual save button and disable history buttons
+      // Viewer Mode: Hide manual save button, history buttons, highlighter, pen, and pinned notes
       if (btnSaveDoc) btnSaveDoc.style.display = "none";
+      if (historyGroup) historyGroup.style.display = "none";
+      if (btnHighlighter) btnHighlighter.style.display = "none";
+      if (btnNavPen) btnNavPen.classList.add("view-hidden");
+      if (btnCreatePinnedNote) btnCreatePinnedNote.style.display = "none";
+
       if (btnUndo) {
         btnUndo.disabled = true;
         btnUndo.title = "Undo unavailable in read-only mode";
@@ -520,8 +536,17 @@
         titleInput.style.cursor = "default";
       }
     } else {
-      // Editor Mode: Show save button and restore history tooltips
+      // Editor Mode: Show save button and restore controls
       if (btnSaveDoc) btnSaveDoc.style.display = "inline-flex";
+      if (historyGroup) historyGroup.style.display = "inline-flex";
+      if (btnHighlighter) btnHighlighter.style.display = "inline-flex";
+      if (btnNavPen) {
+        const shouldShowPen = Boolean(canEditDocument || reviewingStudent || isStudentWorksheet);
+        btnNavPen.classList.toggle("view-hidden", !shouldShowPen);
+      }
+      if (btnCreatePinnedNote && canCurrentUserManageNotes()) {
+        btnCreatePinnedNote.style.display = "inline-flex";
+      }
       if (btnUndo) {
         btnUndo.title = "Undo (Ctrl+Z)";
       }
@@ -604,10 +629,10 @@
       if (btnViewSubmissions) btnViewSubmissions.classList.add("view-hidden");
     }
 
-    // Pen Button: Visible for teachers/admins, reviewing student work, student exercises, or document editors
+    // Pen Button: Visible for reviewing student work, student exercises, or document editors
     const btnNavPen = document.getElementById("btn-teacher-pen");
     if (btnNavPen) {
-      if (isTeacher || reviewingStudent || isStudentWorksheet || canEditDocument) {
+      if (reviewingStudent || isStudentWorksheet || canEditDocument) {
         btnNavPen.classList.remove("view-hidden");
       } else {
         btnNavPen.classList.add("view-hidden");
@@ -638,6 +663,12 @@
 
     if (banner) banner.classList.remove("view-hidden");
     if (btnSubmit) btnSubmit.classList.remove("view-hidden");
+
+    // Ensure history undo/redo and highlighter are visible on personal worksheets
+    const historyGroup = document.getElementById("editor-history-group");
+    const btnHighlighter = document.getElementById("btn-highlighter-mode");
+    if (historyGroup) historyGroup.style.display = "inline-flex";
+    if (btnHighlighter) btnHighlighter.style.display = "inline-flex";
 
     // Student Handwriting Pen button is visible on worksheets
     const btnNavPen = document.getElementById("btn-teacher-pen");
@@ -896,9 +927,8 @@
     const banner = document.getElementById("exercise-review-banner");
     if (banner) banner.classList.add("view-hidden");
 
-    const isTeacher = currentProfile && (currentProfile.role === "teacher" || isSuperAdminUser(currentProfile, currentUser));
     const btnNavPen = document.getElementById("btn-teacher-pen");
-    if (btnNavPen && !isTeacher) btnNavPen.classList.add("view-hidden");
+    if (btnNavPen) btnNavPen.classList.toggle("view-hidden", !canEditDocument);
     configurePenRoleUI();
 
     // Cleanly unmount student worksheet and restore teacher's master blocks
@@ -1533,6 +1563,7 @@
 
   function toggleTeacherPen(forceState = null) {
     if (!reactEditorBridge) return;
+    if (!canEditDocument && !isStudentWorksheet && !reviewingStudent) return;
     configurePenRoleUI();
     const isTeacher = isUserTeacher();
 
@@ -1940,9 +1971,8 @@
     // On new documents being created, the user is the creator and can always add notes
     if (!currentDocId || !loadedDocumentData) return true;
     const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
-    const isTeacher = currentProfile && currentProfile.role === "teacher";
     const isAuthor = currentUser && (!loadedDocumentData.authorId || loadedDocumentData.authorId === currentUser.uid);
-    return Boolean(isSuperAdmin || isTeacher || isAuthor || canEditDocument);
+    return Boolean(isSuperAdmin || isAuthor || canEditDocument);
   }
 
   function renderPinnedNotes() {
@@ -2278,6 +2308,8 @@
         } else {
           const typeParam = getQueryParam("type");
           currentDocType = typeParam === "exercise" ? "exercise" : "document";
+          canEditDocument = true;
+          applyEditingPermissions(true);
           setupDocTypeUI();
           loadPinnedNotes();
           mountReactBlockNote();
