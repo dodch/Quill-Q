@@ -299,6 +299,12 @@
         // Migrate local storage key from draft to new docId
         savePinnedNotes();
         try { localStorage.removeItem(prevDraftKey); } catch (e) {}
+        try {
+          const c = currentClassId || "2ang-aff";
+          const now = Date.now();
+          localStorage.setItem(`quill_subject_latest_${c}_${currentSubject.id}`, String(now));
+          localStorage.setItem(`quill_subject_visited_${c}_${currentSubject.id}`, String(now));
+        } catch (e) {}
 
         // Update URL query params without reloading
         const newUrl = new URL(window.location.href);
@@ -333,6 +339,12 @@
         }
 
         await collectionRef.doc(currentDocId).update(docPayload);
+        try {
+          const c = currentClassId || "2ang-aff";
+          const now = Date.now();
+          localStorage.setItem(`quill_subject_latest_${c}_${currentSubject.id}`, String(now));
+          localStorage.setItem(`quill_subject_visited_${c}_${currentSubject.id}`, String(now));
+        } catch (e) {}
         if (loadedDocumentData) {
           renderAuthorBadge(loadedDocumentData);
         }

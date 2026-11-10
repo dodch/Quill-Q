@@ -102,6 +102,12 @@
     currentSubjectId = subject.id;
     document.title = `${subject.name} – Quill-Q Document Library`;
 
+    // Mark subject as visited so red dot is dismissed
+    try {
+      const c = currentClassId || (currentProfile ? currentProfile.classId : "2ang-aff") || "2ang-aff";
+      localStorage.setItem(`quill_subject_visited_${c}_${subject.id}`, String(Date.now()));
+    } catch (e) {}
+
     const headerTitle = document.getElementById("subject-header-title");
     if (headerTitle) headerTitle.textContent = subject.name;
 

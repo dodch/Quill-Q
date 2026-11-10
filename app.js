@@ -2407,6 +2407,9 @@ function bindUserTasks(user) {
           } catch (e) {}
           renderHomeworksView();
           syncHomeHomeworkNote();
+          if (window.SubjectUnreadTracker) {
+            SubjectUnreadTracker.syncWithServer(currentSubjectsViewClass);
+          }
         }, (err) => {
           console.warn("Firestore homeworks real-time sync warning:", err);
         });
@@ -2684,6 +2687,207 @@ function setupSearchableDropdown({
   };
 }
 
+// ===== Subject Unread / New Content Activity Tracker =====
+const SubjectUnreadTracker = {
+  getVisitedKey(classId, subjectId) {
+    const c = classId || "2ang-aff";
+    return `quill_subject_visited_${c}_${subjectId}`;
+  },
+
+  getLatestKey(classId, subjectId) {
+    const c = classId || "2ang-aff";
+    return `quill_subject_latest_${c}_${subjectId}`;
+  },
+
+  getLastVisited(classId, subjectId) {
+    try {
+      const v = localStorage.getItem(this.getVisitedKey(classId, subjectId));
+      return v ? parseInt(v, 10) : 0;
+    } catch (e) {
+      return 0;
+    }
+  },
+
+  markVisited(classId, subjectId) {
+    if (!subjectId) return;
+    try {
+      const c = classId || currentSubjectsViewClass || "2ang-aff";
+      const now = Date.now();
+      localStorage.setItem(this.getVisitedKey(c, subjectId), String(now));
+
+      // Remove dot from DOM immediately with smooth animation
+      const cards = document.querySelectorAll(`.bento-subject-card[data-subject-id="${subjectId}"]`);
+      cards.forEach(card => {
+        const dot = card.querySelector(".subject-unread-dot");
+        if (dot) {
+          dot.classList.add("fade-out");
+          setTimeout(() => dot.remove(), 220);
+        }
+      });
+
+      this.updateGlobalBadges(c);
+    } catch (e) {}
+  },
+
+  getLatestActivity(classId, subjectId) {
+    try {
+      const v = localStorage.getItem(this.getLatestKey(classId, subjectId));
+      return v ? parseInt(v, 10) : 0;
+    } catch (e) {
+      return 0;
+    }
+  },
+
+  recordActivity(classId, subjectId, timestamp) {
+    if (!timestamp || !subjectId) return;
+    const timeNum = typeof timestamp === "number"
+      ? timestamp
+      : (timestamp.toMillis ? timestamp.toMillis() : new Date(timestamp).getTime());
+    if (isNaN(timeNum) || timeNum <= 0) return;
+    try {
+      const c = classId || "2ang-aff";
+      const current = this.getLatestActivity(c, subjectId);
+      if (timeNum > current) {
+        localStorage.setItem(this.getLatestKey(c, subjectId), String(timeNum));
+      }
+    } catch (e) {}
+  },
+
+  hasUnread(classId, subjectId) {
+    const c = classId || currentSubjectsViewClass || "2ang-aff";
+    let latest = this.getLatestActivity(c, subjectId);
+
+    // If latest not cached yet, inspect GlobalOmniSearch.docsIndex if available
+    if (!latest && window.GlobalOmniSearch && Array.isArray(GlobalOmniSearch.docsIndex)) {
+      GlobalOmniSearch.docsIndex.forEach(doc => {
+        if (doc.subjectId === subjectId && doc.updatedAt) {
+          this.recordActivity(c, subjectId, doc.updatedAt);
+        }
+      });
+      latest = this.getLatestActivity(c, subjectId);
+    }
+
+    if (!latest) return false;
+    const visited = this.getLastVisited(c, subjectId);
+    return latest > visited;
+  },
+
+  updateGlobalBadges(classId) {
+    const activeClass = classId || currentSubjectsViewClass || "2ang-aff";
+    const subjects = (window.AcademicRegistry && typeof window.AcademicRegistry.getSubjectsForClass === "function")
+      ? window.AcademicRegistry.getSubjectsForClass(activeClass)
+      : [];
+
+    const anyUnread = subjects.some(s => this.hasUnread(activeClass, s.id));
+
+    // Sidebar navigation item indicator
+    const navItem = document.getElementById("nav-subjects");
+    if (navItem) {
+      let navDot = navItem.querySelector(".nav-item-unread-dot");
+      if (anyUnread) {
+        if (!navDot) {
+          navDot = document.createElement("span");
+          navDot.className = "nav-item-unread-dot";
+          navItem.appendChild(navDot);
+        }
+      } else {
+        if (navDot) navDot.remove();
+      }
+    }
+
+    // Mobile hub card indicator
+    const hubCard = document.querySelector(".card-nav-subjects");
+    if (hubCard) {
+      let hubDot = hubCard.querySelector(".mobile-hub-unread-dot");
+      if (anyUnread) {
+        if (!hubDot) {
+          hubDot = document.createElement("span");
+          hubDot.className = "mobile-hub-unread-dot";
+          hubCard.appendChild(hubDot);
+        }
+      } else {
+        if (hubDot) hubDot.remove();
+      }
+    }
+  },
+
+  refreshDOM(classId) {
+    const activeClass = classId || currentSubjectsViewClass || "2ang-aff";
+    document.querySelectorAll(".bento-subject-card").forEach(card => {
+      const subjId = card.dataset.subjectId;
+      if (subjId) {
+        const unread = this.hasUnread(activeClass, subjId);
+        let dot = card.querySelector(".subject-unread-dot");
+        if (unread) {
+          if (!dot) {
+            dot = document.createElement("span");
+            dot.className = "subject-unread-dot";
+            dot.setAttribute("title", "New content available");
+            card.appendChild(dot);
+          }
+        } else {
+          if (dot) dot.remove();
+        }
+      }
+    });
+    this.updateGlobalBadges(activeClass);
+  },
+
+  async syncWithServer(classId) {
+    const activeClass = classId || currentSubjectsViewClass || "2ang-aff";
+
+    // 1. Sync from sessionStorage cache first for 0ms startup
+    try {
+      const cacheKey = "quill_q_search_docs_v2_" + activeClass;
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && Array.isArray(parsed.items)) {
+          parsed.items.forEach(doc => {
+            if (doc.subjectId && doc.updatedAt) {
+              this.recordActivity(activeClass, doc.subjectId, doc.updatedAt);
+            }
+          });
+          this.refreshDOM(activeClass);
+        }
+      }
+    } catch (e) {}
+
+    // 2. Fetch fresh documents index in background
+    if (window.GlobalOmniSearch) {
+      try {
+        const docs = await GlobalOmniSearch.lazyLoadServerDocs();
+        if (Array.isArray(docs)) {
+          docs.forEach(doc => {
+            if (doc.subjectId && doc.updatedAt) {
+              this.recordActivity(activeClass, doc.subjectId, doc.updatedAt);
+            }
+          });
+          this.refreshDOM(activeClass);
+        }
+      } catch (err) {}
+    }
+
+    // 3. Sync from current tasks / homeworks
+    if (Array.isArray(currentTasks)) {
+      const subjects = (window.AcademicRegistry && typeof window.AcademicRegistry.getSubjectsForClass === "function")
+        ? window.AcademicRegistry.getSubjectsForClass(activeClass)
+        : [];
+      currentTasks.forEach(task => {
+        if (task.subject) {
+          const matched = subjects.find(s => s.id === task.subject || (task.subject && s.name.toLowerCase() === task.subject.toLowerCase()));
+          if (matched) {
+            const taskTime = task.updatedAt || task.createdAt || 0;
+            this.recordActivity(activeClass, matched.id, taskTime);
+          }
+        }
+      });
+      this.refreshDOM(activeClass);
+    }
+  }
+};
+window.SubjectUnreadTracker = SubjectUnreadTracker;
+
 // ===== Dynamic Bento Subjects View =====
 let currentSubjectsViewClass = "2ang-aff";
 
@@ -2746,8 +2950,13 @@ function renderSubjectsView(targetClassId) {
   container.innerHTML = subjects.map((s) => {
     const iconSvg = typeof getSubjectIconSvg === "function" ? getSubjectIconSvg(s.icon) : (typeof getSubjectIcon === "function" ? getSubjectIcon(s.icon) : "");
     const bgClass = s.bgClass || "card-peach";
+    const hasUnread = SubjectUnreadTracker.hasUnread(activeClass, s.id);
     return `
-      <a href="subject.html?id=${encodeURIComponent(s.id)}&class=${encodeURIComponent(activeClass)}" class="bento-subject-card ${bgClass}">
+      <a href="subject.html?id=${encodeURIComponent(s.id)}&class=${encodeURIComponent(activeClass)}" 
+         class="bento-subject-card ${bgClass}" 
+         data-subject-id="${escapeHtml(s.id)}" 
+         data-class-id="${escapeHtml(activeClass)}">
+        ${hasUnread ? `<span class="subject-unread-dot" title="New content available"></span>` : ""}
         <div class="bento-card-top">
           <div class="bento-card-text">
             <h3 class="bento-card-title">${escapeHtml(s.name)}</h3>
@@ -2759,6 +2968,20 @@ function renderSubjectsView(targetClassId) {
         </div>
       </a>`;
   }).join("");
+
+  // Bind click listener on cards to immediately mark visited and animate-dismiss the red dot
+  container.querySelectorAll(".bento-subject-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const subjId = card.dataset.subjectId;
+      const cId = card.dataset.classId || activeClass;
+      if (subjId) {
+        SubjectUnreadTracker.markVisited(cId, subjId);
+      }
+    });
+  });
+
+  SubjectUnreadTracker.updateGlobalBadges(activeClass);
+  SubjectUnreadTracker.syncWithServer(activeClass);
 }
 
 function renderHomeworksView() {
@@ -3902,6 +4125,9 @@ const GlobalOmniSearch = {
       this.isDocsLoading = false;
       this.updateSpinners(false);
       this.refreshActiveResults();
+      if (window.SubjectUnreadTracker) {
+        SubjectUnreadTracker.refreshDOM(activeClass);
+      }
     }
 
     return this.docsIndex;
@@ -3975,6 +4201,9 @@ const GlobalOmniSearch = {
             meta: `${subj.category || "Core Subject"} • Salle ${subj.room || "15"}`,
             score: score + 50,
             onSelect: () => {
+              if (window.SubjectUnreadTracker) {
+                SubjectUnreadTracker.markVisited(activeClass, subj.id);
+              }
               window.location.href = `subject.html?subject=${encodeURIComponent(subj.id)}&class=${encodeURIComponent(activeClass)}`;
             }
           });
@@ -4005,6 +4234,9 @@ const GlobalOmniSearch = {
             meta: `${doc.subjectName} • By ${doc.authorName || "Faculty"}`,
             score: score + (isEx ? 45 : 40),
             onSelect: () => {
+              if (window.SubjectUnreadTracker) {
+                SubjectUnreadTracker.markVisited(activeClass, doc.subjectId);
+              }
               const exParam = isEx ? "&type=exercise" : "";
               window.location.href = `editor.html?subject=${encodeURIComponent(doc.subjectId)}&docId=${encodeURIComponent(doc.id)}${exParam}&class=${encodeURIComponent(activeClass)}`;
             }
