@@ -1383,6 +1383,16 @@ function switchView(page) {
       renderSchedule();
     }
 
+    // Toggle mobile back to home button (appears on sub-pages, hidden on Home)
+    const mobileBackBtn = document.getElementById("mobile-nav-back-btn");
+    if (mobileBackBtn) {
+      if (page && page !== "home") {
+        mobileBackBtn.classList.remove("view-hidden");
+      } else {
+        mobileBackBtn.classList.add("view-hidden");
+      }
+    }
+
     // Re-apply any active search filter to freshly displayed view
     if (typeof reapplySearchFilter === "function") {
       reapplySearchFilter();
@@ -1601,6 +1611,51 @@ function initMobileHomeHub() {
   }
   if (toggleIcon) {
     toggleIcon.addEventListener("click", toggleTodayScheduleMobile);
+  }
+
+  // 3. Mobile Back to Home Navigation Button
+  const mobileBackBtn = document.getElementById("mobile-nav-back-btn");
+  if (mobileBackBtn) {
+    mobileBackBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const navItems = document.querySelectorAll(".nav-item");
+      navItems.forEach((i) => {
+        if (i.dataset.page === "home") i.classList.add("active");
+        else i.classList.remove("active");
+      });
+      switchView("home");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  // 4. Mobile Brand Click -> Navigate to Home
+  const brandBtn = document.getElementById("mobile-bar-brand");
+  if (brandBtn) {
+    brandBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const navItems = document.querySelectorAll(".nav-item");
+      navItems.forEach((i) => {
+        if (i.dataset.page === "home") i.classList.add("active");
+        else i.classList.remove("active");
+      });
+      switchView("home");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  // 5. Mobile Top Avatar -> Quick Profile Access
+  const avatarBtn = document.getElementById("mobile-top-avatar-btn");
+  if (avatarBtn) {
+    avatarBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const navItems = document.querySelectorAll(".nav-item");
+      navItems.forEach((i) => {
+        if (i.dataset.page === "profile") i.classList.add("active");
+        else i.classList.remove("active");
+      });
+      switchView("profile");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
   }
 }
 
@@ -4021,6 +4076,11 @@ function applyProfileToUI(profile) {
       sideAvatar.src = "assets/avatar.jpg";
       sideAvatar.alt = "Default avatar";
     }
+    const mobileTopAvatar = document.getElementById("mobile-top-avatar");
+    if (mobileTopAvatar) {
+      mobileTopAvatar.src = "assets/avatar.jpg";
+      mobileTopAvatar.alt = "Default avatar";
+    }
     if (sideName) sideName.textContent = "Student";
     if (sideRole) sideRole.textContent = "Student • English Business Grp 1";
     if (btnGetStarted) btnGetStarted.textContent = "Get Started";
@@ -4063,6 +4123,11 @@ function applyProfileToUI(profile) {
   if (sideAvatar) {
     sideAvatar.src = avatarUrl;
     sideAvatar.alt = displayName;
+  }
+  const mobileTopAvatarActive = document.getElementById("mobile-top-avatar");
+  if (mobileTopAvatarActive) {
+    mobileTopAvatarActive.src = avatarUrl;
+    mobileTopAvatarActive.alt = displayName;
   }
   if (sideName) sideName.textContent = displayName;
   if (sideRole) sideRole.textContent = `${roleDisplay} • ${academicDisplay}`;

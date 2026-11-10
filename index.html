@@ -43,7 +43,7 @@
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css" />
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css" />
   </noscript>
-  <link rel="stylesheet" href="styles.min.css?v=78" />
+  <link rel="stylesheet" href="styles.min.css?v=79" />
 
   <!-- Speculation Rules API for instant 0ms pre-rendering of subject & editor pages -->
   <script type="speculationrules">
@@ -501,17 +501,21 @@
     <!-- Mobile Top Navigation Bar -->
     <header class="mobile-top-bar" id="mobile-top-bar">
       <div class="mobile-bar-left">
-        <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle navigation menu" style="position: relative;">
-          <i class="fi fi-rr-menu-burger"></i>
-          <span class="mobile-approvals-dot view-hidden" id="mobile-approvals-dot" style="position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; background: #dc2626; border-radius: 50%; border: 1.5px solid #1a1816; animation: badgePulse 2.2s infinite ease-in-out;"></span>
+        <!-- Back to Home Button (Appears on non-Home pages) -->
+        <button type="button" class="mobile-nav-back-btn view-hidden" id="mobile-nav-back-btn" aria-label="Back to Home">
+          <i class="fi fi-rr-arrow-small-left"></i>
+          <span>Home</span>
         </button>
       </div>
-      <div class="mobile-bar-brand" id="mobile-bar-brand">
+      <div class="mobile-bar-brand" id="mobile-bar-brand" title="Quill-Q Home" style="cursor: pointer;">
         <span style="font-family: 'Patrick Hand', cursive; font-size: 26px; font-weight: 700; color: #1a1816;">Quill-Q</span>
       </div>
       <div class="mobile-bar-right">
         <button type="button" class="mobile-search-toggle-btn" id="mobile-search-toggle-btn" aria-label="Toggle search">
           <i class="fi fi-rr-search"></i>
+        </button>
+        <button type="button" class="mobile-top-avatar-btn" id="mobile-top-avatar-btn" aria-label="My Profile" title="My Profile">
+          <img src="assets/avatar.jpg" alt="Profile" id="mobile-top-avatar" decoding="async" />
         </button>
       </div>
 
@@ -616,14 +620,7 @@
             <article class="card status-card" id="status-card">
               <span class="status-card-tag" id="status-card-tag">STATUS</span>
               <div class="status-now">
-                <div class="status-now-header">
-                  <h4 class="status-label" id="status-now-label">Happening Now</h4>
-                  <!-- Mobile Day Progress Expand Trigger Icon / Button -->
-                  <button type="button" class="mobile-status-expand-icon-btn" id="btn-toggle-today-schedule-icon" aria-label="Toggle today's schedule timeline" title="Toggle today's schedule timeline">
-                    <i class="fi fi-rr-calendar-clock"></i>
-                    <span class="expand-icon-badge" id="sched-expand-dot"></span>
-                  </button>
-                </div>
+                <h4 class="status-label" id="status-now-label">Happening Now</h4>
                 <div class="status-body">
                   <span class="live-dot" id="live-dot" aria-label="Live"><span></span></span>
                   <div>
@@ -1613,6 +1610,6 @@
 
   <script defer src="academic-config.js?v=63"></script>
   <script defer src="profile-manager.js?v=63"></script>
-  <script defer src="app.min.js?v=67"></script>
+  <script defer src="app.min.js?v=68"></script>
 </body>
 </html>

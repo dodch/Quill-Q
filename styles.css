@@ -3304,9 +3304,14 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   .mobile-bar-right {
     display: flex;
     align-items: center;
-    width: 44px;
+    gap: 8px;
+  }
+  .mobile-bar-left {
+    min-width: 44px;
+    justify-content: flex-start;
   }
   .mobile-bar-right {
+    min-width: 44px;
     justify-content: flex-end;
   }
 
@@ -3321,13 +3326,73 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     opacity: 0.85;
   }
 
-  .mobile-menu-btn,
+  .mobile-menu-btn {
+    display: none !important;
+  }
+
+  /* Back to Home Button on Mobile Sub-pages */
+  .mobile-nav-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #ffffff;
+    border: 2px solid #1a1816;
+    border-radius: 999px;
+    padding: 5px 12px 5px 8px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1a1816;
+    cursor: pointer;
+    box-shadow: 2px 2px 0px #1a1816;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+    touch-action: manipulation;
+  }
+  .mobile-nav-back-btn i {
+    font-size: 16px;
+    color: #e07a5f;
+  }
+  .mobile-nav-back-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px #1a1816;
+  }
+  .mobile-nav-back-btn.view-hidden {
+    display: none !important;
+  }
+
+  /* Quick Profile Avatar in Mobile Top Bar */
+  .mobile-top-avatar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #1a1816;
+    background: #ffffff;
+    padding: 0;
+    cursor: pointer;
+    box-shadow: 2px 2px 0px #1a1816;
+    overflow: hidden;
+    transition: transform 0.1s ease;
+    touch-action: manipulation;
+  }
+  .mobile-top-avatar-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .mobile-top-avatar-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px #1a1816;
+  }
+
   .mobile-search-toggle-btn {
     background: #ffffff;
     border: 2px solid #1a1816;
     border-radius: 10px;
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3337,7 +3402,6 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     box-shadow: 2px 2px 0px #1a1816;
     transition: transform 0.1s ease, background 0.15s ease;
   }
-  .mobile-menu-btn:active,
   .mobile-search-toggle-btn:active {
     transform: translate(1px, 1px);
     box-shadow: 1px 1px 0px #1a1816;
@@ -3415,51 +3479,10 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     color: #1a1816;
   }
 
-  /* Slide-in Mobile Drawer Sidebar */
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 290px;
-    height: 100vh;
-    max-height: 100vh;
-    background: #fcf9f2;
-    z-index: 1000;
-    border-right: 2.5px solid #1a1816;
-    box-shadow: 8px 0 0 rgba(26, 24, 22, 0.15);
-    transform: translateX(-110%) !important;
-    visibility: hidden;
-    pointer-events: none;
-    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.28s ease;
-    padding: 24px 20px 32px;
-    overflow-y: auto;
-  }
-
-  .sidebar.mobile-open {
-    transform: translateX(0) !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-  }
-
-  /* Drawer Backdrop */
+  /* Mobile Sidebar Completely Hidden (Replaced by Home Hub Grid and Back Navigation) */
+  .sidebar,
   .sidebar-backdrop {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(26, 24, 22, 0.45);
-    backdrop-filter: blur(2px);
-    z-index: 999;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
-  }
-
-  .sidebar-backdrop.active {
-    opacity: 1;
-    pointer-events: auto;
+    display: none !important;
   }
 
   /* Content area adjustment */
@@ -3482,7 +3505,7 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   /* Today's status & schedule cards */
   .qg-row {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 14px;
   }
 
   /* Search is now accessible directly at the top in navbar */
@@ -3490,64 +3513,101 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     display: none !important;
   }
 
+  /* Ultra-Compact & Clear Mobile Day Status Card */
   .status-card {
     grid-template-columns: 1fr !important;
-    gap: 18px;
-    padding: 20px 18px;
+    gap: 10px !important;
+    padding: 14px 14px 12px !important;
+    border-radius: 18px !important;
+  }
+  .status-card-tag {
+    font-size: 9.5px !important;
+    padding: 2px 7px !important;
+    top: 10px !important;
+    right: 12px !important;
   }
   .status-divider {
     display: none !important;
   }
-
-  /* Mobile Day Progress Header & Trigger Icon */
-  .status-now-header {
+  /* Remove unclear progress bar on mobile */
+  .status-card .progress {
+    display: none !important;
+  }
+  .status-now .status-label {
+    font-size: 11px !important;
+    margin-bottom: 5px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .status-now .now-subject {
+    font-size: 20px !important;
+    line-height: 1.2 !important;
+    font-weight: 700 !important;
+  }
+  .status-now .now-meta {
+    font-size: 13px !important;
+    margin-top: 2px !important;
+  }
+  .status-now .status-body {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-  .status-now-header .status-label {
-    margin-bottom: 0 !important;
-  }
-  .mobile-status-expand-icon-btn {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    background: #fdfaf3;
-    border: 1.8px solid #1a1816;
-    box-shadow: 2px 2px 0px #1a1816;
-    color: #e07a5f;
-    font-size: 15px;
-    cursor: pointer;
-    touch-action: manipulation;
-    transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
-    position: relative;
-    padding: 0;
-  }
-  .mobile-status-expand-icon-btn:active {
-    transform: translate(1px, 1px);
-    box-shadow: 1px 1px 0px #1a1816;
-  }
-  .mobile-status-expand-icon-btn.is-active {
-    background: #fce7df;
-    color: #c84e2a;
+    gap: 10px !important;
   }
 
-  /* Full-width mobile footer expand bar on status card */
+  /* Compact Up Next Pill */
+  .status-next {
+    background: #fbf7ee;
+    border: 1.5px dashed #ded4c5;
+    padding: 8px 12px;
+    border-radius: 12px;
+    margin-top: 2px;
+  }
+  .status-next .status-label {
+    font-size: 10.5px !important;
+    margin-bottom: 4px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .status-next .status-body {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .status-next .next-subject {
+    font-size: 14.5px !important;
+    font-weight: 600 !important;
+    line-height: 1.25 !important;
+  }
+  .status-next .next-meta {
+    font-size: 12px !important;
+    margin-top: 2px !important;
+  }
+  .status-next .next-icon-wrap {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .status-next .next-color-circle {
+    width: 26px !important;
+    height: 26px !important;
+    top: 3px !important;
+  }
+  .status-next .next-quill-svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* Compact full-width mobile footer expand bar on status card */
   .status-schedule-expand-bar {
     display: flex !important;
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    margin-top: 6px;
-    padding: 10px 14px;
+    margin-top: 4px !important;
+    padding: 8px 12px !important;
     background: #fefcf7;
     border: 1.8px solid #1a1816;
     border-radius: 12px;
-    box-shadow: 2px 2.5px 0px #1a1816;
+    box-shadow: 2px 2px 0px #1a1816;
     cursor: pointer;
     touch-action: manipulation;
     font-family: inherit;
