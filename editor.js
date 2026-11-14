@@ -700,7 +700,7 @@
     const newStatus = isCurrentlySubmitted ? "in-progress" : "submitted";
 
     try {
-      const subDocRef = db.collection("subjects").doc(currentSubject.id).collection("documents").doc(currentDocId).collection("submissions").doc(currentUser.uid);
+      const subDocRef = getSubjectCollectionDocRef().collection("documents").doc(currentDocId).collection("submissions").doc(currentUser.uid);
       
       const jsonString = reactEditorBridge && typeof reactEditorBridge.getJSONString === "function" ? reactEditorBridge.getJSONString() : "{}";
 

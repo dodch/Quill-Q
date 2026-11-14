@@ -135,8 +135,11 @@
         </div>
       </div>
 
-      <!-- Compact Subject Switcher Dropdown on Right -->
-      <div class="subject-switcher-compact-wrap">
+      <!-- Compact Class & Subject Switcher Dropdowns on Right -->
+      <div class="subject-switcher-compact-wrap" style="display: flex; align-items: center; gap: 8px;">
+        <select id="subject-class-select" class="subject-switcher-select" aria-label="Select class" style="display: none;">
+          <!-- Dynamically populated for teachers & admins -->
+        </select>
         <select id="subject-select" class="subject-switcher-select" aria-label="Select subject">
           <!-- Dynamically populated from registry -->
         </select>

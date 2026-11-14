@@ -27,6 +27,7 @@
   const heroRoom = document.getElementById("subject-room-name");
   const heroSchedule = document.getElementById("subject-schedule-name");
   const subjectSelect = document.getElementById("subject-select");
+  const classSelect = document.getElementById("subject-class-select");
   const btnCreateDoc = document.getElementById("btn-create-document");
   const btnCreateLabel = document.getElementById("btn-create-label");
   const tabBtnDocs = document.getElementById("tab-btn-docs");
@@ -65,6 +66,68 @@
     if (diffSecs < 604800) return `${Math.floor(diffSecs / 86400)}d ago`;
 
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  function initClassDropdown() {
+    if (!classSelect || !window.AcademicRegistry) return;
+    const isSuperAdmin = isSuperAdminUser(currentProfile, currentUser);
+    const isTeacher = currentProfile && currentProfile.role === "teacher";
+    if (!isSuperAdmin && !isTeacher) {
+      classSelect.style.display = "none";
+      return;
+    }
+
+    const allClasses = window.AcademicRegistry.getAllClasses() || [];
+    const teaching = (currentProfile && Array.isArray(currentProfile.teachingClasses)) ? currentProfile.teachingClasses : [];
+    const available = (isSuperAdmin || teaching.length === 0)
+      ? allClasses
+      : allClasses.filter((c) => teaching.includes(c.id));
+    const classesToRender = available.length ? available : allClasses;
+
+    if (classesToRender.length <= 1) {
+      classSelect.style.display = "none";
+      return;
+    }
+
+    const activeClass = currentClassId || (currentProfile && currentProfile.classId) || (classesToRender[0] && classesToRender[0].id) || "2ang-aff";
+    classSelect.innerHTML = "";
+    classesToRender.forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = c.shortName || c.name;
+      if (c.id === activeClass) opt.selected = true;
+      classSelect.appendChild(opt);
+    });
+    classSelect.value = activeClass;
+    classSelect.style.display = "";
+
+    if (!classSelect.dataset.bound) {
+      classSelect.dataset.bound = "true";
+      classSelect.addEventListener("change", (e) => {
+        switchClass(e.target.value);
+      });
+    }
+  }
+
+  function switchClass(newClassId) {
+    if (!newClassId || newClassId === currentClassId) return;
+    currentClassId = newClassId;
+
+    const subjects = (window.AcademicRegistry && typeof window.AcademicRegistry.getSubjectsForClass === "function")
+      ? window.AcademicRegistry.getSubjectsForClass(currentClassId)
+      : [];
+    if (subjects.length > 0 && !subjects.some((s) => s.id === currentSubjectId)) {
+      currentSubjectId = subjects[0].id;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("class", currentClassId);
+    url.searchParams.set("id", currentSubjectId);
+    window.history.replaceState({}, "", url.toString());
+
+    initSubjectDropdown();
+    renderSubjectHero(currentSubjectId);
+    bindDocumentsListener();
   }
 
   function initSubjectDropdown() {
@@ -553,8 +616,9 @@
     // 1. Determine class and subject from query parameters
     currentClassId = getQueryParam("class") || "";
     const querySub = getQueryParam("id") || getQueryParam("subject");
-    if (querySub && typeof getSubjectById === "function" && getSubjectById(querySub, currentClassId)) {
-      currentSubjectId = getSubjectById(querySub, currentClassId).id;
+    if (querySub) {
+      const resolvedSub = typeof getSubjectById === "function" ? getSubjectById(querySub, currentClassId) : null;
+      currentSubjectId = resolvedSub ? resolvedSub.id : querySub;
     }
 
     initSubjectDropdown();
@@ -572,8 +636,17 @@
 
     if (window.AcademicRegistry && typeof window.AcademicRegistry.onAcademicStructureChange === "function") {
       window.AcademicRegistry.onAcademicStructureChange(() => {
+        const prevSubjectId = currentSubjectId;
+        if (querySub && typeof getSubjectById === "function") {
+          const resolved = getSubjectById(querySub, currentClassId);
+          if (resolved) currentSubjectId = resolved.id;
+        }
+        initClassDropdown();
         initSubjectDropdown();
         renderSubjectHero(currentSubjectId);
+        if (currentUser && currentSubjectId !== prevSubjectId) {
+          bindDocumentsListener();
+        }
       });
     }
 
@@ -606,12 +679,13 @@
           currentProfile = { email: user.email, role: "student", status: "pending" };
         }
 
-        // If class wasn't explicitly provided in the URL query, use the student's profile class
-        if (!currentClassId && currentProfile && currentProfile.classId) {
-          currentClassId = currentProfile.classId;
-          initSubjectDropdown();
-          renderSubjectHero(currentSubjectId);
+        // If class wasn't explicitly provided in the URL query, use the user's profile class
+        if (!currentClassId && currentProfile) {
+          currentClassId = currentProfile.classId || (Array.isArray(currentProfile.teachingClasses) && currentProfile.teachingClasses[0]) || "";
         }
+        initClassDropdown();
+        initSubjectDropdown();
+        renderSubjectHero(currentSubjectId);
 
         // Update nav bar user info
         if (navName) navName.textContent = currentProfile.displayName || user.displayName || "Student";
