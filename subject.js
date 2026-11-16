@@ -14,6 +14,8 @@
   let documentsUnsubscribe = null;
   let allDocumentsCache = [];
   let isFirstDocsSnapshot = true;
+  let docsLoadWatchdog = null;
+  let docsSnapshotReceived = false;
 
   const SUPER_ADMIN_EMAILS = ["dodchadam@gmail.com", "dotchadam@gmail.com"];
 
@@ -393,13 +395,165 @@
     }
   }
 
+  function getSubjectDocsCacheKey(docPath) {
+    return `quill_q_subject_docs_${docPath}`;
+  }
+
+  function renderDocsErrorState(message) {
+    if (!docsGrid) return;
+    docsGrid.innerHTML = `
+      <div class="docs-empty-state">
+        <div class="docs-empty-icon" style="background: #ffe3e3;">
+          <i class="fi fi-rr-wifi-slash" style="color: #c92a2a;"></i>
+        </div>
+        <h2 class="docs-empty-title">Connection issue</h2>
+        <p class="docs-empty-desc">${escapeHtml(message || "Could not reach Quill-Q server. Please check your internet connection.")}</p>
+        <button type="button" class="btn-create-doc" id="btn-retry-docs" style="margin-top: 10px; cursor: pointer;">
+          <i class="fi fi-rr-refresh"></i>
+          <span>Retry Connection</span>
+        </button>
+      </div>
+    `;
+    const retryBtn = document.getElementById("btn-retry-docs");
+    if (retryBtn) {
+      retryBtn.addEventListener("click", () => {
+        bindDocumentsListener();
+      });
+    }
+  }
+
+  function processDocsSnapshot(snapshot, docPath) {
+    docsSnapshotReceived = true;
+    if (docsLoadWatchdog) {
+      clearTimeout(docsLoadWatchdog);
+      docsLoadWatchdog = null;
+    }
+
+    // Detect newly added documents/exercises
+    if (!isFirstDocsSnapshot && typeof snapshot.docChanges === "function") {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          const docData = change.doc.data();
+          if (docData && docData.authorId !== (currentUser ? currentUser.uid : null)) {
+            const isEx = docData.docType === "exercise";
+            const author = docData.authorName || "Classmate";
+            const title = docData.title || "Untitled";
+            
+            // Audio Chime
+            try {
+              const ctx = new (window.AudioContext || window.webkitAudioContext)();
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = "sine";
+              osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+              osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+              gain.gain.setValueAtTime(0.08, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(ctx.currentTime);
+              osc.stop(ctx.currentTime + 0.5);
+            } catch (e) {}
+
+            // In-app Toast alert
+            const toastContainer = document.getElementById("inapp-toast-container");
+            if (toastContainer) {
+              const toast = document.createElement("div");
+              toast.className = `inapp-toast ${isEx ? 'toast-exercise' : 'toast-doc'}`;
+              toast.setAttribute("role", "alert");
+              toast.innerHTML = `
+                <div class="inapp-toast-icon-wrap">
+                  <i class="fi ${isEx ? 'fi-rr-edit' : 'fi-rr-document'}"></i>
+                </div>
+                <div class="inapp-toast-body">
+                  <div class="inapp-toast-header">
+                    <span class="inapp-toast-badge">${isEx ? 'New Exercise' : 'New Notes'}</span>
+                  </div>
+                  <div class="inapp-toast-title">${escapeHtml(title)}</div>
+                  <div class="inapp-toast-desc">${escapeHtml(docData.excerpt || "Added to subject")}</div>
+                  <div class="inapp-toast-meta">By ${escapeHtml(author)}</div>
+                </div>
+                <button type="button" class="inapp-toast-close" aria-label="Dismiss">&times;</button>
+              `;
+              toast.addEventListener("click", (e) => {
+                if (e.target.closest(".inapp-toast-close")) return;
+                const cParam = currentClassId ? `&class=${encodeURIComponent(currentClassId)}` : "";
+                window.location.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}${cParam}&docId=${encodeURIComponent(change.doc.id)}`;
+              });
+              const closeBtn = toast.querySelector(".inapp-toast-close");
+              if (closeBtn) {
+                closeBtn.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  toast.remove();
+                });
+              }
+              setTimeout(() => { if (toast.parentNode) toast.remove(); }, 6500);
+              toastContainer.appendChild(toast);
+            }
+
+            // Browser/System notification
+            if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+              try {
+                new Notification(isEx ? `✏️ New Exercise: ${title}` : `📄 New Notes: ${title}`, {
+                  body: `By ${author}\n${docData.excerpt || ""}`,
+                  icon: "assets/icon-192.png",
+                  badge: "assets/favicon-32x32-light.png",
+                  tag: "subject-doc-" + change.doc.id
+                });
+              } catch (e) {}
+            }
+          }
+        }
+      });
+    }
+    isFirstDocsSnapshot = false;
+
+    const docs = [];
+    snapshot.forEach((d) => {
+      docs.push({ id: d.id, ...d.data() });
+    });
+
+    // Sort by updatedAt descending
+    docs.sort((a, b) => {
+      const tA = a.updatedAt ? (a.updatedAt.toMillis ? a.updatedAt.toMillis() : new Date(a.updatedAt).getTime()) : 0;
+      const tB = b.updatedAt ? (b.updatedAt.toMillis ? b.updatedAt.toMillis() : new Date(b.updatedAt).getTime()) : 0;
+      return tB - tA;
+    });
+
+    allDocumentsCache = docs;
+    try {
+      const lightweight = docs.map((d) => ({
+        id: d.id,
+        title: d.title,
+        excerpt: d.excerpt,
+        docType: d.docType,
+        authorId: d.authorId,
+        authorName: d.authorName,
+        authorRole: d.authorRole,
+        authorAvatar: d.authorAvatar,
+        lastEditorId: d.lastEditorId,
+        lastEditorName: d.lastEditorName,
+        lastEditorAvatar: d.lastEditorAvatar,
+        updatedAt: d.updatedAt && d.updatedAt.toMillis ? d.updatedAt.toMillis() : d.updatedAt,
+        createdAt: d.createdAt && d.createdAt.toMillis ? d.createdAt.toMillis() : d.createdAt
+      }));
+      sessionStorage.setItem(getSubjectDocsCacheKey(docPath), JSON.stringify(lightweight));
+    } catch (e) {}
+    filterAndRenderDocs();
+  }
+
   function bindDocumentsListener() {
     if (documentsUnsubscribe) {
       try { documentsUnsubscribe(); } catch (e) {}
       documentsUnsubscribe = null;
     }
+    if (docsLoadWatchdog) {
+      clearTimeout(docsLoadWatchdog);
+      docsLoadWatchdog = null;
+    }
 
     isFirstDocsSnapshot = true;
+    docsSnapshotReceived = false;
 
     if (!db || !currentUser) return;
 
@@ -423,8 +577,26 @@
       return;
     }
 
-    // Show loading state
-    if (docsGrid) {
+    const docPath = (currentClassId && currentClassId !== "2ang-aff")
+      ? `${currentClassId}_${currentSubjectId}`
+      : currentSubjectId;
+
+    // 0ms instant render from session cache if available
+    let renderedFromCache = false;
+    try {
+      const cachedRaw = sessionStorage.getItem(getSubjectDocsCacheKey(docPath));
+      if (cachedRaw) {
+        const parsed = JSON.parse(cachedRaw);
+        if (Array.isArray(parsed)) {
+          allDocumentsCache = parsed;
+          filterAndRenderDocs();
+          renderedFromCache = true;
+        }
+      }
+    } catch (e) {}
+
+    // Show loading skeleton only if no cached docs were rendered
+    if (!renderedFromCache && docsGrid) {
       docsGrid.innerHTML = `
         <div class="doc-card" style="opacity: 0.6; pointer-events: none;">
           <div class="doc-card-top">
@@ -436,119 +608,38 @@
       `;
     }
 
-    const docPath = (currentClassId && currentClassId !== "2ang-aff")
-      ? `${currentClassId}_${currentSubjectId}`
-      : currentSubjectId;
     const docRef = db.collection("subjects").doc(docPath).collection("documents");
+
+    // Watchdog: if onSnapshot stalls (e.g. Safari WebChannel / sleep / slow network), fall back to one-shot .get()
+    docsLoadWatchdog = setTimeout(async () => {
+      if (docsSnapshotReceived) return;
+      try {
+        const fallbackSnap = window.QuillNet
+          ? await window.QuillNet.withTimeout(docRef.get({ source: "server" }), 7000, "Documents fetch")
+          : await docRef.get();
+        if (!docsSnapshotReceived && fallbackSnap) {
+          processDocsSnapshot(fallbackSnap, docPath);
+        }
+      } catch (fallbackErr) {
+        console.warn("Subject docs watchdog fallback failed:", fallbackErr);
+        if (!docsSnapshotReceived && !renderedFromCache) {
+          renderDocsErrorState("Connection timed out while fetching documents. Tap Retry to reconnect.");
+        }
+      }
+    }, 8000);
 
     documentsUnsubscribe = docRef.onSnapshot(
       (snapshot) => {
-        // Detect newly added documents/exercises
-        if (!isFirstDocsSnapshot) {
-          snapshot.docChanges().forEach((change) => {
-            if (change.type === "added") {
-              const docData = change.doc.data();
-              if (docData && docData.authorId !== (currentUser ? currentUser.uid : null)) {
-                const isEx = docData.docType === "exercise";
-                const author = docData.authorName || "Classmate";
-                const title = docData.title || "Untitled";
-                
-                // Audio Chime
-                try {
-                  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                  const osc = ctx.createOscillator();
-                  const gain = ctx.createGain();
-                  osc.type = "sine";
-                  osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-                  osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
-                  gain.gain.setValueAtTime(0.08, ctx.currentTime);
-                  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-                  osc.connect(gain);
-                  gain.connect(ctx.destination);
-                  osc.start(ctx.currentTime);
-                  osc.stop(ctx.currentTime + 0.5);
-                } catch (e) {}
-
-                // In-app Toast alert
-                const toastContainer = document.getElementById("inapp-toast-container");
-                if (toastContainer) {
-                  const toast = document.createElement("div");
-                  toast.className = `inapp-toast ${isEx ? 'toast-exercise' : 'toast-doc'}`;
-                  toast.setAttribute("role", "alert");
-                  toast.innerHTML = `
-                    <div class="inapp-toast-icon-wrap">
-                      <i class="fi ${isEx ? 'fi-rr-edit' : 'fi-rr-document'}"></i>
-                    </div>
-                    <div class="inapp-toast-body">
-                      <div class="inapp-toast-header">
-                        <span class="inapp-toast-badge">${isEx ? 'New Exercise' : 'New Notes'}</span>
-                      </div>
-                      <div class="inapp-toast-title">${escapeHtml(title)}</div>
-                      <div class="inapp-toast-desc">${escapeHtml(docData.excerpt || "Added to subject")}</div>
-                      <div class="inapp-toast-meta">By ${escapeHtml(author)}</div>
-                    </div>
-                    <button type="button" class="inapp-toast-close" aria-label="Dismiss">&times;</button>
-                  `;
-                  toast.addEventListener("click", (e) => {
-                    if (e.target.closest(".inapp-toast-close")) return;
-                    const cParam = currentClassId ? `&class=${encodeURIComponent(currentClassId)}` : "";
-                    window.location.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}${cParam}&docId=${encodeURIComponent(change.doc.id)}`;
-                  });
-                  const closeBtn = toast.querySelector(".inapp-toast-close");
-                  if (closeBtn) {
-                    closeBtn.addEventListener("click", (e) => {
-                      e.stopPropagation();
-                      toast.remove();
-                    });
-                  }
-                  setTimeout(() => { if (toast.parentNode) toast.remove(); }, 6500);
-                  toastContainer.appendChild(toast);
-                }
-
-                // Browser/System notification
-                if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-                  try {
-                    new Notification(isEx ? `✏️ New Exercise: ${title}` : `📄 New Notes: ${title}`, {
-                      body: `By ${author}\n${docData.excerpt || ""}`,
-                      icon: "assets/icon-192.png",
-                      badge: "assets/favicon-32x32-light.png",
-                      tag: "subject-doc-" + change.doc.id
-                    });
-                  } catch (e) {}
-                }
-              }
-            }
-          });
-        }
-        isFirstDocsSnapshot = false;
-
-        const docs = [];
-        snapshot.forEach((d) => {
-          docs.push({ id: d.id, ...d.data() });
-        });
-
-        // Sort by updatedAt descending
-        docs.sort((a, b) => {
-          const tA = a.updatedAt ? (a.updatedAt.toMillis ? a.updatedAt.toMillis() : new Date(a.updatedAt).getTime()) : 0;
-          const tB = b.updatedAt ? (b.updatedAt.toMillis ? b.updatedAt.toMillis() : new Date(b.updatedAt).getTime()) : 0;
-          return tB - tA;
-        });
-
-        allDocumentsCache = docs;
-        filterAndRenderDocs();
+        processDocsSnapshot(snapshot, docPath);
       },
       (error) => {
+        if (docsLoadWatchdog) {
+          clearTimeout(docsLoadWatchdog);
+          docsLoadWatchdog = null;
+        }
         console.error("Firestore document listener error:", error);
-        if (docsGrid) {
-          docsGrid.innerHTML = `
-            <div class="docs-empty-state">
-              <div class="docs-empty-icon" style="background: #ffe3e3;">
-                <i class="fi fi-rr-cross-circle" style="color: #c92a2a;"></i>
-              </div>
-              <h2 class="docs-empty-title">Could not load documents</h2>
-              <p class="docs-empty-desc">${error.message}</p>
-            </div>
-          `;
+        if (!renderedFromCache) {
+          renderDocsErrorState(error.message);
         }
       }
     );
@@ -661,11 +752,28 @@
 
         currentUser = user;
 
-        // Fetch User Profile from Firestore
+        // Fetch User Profile from Firestore (with localStorage cache fallback so network blips don't mark user pending)
+        let cachedProfile = null;
         try {
-          const userDoc = await db.collection("users").doc(user.uid).get();
+          const raw = localStorage.getItem("quill_q_profile");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && (!parsed.uid || parsed.uid === user.uid)) {
+              cachedProfile = parsed;
+            }
+          }
+        } catch (e) {}
+
+        try {
+          const userRef = db.collection("users").doc(user.uid);
+          const userDoc = window.QuillNet
+            ? await window.QuillNet.fetchDocResilient(userRef, 8000)
+            : await userRef.get();
           if (userDoc.exists) {
             currentProfile = userDoc.data();
+            try { localStorage.setItem("quill_q_profile", JSON.stringify(currentProfile)); } catch (e) {}
+          } else if (cachedProfile) {
+            currentProfile = cachedProfile;
           } else {
             currentProfile = {
               displayName: user.displayName || user.email.split("@")[0],
@@ -676,8 +784,19 @@
           }
         } catch (e) {
           console.warn("Could not load user profile:", e);
-          currentProfile = { email: user.email, role: "student", status: "pending" };
+          currentProfile = cachedProfile || {
+            email: user.email,
+            role: isSuperAdminUser(null, user) ? "admin" : "student",
+            status: isSuperAdminUser(null, user) ? "approved" : "pending"
+          };
         }
+
+        // Auto-recover connection when network comes back online
+        window.addEventListener("online", () => {
+          if (currentUser && !docsSnapshotReceived) {
+            bindDocumentsListener();
+          }
+        });
 
         // If class wasn't explicitly provided in the URL query, use the user's profile class
         if (!currentClassId && currentProfile) {

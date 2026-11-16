@@ -368,10 +368,38 @@
 
   let canEditDocument = true;
 
+  function renderEditorLoadError(docId, message) {
+    if (!editorContainer) return;
+    editorContainer.innerHTML = `
+      <div style="max-width: 520px; margin: 40px auto; padding: 32px 24px; background: #fff; border: 2.5px solid #1a1816; border-radius: 16px; box-shadow: 4px 5px 0 #1a1816; text-align: center; font-family: Outfit, sans-serif;">
+        <div style="font-size: 2rem; margin-bottom: 10px;">📡</div>
+        <h3 style="margin: 0 0 8px; color: #1a1816;">Connection issue</h3>
+        <p style="margin: 0 0 18px; color: #5c544b; font-size: 0.95rem;">${escapeHtml(message || "Could not load this document. Please check your connection.")}</p>
+        <button type="button" id="btn-retry-load-doc" style="padding: 10px 22px; background: #f6cf7c; border: 2px solid #1a1816; border-radius: 12px; box-shadow: 2px 3px 0 #1a1816; font-weight: 700; cursor: pointer; font-family: inherit;">
+          Retry Loading Document
+        </button>
+      </div>
+    `;
+    const btn = document.getElementById("btn-retry-load-doc");
+    if (btn) {
+      btn.addEventListener("click", () => loadExistingDocument(docId));
+    }
+  }
+
   async function loadExistingDocument(docId) {
+    if (editorContainer) {
+      editorContainer.innerHTML = `
+        <div style="max-width: 520px; margin: 40px auto; padding: 32px 24px; background: #fff; border: 2.5px solid #1a1816; border-radius: 16px; box-shadow: 4px 5px 0 #1a1816; text-align: center; font-family: Outfit, sans-serif; color: #7d756d;">
+          <i class="fi fi-rr-spinner editor-spin-icon" style="font-size: 1.5rem; display: inline-block; margin-bottom: 10px;"></i>
+          <div>Loading document...</div>
+        </div>
+      `;
+    }
     try {
       const docRef = getSubjectCollectionDocRef().collection("documents").doc(docId);
-      const snapshot = await docRef.get();
+      const snapshot = window.QuillNet
+        ? await window.QuillNet.fetchDocResilient(docRef, 10000)
+        : await docRef.get();
 
       if (!snapshot.exists) {
         showToast("Document not found. Creating a fresh document.", "error");
@@ -402,7 +430,9 @@
         isStudentWorksheet = true;
 
         const subDocRef = getSubjectCollectionDocRef().collection("documents").doc(docId).collection("submissions").doc(currentUser.uid);
-        const subSnap = await subDocRef.get();
+        const subSnap = window.QuillNet
+          ? await window.QuillNet.fetchDocResilient(subDocRef, 10000)
+          : await subDocRef.get();
 
         let initialContent = data.content;
         let subStatus = "in-progress";
@@ -500,10 +530,7 @@
     } catch (err) {
       console.error("Error loading document:", err);
       showToast("Error loading document: " + err.message, "error");
-      canEditDocument = true;
-      applyEditingPermissions(true);
-      loadPinnedNotes();
-      mountReactBlockNote(undefined, true);
+      renderEditorLoadError(docId, err.message);
     }
   }
 
@@ -2274,11 +2301,28 @@
 
         currentUser = user;
 
-        // Fetch user profile
+        // Fetch user profile (with localStorage cache fallback on timeout/offline)
+        let cachedProfile = null;
         try {
-          const userDoc = await db.collection("users").doc(user.uid).get();
+          const raw = localStorage.getItem("quill_q_profile");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && (!parsed.uid || parsed.uid === user.uid)) {
+              cachedProfile = parsed;
+            }
+          }
+        } catch (e) {}
+
+        try {
+          const userRef = db.collection("users").doc(user.uid);
+          const userDoc = window.QuillNet
+            ? await window.QuillNet.fetchDocResilient(userRef, 8000)
+            : await userRef.get();
           if (userDoc.exists) {
             currentProfile = userDoc.data();
+            try { localStorage.setItem("quill_q_profile", JSON.stringify(currentProfile)); } catch (e) {}
+          } else if (cachedProfile) {
+            currentProfile = cachedProfile;
           } else {
             currentProfile = {
               displayName: user.displayName || user.email.split("@")[0],
@@ -2289,12 +2333,19 @@
           }
         } catch (e) {
           console.warn("Could not load user profile:", e);
-          currentProfile = {
+          currentProfile = cachedProfile || {
             email: user.email,
             role: isSuperAdminUser(null, user) ? "admin" : "student",
             status: isSuperAdminUser(null, user) ? "approved" : "pending"
           };
         }
+
+        // Auto-retry pending save when connection returns
+        window.addEventListener("online", () => {
+          if (hasPendingChanges && canEditDocument && !isSaving) {
+            saveDocumentToFirestore(false);
+          }
+        });
 
         // If class wasn't explicitly provided in the URL query, use the profile class
         if (!currentClassId && currentProfile && currentProfile.classId) {

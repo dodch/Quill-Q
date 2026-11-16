@@ -16,6 +16,7 @@ var firebaseConfig = window.firebaseConfig || {
 window.firebaseConfig = firebaseConfig;
 
 var _firestorePersistenceInitialized = false;
+var _firestoreSettingsApplied = false;
 
 function initFirebase() {
   if (typeof firebase !== "undefined" && !firebase.apps.length) {
@@ -29,6 +30,19 @@ function initFirebase() {
   const firestoreDb = (typeof firebase !== "undefined" && typeof firebase.firestore === "function")
     ? firebase.firestore()
     : null;
+
+  // Apply long-polling auto-detection BEFORE any Firestore read/write to prevent Safari/mobile WebChannel hangs
+  if (firestoreDb && !_firestoreSettingsApplied) {
+    _firestoreSettingsApplied = true;
+    try {
+      firestoreDb.settings({
+        experimentalAutoDetectLongPolling: true,
+        merge: true
+      });
+    } catch (sErr) {
+      console.warn("Firestore settings warning:", sErr);
+    }
+  }
 
   if (firestoreDb && !_firestorePersistenceInitialized && typeof window !== "undefined") {
     _firestorePersistenceInitialized = true;
@@ -49,6 +63,58 @@ function initFirebase() {
     storage: typeof firebase !== "undefined" && typeof firebase.storage === "function" ? firebase.storage() : null
   };
 }
+
+/**
+ * QuillNet: Shared connectivity, timeout, and in-app WebView resilience helpers
+ */
+var QuillNet = {
+  withTimeout: function (promise, timeoutMs = 8000, label = "Request") {
+    let timer;
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${Math.round(timeoutMs / 1000)}s`)), timeoutMs);
+      })
+    ]).finally(() => clearTimeout(timer));
+  },
+
+  fetchDocResilient: async function (docRef, timeoutMs = 8000) {
+    try {
+      return await QuillNet.withTimeout(docRef.get({ source: "server" }), timeoutMs, "Server fetch");
+    } catch (serverErr) {
+      try {
+        const cached = await docRef.get({ source: "cache" });
+        if (cached && cached.exists) return cached;
+      } catch (cacheErr) {}
+      throw serverErr;
+    }
+  },
+
+  detectInAppBrowser: function () {
+    if (typeof navigator === "undefined") return null;
+    const ua = navigator.userAgent || "";
+    if (/FBAN|FBAV|Messenger/i.test(ua)) return "Facebook Messenger";
+    if (/Instagram/i.test(ua)) return "Instagram";
+    if (/WhatsApp/i.test(ua)) return "WhatsApp";
+    if (/Snapchat/i.test(ua)) return "Snapchat";
+    if (/BytedanceWebview|musical_ly|TikTok/i.test(ua)) return "TikTok";
+    if (/Line\//i.test(ua)) return "LINE";
+    return null;
+  },
+
+  isAndroid: function () {
+    return typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent || "");
+  },
+
+  getExternalBrowserUrl: function (targetUrl) {
+    const url = targetUrl || (typeof window !== "undefined" ? window.location.href : "");
+    if (QuillNet.isAndroid() && url.startsWith("https://")) {
+      const stripped = url.replace(/^https:\/\//, "");
+      return `intent://${stripped}#Intent;scheme=https;action=android.intent.action.VIEW;end`;
+    }
+    return url;
+  }
+};
 
 /**
  * Universal background push notification dispatcher.
@@ -115,6 +181,7 @@ if (typeof window !== "undefined") {
   window.firebaseConfig = firebaseConfig;
   window.initFirebase = initFirebase;
   window.broadcastPushNotification = broadcastPushNotification;
+  window.QuillNet = QuillNet;
 }
 
 if (typeof module !== "undefined" && module.exports) {

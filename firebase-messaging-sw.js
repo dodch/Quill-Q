@@ -4,7 +4,7 @@
 importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'quill-q-static-v2';
+const CACHE_NAME = 'quill-q-static-v3';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -42,18 +42,28 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Stale-While-Revalidate caching: 0ms instant loads from local cache + background updates
+function fetchWithTimeout(req, timeoutMs = 4500) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(req, { signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+
+// Network-First for HTML/JS/CSS (prevents stale code & version mismatch hangs);
+// Cache-First for static images/fonts.
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
 
-  // Never cache Firestore / Firebase Auth / Cloudflare Worker / Analytics / SW itself
+  // Never intercept Firebase, Auth, Cloudflare Worker, external CDNs, or SW itself
   if (
+    url.origin !== self.location.origin ||
     url.hostname.includes('googleapis.com') ||
     url.hostname.includes('firebaseio.com') ||
     url.hostname.includes('identitytoolkit') ||
+    url.hostname.includes('securetoken') ||
     url.hostname.includes('workers.dev') ||
     url.pathname.endsWith('firebase-messaging-sw.js') ||
     url.pathname.endsWith('sw.js') ||
@@ -62,18 +72,42 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const isCodeOrDoc =
+    req.mode === 'navigate' ||
+    url.pathname.endsWith('.html') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('/');
+
+  if (isCodeOrDoc) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        try {
+          const networkRes = await fetchWithTimeout(req, 4500);
+          if (networkRes && networkRes.status === 200) {
+            cache.put(req, networkRes.clone());
+          }
+          return networkRes;
+        } catch (err) {
+          const cached = await cache.match(req);
+          if (cached) return cached;
+          throw err;
+        }
+      })
+    );
+    return;
+  }
+
+  // Static media/assets: Cache-First with background refresh
   event.respondWith(
     caches.open(CACHE_NAME).then(async (cache) => {
       const cached = await cache.match(req);
-
       const fetchPromise = fetch(req).then((networkRes) => {
         if (networkRes && networkRes.status === 200) {
           cache.put(req, networkRes.clone());
         }
         return networkRes;
-      }).catch(() => {
-        return cached;
-      });
+      }).catch(() => cached);
 
       return cached || fetchPromise;
     })
