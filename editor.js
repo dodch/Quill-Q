@@ -387,11 +387,20 @@
   }
 
   async function loadExistingDocument(docId) {
+    if (titleInput && !titleInput.value) {
+      titleInput.placeholder = "Loading...";
+      titleInput.readOnly = true;
+    }
     if (editorContainer) {
       editorContainer.innerHTML = `
-        <div style="max-width: 520px; margin: 40px auto; padding: 32px 24px; background: #fff; border: 2.5px solid #1a1816; border-radius: 16px; box-shadow: 4px 5px 0 #1a1816; text-align: center; font-family: Outfit, sans-serif; color: #7d756d;">
-          <i class="fi fi-rr-spinner editor-spin-icon" style="font-size: 1.5rem; display: inline-block; margin-bottom: 10px;"></i>
-          <div>Loading document...</div>
+        <div class="a4-page-sheet" style="pointer-events: none;">
+          <div style="display: flex; flex-direction: column; gap: 16px; padding-top: 8px;">
+            <div style="height: 22px; width: 42%; border-radius: 8px; background: linear-gradient(90deg, #f3efe6 25%, #e8e2d5 50%, #f3efe6 75%); background-size: 200% 100%; animation: quillSkeletonShimmer 1.3s infinite;"></div>
+            <div style="height: 14px; width: 92%; border-radius: 6px; background: linear-gradient(90deg, #f3efe6 25%, #e8e2d5 50%, #f3efe6 75%); background-size: 200% 100%; animation: quillSkeletonShimmer 1.3s infinite;"></div>
+            <div style="height: 14px; width: 85%; border-radius: 6px; background: linear-gradient(90deg, #f3efe6 25%, #e8e2d5 50%, #f3efe6 75%); background-size: 200% 100%; animation: quillSkeletonShimmer 1.3s infinite;"></div>
+            <div style="height: 14px; width: 68%; border-radius: 6px; background: linear-gradient(90deg, #f3efe6 25%, #e8e2d5 50%, #f3efe6 75%); background-size: 200% 100%; animation: quillSkeletonShimmer 1.3s infinite;"></div>
+          </div>
+          <style>@keyframes quillSkeletonShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }</style>
         </div>
       `;
     }
@@ -2275,6 +2284,26 @@
     setupSubjectContext();
     setupExportHandlers();
     initPinnedNotesManager();
+
+    // When opening an existing document, avoid flashing "Untitled Document..." while loading
+    if (currentDocId && titleInput) {
+      titleInput.placeholder = "Loading...";
+      titleInput.readOnly = true;
+      try {
+        const docPath = (currentClassId && currentClassId !== "2ang-aff")
+          ? `${currentClassId}_${currentSubject.id}`
+          : currentSubject.id;
+        const cachedRaw = sessionStorage.getItem(`quill_q_subject_docs_${docPath}`);
+        if (cachedRaw) {
+          const list = JSON.parse(cachedRaw);
+          const match = Array.isArray(list) ? list.find((d) => d.id === currentDocId) : null;
+          if (match && match.title) {
+            titleInput.value = match.title;
+            document.title = `${match.title} – Quill-Q`;
+          }
+        }
+      } catch (e) {}
+    }
 
     // Initialize Firebase
     if (typeof initFirebase === "function") {
