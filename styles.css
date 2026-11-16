@@ -10404,6 +10404,8 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     border-radius: 12px;
     box-shadow: 3px 4px 0 #1a1816;
     min-height: 480px;
+    animation: none !important;
+    transform: none !important;
   }
 
   .bn-editor {

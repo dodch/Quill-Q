@@ -4,7 +4,7 @@
 importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'quill-q-static-v3';
+const CACHE_NAME = 'quill-q-static-v4';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -42,15 +42,16 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-function fetchWithTimeout(req, timeoutMs = 4500) {
+function fetchWithTimeout(req, timeoutMs = 10000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   return fetch(req, { signal: controller.signal })
     .finally(() => clearTimeout(timer));
 }
 
-// Network-First for HTML/JS/CSS (prevents stale code & version mismatch hangs);
-// Cache-First for static images/fonts.
+// Versioned vendor bundles (/libs/*): Cache-First (immutable via ?v= query)
+// HTML/App JS/CSS: Network-First with 10s timeout fallback to cache
+// Static media/fonts: Cache-First with background refresh
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
@@ -72,6 +73,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const isVersionedBundle = url.pathname.includes('/libs/') && url.search.includes('v=');
+  if (isVersionedBundle) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(req);
+        if (cached) return cached;
+        const networkRes = await fetch(req);
+        if (networkRes && networkRes.status === 200) {
+          cache.put(req, networkRes.clone());
+        }
+        return networkRes;
+      })
+    );
+    return;
+  }
+
   const isCodeOrDoc =
     req.mode === 'navigate' ||
     url.pathname.endsWith('.html') ||
@@ -83,7 +100,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         try {
-          const networkRes = await fetchWithTimeout(req, 4500);
+          const networkRes = await fetchWithTimeout(req, 10000);
           if (networkRes && networkRes.status === 200) {
             cache.put(req, networkRes.clone());
           }

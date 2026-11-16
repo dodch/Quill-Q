@@ -182,16 +182,22 @@ function PageAnnotationCanvas({
     const height = canvas.clientHeight;
     if (width === 0 || height === 0) return;
 
-    const dpr = window.devicePixelRatio || 1;
-    if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const maxCanvasDim = 4096;
+    const targetW = Math.min(Math.round(width * dpr), maxCanvasDim);
+    const targetH = Math.min(Math.round(height * dpr), maxCanvasDim);
+    const scaleX = targetW / width;
+    const scaleY = targetH / height;
+
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+      canvas.width = targetW;
+      canvas.height = targetH;
     }
 
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.scale(dpr, dpr);
+    ctx.scale(scaleX, scaleY);
 
     const list = [...(currentStrokes || [])];
     if (inProgressStroke) {
@@ -504,17 +510,19 @@ function A4PageSheet({
           </div>
         </footer>
 
-        {/* Annotation Canvas Overlay (Student or Teacher) */}
-        <PageAnnotationCanvas
-          pageId={page.id}
-          strokes={strokes}
-          penActive={penActive}
-          penTool={penTool}
-          penColor={penColor}
-          penSize={penSize}
-          isTeacher={isTeacher}
-          onAddStroke={onAddStroke}
-        />
+        {/* Annotation Canvas Overlay (only mounted when pen is active or strokes exist, saving mobile GPU RAM) */}
+        {(penActive || (strokes && strokes.length > 0)) && (
+          <PageAnnotationCanvas
+            pageId={page.id}
+            strokes={strokes}
+            penActive={penActive}
+            penTool={penTool}
+            penColor={penColor}
+            penSize={penSize}
+            isTeacher={isTeacher}
+            onAddStroke={onAddStroke}
+          />
+        )}
       </article>
 
       {/* Visual Page Break / Add Page Divider (Screen only) */}
@@ -1710,6 +1718,59 @@ export function MultiPageBlockNoteApp({
   );
 }
 
+class EditorErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, errorMsg: "" };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, errorMsg: error ? error.message : "Render error" };
+  }
+  componentDidCatch(error, info) {
+    console.error("BlockNote Editor ErrorBoundary:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return React.createElement(
+        "div",
+        {
+          style: {
+            maxWidth: "520px",
+            margin: "32px auto",
+            padding: "28px 22px",
+            background: "#fff",
+            border: "2.5px solid #1a1816",
+            borderRadius: "16px",
+            boxShadow: "4px 5px 0 #1a1816",
+            textAlign: "center",
+            fontFamily: "Outfit, sans-serif"
+          }
+        },
+        React.createElement("h3", { style: { margin: "0 0 8px", color: "#1a1816" } }, "Document failed to render"),
+        React.createElement("p", { style: { margin: "0 0 16px", color: "#5c544b", fontSize: "0.92rem" } }, this.state.errorMsg),
+        React.createElement(
+          "button",
+          {
+            type: "button",
+            onClick: () => window.location.reload(),
+            style: {
+              padding: "10px 20px",
+              background: "#f6cf7c",
+              border: "2px solid #1a1816",
+              borderRadius: "12px",
+              boxShadow: "2px 3px 0 #1a1816",
+              fontWeight: 700,
+              cursor: "pointer"
+            }
+          },
+          "Reload Page"
+        )
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // Global Mount Hook for Vanilla JS / DOM integration
 if (typeof window !== "undefined") {
   window.MultiPageBlockNoteApp = MultiPageBlockNoteApp;
@@ -1721,13 +1782,17 @@ if (typeof window !== "undefined") {
 
     function renderApp() {
       root.render(
-        React.createElement(MultiPageBlockNoteApp, {
-          ...currentProps,
-          onBridgeReady: (bridge) => {
-            bridgeRef = bridge;
-            if (currentProps.onBridgeReady) currentProps.onBridgeReady(bridge);
-          }
-        })
+        React.createElement(
+          EditorErrorBoundary,
+          null,
+          React.createElement(MultiPageBlockNoteApp, {
+            ...currentProps,
+            onBridgeReady: (bridge) => {
+              bridgeRef = bridge;
+              if (currentProps.onBridgeReady) currentProps.onBridgeReady(bridge);
+            }
+          })
+        )
       );
     }
 
