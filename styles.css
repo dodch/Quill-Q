@@ -9570,7 +9570,10 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
 
 .bn-editor[contenteditable="false"] .bn-block-content.ProseMirror-selectednode > *:after,
 .bn-editor[contenteditable="false"] .ProseMirror-selectednode > .bn-block-content > *:after,
-.bn-editor[contenteditable="false"] .bn-block-content .ProseMirror-selectednode:after {
+.bn-editor[contenteditable="false"] .bn-block-content .ProseMirror-selectednode:after,
+.bn-editor .bn-block-content[data-file-block].ProseMirror-selectednode > *:after,
+.bn-editor .ProseMirror-selectednode > .bn-block-content[data-file-block] > *:after,
+.bn-editor [data-file-block] .ProseMirror-selectednode:after {
   display: none !important;
   background-color: transparent !important;
   box-shadow: none !important;
@@ -10461,9 +10464,12 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
     display: none !important;
   }
 
+  .bn-editor .bn-block-content[data-file-block].ProseMirror-selectednode > *:after,
+  .bn-editor .ProseMirror-selectednode > .bn-block-content[data-file-block] > *:after,
   .bn-editor [data-file-block].ProseMirror-selectednode > *:after,
   .bn-editor .ProseMirror-selectednode > [data-file-block]:after,
   .bn-editor [data-file-block] .ProseMirror-selectednode:after {
+    display: none !important;
     background-color: transparent !important;
     box-shadow: none !important;
   }
