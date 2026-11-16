@@ -9554,8 +9554,39 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   padding-right: 8px !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  font-size: 1.1rem !important;
-  line-height: 1.65 !important;
+  font-size: 1.05rem !important;
+  line-height: 1.6 !important;
+}
+
+/* Read-only mode: no drag handles, so reclaim horizontal space and hide selection/resize artifacts */
+.bn-editor[contenteditable="false"] {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+.bn-editor[contenteditable="false"] [data-file-block] .bn-resize-handle {
+  display: none !important;
+}
+
+.bn-editor[contenteditable="false"] .bn-block-content.ProseMirror-selectednode > *:after,
+.bn-editor[contenteditable="false"] .ProseMirror-selectednode > .bn-block-content > *:after,
+.bn-editor[contenteditable="false"] .bn-block-content .ProseMirror-selectednode:after {
+  display: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Prevent images/media blocks from ever getting cut off or overflowing */
+.bn-editor [data-file-block] .bn-file-block-content-wrapper,
+.bn-editor [data-file-block] .bn-visual-media-wrapper {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.bn-editor [data-file-block] .bn-visual-media {
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain;
 }
 
 /* Ensure the floating side menu (drag handle + plus icon) stays inside the page sheet */
@@ -10409,8 +10440,55 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   }
 
   .bn-editor {
-    padding-left: 32px !important;
+    padding-left: 28px !important;
     padding-right: 4px !important;
+    font-size: 0.94rem !important;
+    line-height: 1.52 !important;
+  }
+
+  .bn-editor[contenteditable="false"] {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+
+  /* Mobile media blocks: fit cleanly inside A4 sheet without horizontal cutoff or sticky blue highlight */
+  .bn-editor [data-file-block] .bn-visual-media-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .bn-editor [data-file-block] .bn-resize-handle {
+    display: none !important;
+  }
+
+  .bn-editor [data-file-block].ProseMirror-selectednode > *:after,
+  .bn-editor .ProseMirror-selectednode > [data-file-block]:after,
+  .bn-editor [data-file-block] .ProseMirror-selectednode:after {
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* Mobile tables: prevent cramped mid-word wrapping (e.g. Complemen-t) via readable font & horizontal scroll */
+  .bn-editor [data-content-type="table"] .tableWrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 0 !important;
+    max-width: 100% !important;
+  }
+
+  .bn-editor [data-content-type="table"] table {
+    min-width: 440px !important;
+    width: 100% !important;
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .bn-editor [data-content-type="table"] td,
+  .bn-editor [data-content-type="table"] th {
+    padding: 6px 8px !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    hyphens: none !important;
   }
 
   .bn-side-menu {
