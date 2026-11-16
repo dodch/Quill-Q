@@ -10644,57 +10644,56 @@ html.authed-start #dashboard-app:not(.dashboard-hidden) {
   }
 }
 
-/* Mobile Floating Pin Trigger Pill (tucked cleanly at bottom-left, out of reading area) */
+/* Mobile Floating Pin Trigger Button (slim, low-contrast tab on left edge) */
 .mobile-pinned-notes-trigger {
   display: none; /* Desktop default: hidden */
   position: fixed;
-  left: 14px;
-  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-  top: auto;
-  transform: none;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 9999;
-  background: rgba(253, 246, 226, 0.92);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(253, 246, 226, 0.88);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   color: #1a1816;
-  border: 1.5px solid rgba(26, 24, 22, 0.22);
-  border-radius: 999px;
-  padding: 7px 11px;
-  gap: 6px;
-  box-shadow: 0 4px 14px rgba(26, 24, 22, 0.14);
+  border: 1.5px solid rgba(26, 24, 22, 0.25);
+  border-left: none;
+  border-radius: 0 10px 10px 0;
+  padding: 7px 8px 7px 6px;
+  box-shadow: 2px 2px 8px rgba(26, 24, 22, 0.1);
   cursor: pointer;
   align-items: center;
   justify-content: center;
-  transition: transform 0.16s ease, background-color 0.16s ease, opacity 0.16s ease;
+  transition: transform 0.16s ease, background-color 0.16s ease;
 }
 
 .mobile-pinned-notes-trigger:active {
-  transform: scale(0.94);
+  transform: translateY(-50%) scale(0.95);
 }
 
 .mobile-pinned-notes-trigger i {
-  font-size: 16px;
-  color: #d9734e;
-  transform: rotate(-30deg);
+  font-size: 15px;
+  color: #d97757;
+  transform: rotate(-35deg);
   display: inline-block;
-  line-height: 1;
 }
 
 .mobile-pin-badge {
-  position: static;
-  background: rgba(26, 24, 22, 0.82);
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: rgba(26, 24, 22, 0.78);
   color: #ffffff;
   font-family: 'Outfit', sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 999px;
-  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box;
+  border: 1.5px solid #ffffff;
 }
 
 /* Backdrop for Mobile Slide-Out Drawer */
