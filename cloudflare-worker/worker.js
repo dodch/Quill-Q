@@ -442,7 +442,10 @@ function sanitizeOrigin(rawOrigin) {
   try {
     const parsed = new URL(rawOrigin);
     if (parsed.protocol === "https:" || parsed.protocol === "http:") {
-      const cleanPath = parsed.pathname.replace(/\/+$/, "");
+      let cleanPath = parsed.pathname.replace(/\/+$/, "");
+      if (parsed.hostname === "dodch.github.io" && !cleanPath.startsWith("/Quill-Q")) {
+        cleanPath = "/Quill-Q" + cleanPath;
+      }
       return `${parsed.origin}${cleanPath}`;
     }
   } catch (e) {}
