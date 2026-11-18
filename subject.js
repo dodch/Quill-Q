@@ -297,10 +297,9 @@
             <span>${isExercise ? 'Exercise' : 'Notes'}</span>
           </span>
           <div class="doc-card-actions">
-            <a href="editor.html?subject=${encodeURIComponent(currentSubjectId)}${classParam}&docId=${encodeURIComponent(doc.id)}" 
-               class="doc-btn-icon" title="Open in Full-Page Editor" aria-label="Open editor">
-              <i class="fi fi-rr-arrow-up-right"></i>
-            </a>
+            <button type="button" class="doc-btn-icon doc-btn-share" data-doc-id="${doc.id}" title="Share Document" aria-label="Share document">
+              <i class="fi fi-rr-share"></i>
+            </button>
             ${canDelete ? `
               <button class="doc-btn-icon doc-btn-delete" data-doc-id="${doc.id}" title="Delete Document" aria-label="Delete document">
                 <i class="fi fi-rr-trash"></i>
@@ -333,11 +332,43 @@
         </div>
       `;
 
-      // Entire card clicks open the editor (unless clicking the delete button)
+      // Entire card clicks open the editor (unless clicking share or delete)
       card.addEventListener("click", (e) => {
-        if (e.target.closest(".doc-btn-delete")) return;
+        if (e.target.closest(".doc-btn-delete, .doc-btn-share")) return;
         window.location.href = `editor.html?subject=${encodeURIComponent(currentSubjectId)}${classParam}&docId=${encodeURIComponent(doc.id)}`;
       });
+
+      // Handle share with rich link preview URL
+      const shareBtn = card.querySelector(".doc-btn-share");
+      if (shareBtn) {
+        shareBtn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const originParam = `&origin=${encodeURIComponent(window.location.origin)}`;
+          const shareUrl = `https://quill-push-dispatcher.dodchadam.workers.dev/share?subject=${encodeURIComponent(currentSubjectId)}${classParam}&docId=${encodeURIComponent(doc.id)}${originParam}`;
+
+          if (navigator.share) {
+            try {
+              await navigator.share({
+                title: `${title} – Quill-Q`,
+                text: excerpt,
+                url: shareUrl
+              });
+              return;
+            } catch (err) {
+              if (err && err.name === "AbortError") return;
+            }
+          }
+
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            if (typeof showToast === "function") {
+              showToast("Share link copied to clipboard!", "success");
+            }
+          } catch (err) {
+            window.prompt("Copy share link:", shareUrl);
+          }
+        });
+      }
 
       // Handle delete
       const delBtn = card.querySelector(".doc-btn-delete");
@@ -694,8 +725,68 @@
     searchInput.addEventListener("input", filterAndRenderDocs);
   }
 
+  function initSubjectReadingTheme() {
+    const STORAGE_KEY = "quill_doc_reading_theme";
+    const VALID_PREFS = new Set(["auto", "paper", "dark", "light"]);
+    const mql = typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-color-scheme: dark)")
+      : null;
+
+    function applyTheme() {
+      let pref = "auto";
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (VALID_PREFS.has(saved)) pref = saved;
+      } catch (e) {}
+
+      const now = new Date();
+      const hour = now.getHours() + now.getMinutes() / 60;
+      const osDark = Boolean(mql && mql.matches);
+
+      let theme = pref;
+      if (pref === "auto") {
+        if (osDark || hour >= 21 || hour < 7) {
+          theme = "dark";
+        } else if (hour >= 17.5) {
+          theme = "paper";
+        } else {
+          theme = "light";
+        }
+      }
+
+      let warmthSepia = 0;
+      let warmthBrightness = 1;
+      if (theme === "paper" || (pref === "auto" && theme === "light" && hour >= 16.5)) {
+        const progress = Math.min(1, Math.max(0, (hour - 16.5) / 4.5));
+        warmthSepia = +(0.04 + progress * 0.1).toFixed(3);
+        warmthBrightness = +(1 - progress * 0.05).toFixed(3);
+      }
+
+      if (document.body) {
+        document.body.setAttribute("data-doc-theme", theme);
+      }
+      document.documentElement.style.setProperty("--doc-warmth-sepia", String(warmthSepia));
+      document.documentElement.style.setProperty("--doc-warmth-brightness", String(warmthBrightness));
+    }
+
+    if (mql) {
+      if (typeof mql.addEventListener === "function") {
+        mql.addEventListener("change", applyTheme);
+      } else if (typeof mql.addListener === "function") {
+        mql.addListener(applyTheme);
+      }
+    }
+    window.addEventListener("storage", (e) => {
+      if (e.key === STORAGE_KEY) applyTheme();
+    });
+
+    applyTheme();
+    window.setInterval(applyTheme, 60000);
+  }
+
   // Initialization lifecycle
   document.addEventListener("DOMContentLoaded", () => {
+    initSubjectReadingTheme();
     // Bind Tab Switching Events
     if (tabBtnDocs) {
       tabBtnDocs.addEventListener("click", () => switchTab("docs"));

@@ -831,25 +831,30 @@
       }
 
       if (students.length === 0) {
-        listContainer.innerHTML = '<div style="text-align:center; padding: 20px; color: #8c8275;">No students registered yet.</div>';
+        listContainer.innerHTML = '<div class="submissions-empty-msg">No students registered yet.</div>';
         return;
       }
 
+      const counts = { all: students.length, submitted: 0, "in-progress": 0, "not-started": 0 };
       listContainer.innerHTML = "";
       students.forEach((st) => {
         const sub = submissionsMap[st.uid];
-        const status = sub ? sub.status : "not-started";
+        const status = sub && (sub.status === "submitted" || sub.status === "in-progress")
+          ? sub.status
+          : "not-started";
+        counts[status] += 1;
         const hasWork = Boolean(sub && sub.content);
 
-        let statusBadge = '<span class="student-card-status-pill" style="background:#f1f3f5; color:#868e96;">⚪ Not Started</span>';
+        let statusBadge = '<span class="student-card-status-pill status-not-started">⚪ Not Started</span>';
         if (status === "submitted") {
-          statusBadge = '<span class="student-card-status-pill" style="background:#d3f9d8; color:#2b8a3e;">🟢 Submitted</span>';
+          statusBadge = '<span class="student-card-status-pill status-submitted">🟢 Submitted</span>';
         } else if (status === "in-progress") {
-          statusBadge = '<span class="student-card-status-pill" style="background:#fff3bf; color:#d9480f;">🟡 In Progress</span>';
+          statusBadge = '<span class="student-card-status-pill status-in-progress">🟡 In Progress</span>';
         }
 
         const card = document.createElement("div");
         card.className = "submission-student-card";
+        card.dataset.status = status;
         const avatarUrl = st.photoURL || st.avatarUrl || "assets/avatar.jpg";
         const studentName = st.displayName || st.name || st.email.split("@")[0];
 
@@ -882,6 +887,48 @@
 
         listContainer.appendChild(card);
       });
+
+      // Populate status filter counts and apply active filter
+      const filterSelect = document.getElementById("submissions-status-filter");
+      if (filterSelect) {
+        const labels = {
+          all: `All Students (${counts.all})`,
+          submitted: `Submitted (${counts.submitted})`,
+          "in-progress": `In Progress (${counts["in-progress"]})`,
+          "not-started": `Not Started (${counts["not-started"]})`
+        };
+        Array.from(filterSelect.options).forEach((opt) => {
+          if (labels[opt.value]) opt.textContent = labels[opt.value];
+        });
+
+        const applyFilter = () => {
+          const val = filterSelect.value || "all";
+          let visibleCount = 0;
+          listContainer.querySelectorAll(".submission-student-card").forEach((el) => {
+            const match = val === "all" || el.dataset.status === val;
+            el.style.display = match ? "" : "none";
+            if (match) visibleCount += 1;
+          });
+          let emptyEl = listContainer.querySelector(".submissions-empty-msg");
+          if (visibleCount === 0) {
+            if (!emptyEl) {
+              emptyEl = document.createElement("div");
+              emptyEl.className = "submissions-empty-msg";
+              listContainer.appendChild(emptyEl);
+            }
+            emptyEl.textContent = "No students match this status.";
+            emptyEl.style.display = "";
+          } else if (emptyEl) {
+            emptyEl.style.display = "none";
+          }
+        };
+
+        if (!filterSelect.dataset.bound) {
+          filterSelect.addEventListener("change", applyFilter);
+          filterSelect.dataset.bound = "1";
+        }
+        applyFilter();
+      }
     } catch (e) {
       console.error("Error loading submissions:", e);
       listContainer.innerHTML = `<div style="color: #c92a2a; padding: 16px;">Failed to load submissions: ${escapeHtml(e.message)}</div>`;
@@ -2277,8 +2324,113 @@
     }
   }
 
+  function initDocReadingTheme() {
+    const STORAGE_KEY = "quill_doc_reading_theme";
+    const VALID_PREFS = new Set(["auto", "paper", "dark", "light"]);
+    const mql = typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-color-scheme: dark)")
+      : null;
+
+    function getPref() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return VALID_PREFS.has(saved) ? saved : "auto";
+      } catch (e) {
+        return "auto";
+      }
+    }
+
+    function resolveTheme(pref) {
+      const now = new Date();
+      const hour = now.getHours() + now.getMinutes() / 60;
+      const osDark = Boolean(mql && mql.matches);
+
+      let theme = pref;
+      let hintLabel = "Light";
+
+      if (pref === "auto") {
+        if (osDark || hour >= 21 || hour < 7) {
+          theme = "dark";
+          hintLabel = osDark ? "Auto · OS Dark" : "Auto · Night";
+        } else if (hour >= 17.5) {
+          theme = "paper";
+          hintLabel = "Auto · Evening Paper";
+        } else {
+          theme = "light";
+          hintLabel = "Auto · Day";
+        }
+      } else if (pref === "paper") {
+        hintLabel = "Warm Paper";
+      } else if (pref === "dark") {
+        hintLabel = "Charcoal Dark";
+      } else {
+        hintLabel = "Crisp Light";
+      }
+
+      // Gradual evening warmth (17:30 -> 21:00) for paper/auto reading without sudden snaps
+      let warmthSepia = 0;
+      let warmthBrightness = 1;
+      if (theme === "paper" || (pref === "auto" && theme === "light" && hour >= 16.5)) {
+        const progress = Math.min(1, Math.max(0, (hour - 16.5) / 4.5));
+        warmthSepia = +(0.04 + progress * 0.1).toFixed(3);
+        warmthBrightness = +(1 - progress * 0.05).toFixed(3);
+      }
+
+      return { theme, hintLabel, warmthSepia, warmthBrightness };
+    }
+
+    function applyReadingTheme() {
+      const pref = getPref();
+      const { theme, hintLabel, warmthSepia, warmthBrightness } = resolveTheme(pref);
+
+      if (document.body) {
+        document.body.setAttribute("data-doc-theme", theme);
+      }
+      document.documentElement.style.setProperty("--doc-warmth-sepia", String(warmthSepia));
+      document.documentElement.style.setProperty("--doc-warmth-brightness", String(warmthBrightness));
+
+      const hintEl = document.getElementById("doc-theme-active-hint");
+      if (hintEl) hintEl.textContent = hintLabel;
+
+      const pills = document.querySelectorAll("#doc-theme-pills .doc-theme-pill");
+      pills.forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-theme-pref") === pref);
+      });
+
+      window.dispatchEvent(new CustomEvent("quill-doc-theme-change", {
+        detail: { theme, pref }
+      }));
+    }
+
+    const pillsWrap = document.getElementById("doc-theme-pills");
+    if (pillsWrap) {
+      pillsWrap.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-theme-pref]");
+        if (!btn) return;
+        const nextPref = btn.getAttribute("data-theme-pref");
+        if (!VALID_PREFS.has(nextPref)) return;
+        try {
+          localStorage.setItem(STORAGE_KEY, nextPref);
+        } catch (err) {}
+        applyReadingTheme();
+      });
+    }
+
+    if (mql) {
+      if (typeof mql.addEventListener === "function") {
+        mql.addEventListener("change", applyReadingTheme);
+      } else if (typeof mql.addListener === "function") {
+        mql.addListener(applyReadingTheme);
+      }
+    }
+
+    applyReadingTheme();
+    window.setInterval(applyReadingTheme, 60000);
+  }
+
   // Initialization
   document.addEventListener("DOMContentLoaded", () => {
+    initDocReadingTheme();
     initTopBarObserver();
     currentDocId = getQueryParam("docId");
     setupSubjectContext();

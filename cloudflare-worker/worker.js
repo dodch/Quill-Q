@@ -59,6 +59,11 @@ export default {
       return new Response(object.body, { headers });
     }
 
+    // 1.5. Share Link Open Graph Preview: GET /share?subject=...&docId=...
+    if (request.method === "GET" && (url.pathname === "/share" || url.pathname === "/share/")) {
+      return handleSharePreview(url, env, url.origin);
+    }
+
     // 2. Upload Media to Cloudflare R2: POST /upload
     if (request.method === "POST" && (url.pathname === "/upload" || url.pathname.endsWith("/upload"))) {
       if (!env.MEDIA_BUCKET) {
@@ -429,4 +434,140 @@ function base64UrlEncodeBytes(bytes) {
     binary += String.fromCharCode(bytes[i]);
   }
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function sanitizeOrigin(rawOrigin) {
+  const fallback = "https://quill-q-dodch.web.app";
+  if (!rawOrigin) return fallback;
+  try {
+    const parsed = new URL(rawOrigin);
+    if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+      return parsed.origin;
+    }
+  } catch (e) {}
+  return fallback;
+}
+
+function escapeHtml(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function findImageInBlocks(blocks) {
+  if (!Array.isArray(blocks)) return null;
+  for (const block of blocks) {
+    if (!block || typeof block !== "object") continue;
+    if (block.type === "image" && block.props && typeof block.props.url === "string" && block.props.url.trim()) {
+      return block.props.url.trim();
+    }
+    if (Array.isArray(block.children) && block.children.length > 0) {
+      const nested = findImageInBlocks(block.children);
+      if (nested) return nested;
+    }
+  }
+  return null;
+}
+
+function extractFirstImageUrl(rawContent, workerOrigin, appOrigin) {
+  if (!rawContent) return null;
+  try {
+    const parsed = typeof rawContent === "string" ? JSON.parse(rawContent) : rawContent;
+    let found = null;
+    if (parsed && Array.isArray(parsed.pages)) {
+      for (const page of parsed.pages) {
+        found = findImageInBlocks(page?.blocks);
+        if (found) break;
+      }
+    } else if (Array.isArray(parsed)) {
+      found = findImageInBlocks(parsed);
+    }
+    if (!found) return null;
+    if (found.startsWith("/media/")) return `${workerOrigin}${found}`;
+    if (found.startsWith("/")) return `${appOrigin}${found}`;
+    if (/^https?:\/\//i.test(found)) return found;
+  } catch (e) {}
+  return null;
+}
+
+async function handleSharePreview(url, env, workerOrigin) {
+  const subjectId = url.searchParams.get("subject") || "";
+  const classId = url.searchParams.get("class") || "";
+  const docId = url.searchParams.get("docId") || "";
+  const appOrigin = sanitizeOrigin(url.searchParams.get("origin"));
+
+  const classParam = classId ? `&class=${encodeURIComponent(classId)}` : "";
+  const targetUrl = docId && subjectId
+    ? `${appOrigin}/editor.html?subject=${encodeURIComponent(subjectId)}${classParam}&docId=${encodeURIComponent(docId)}`
+    : appOrigin;
+
+  let docTitle = "Quill-Q Document";
+  let docExcerpt = "Read this document on Quill-Q.";
+  let firstImage = null;
+
+  if (docId && subjectId && env.FIREBASE_CLIENT_EMAIL && env.FIREBASE_PRIVATE_KEY) {
+    try {
+      const projectId = env.FIREBASE_PROJECT_ID || "quill-q-dodch";
+      const docPath = classId && classId !== "2ang-aff" ? `${classId}_${subjectId}` : subjectId;
+      const accessToken = await getGoogleOAuth2Token(env.FIREBASE_CLIENT_EMAIL, env.FIREBASE_PRIVATE_KEY);
+      const fsUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/subjects/${encodeURIComponent(docPath)}/documents/${encodeURIComponent(docId)}`;
+
+      const fsRes = await fetch(fsUrl, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (fsRes.ok) {
+        const fsJson = await fsRes.json();
+        const fields = fsJson.fields || {};
+        if (fields.title?.stringValue) docTitle = fields.title.stringValue;
+        if (fields.excerpt?.stringValue) docExcerpt = fields.excerpt.stringValue;
+        if (fields.content?.stringValue) {
+          firstImage = extractFirstImageUrl(fields.content.stringValue, workerOrigin, appOrigin);
+        }
+      }
+    } catch (err) {
+      console.error("Share preview fetch error:", err);
+    }
+  }
+
+  const imageUrl = firstImage || `${appOrigin}/assets/icon-512.png`;
+  const twitterCard = firstImage ? "summary_large_image" : "summary";
+  const safeTitle = escapeHtml(`${docTitle} – Quill-Q`);
+  const safeDesc = escapeHtml(docExcerpt);
+  const safeImg = escapeHtml(imageUrl);
+  const safeTarget = escapeHtml(targetUrl);
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${safeTitle}</title>
+  <meta name="description" content="${safeDesc}" />
+  <meta property="og:site_name" content="Quill-Q" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="${safeTitle}" />
+  <meta property="og:description" content="${safeDesc}" />
+  <meta property="og:image" content="${safeImg}" />
+  <meta property="og:url" content="${escapeHtml(url.toString())}" />
+  <meta name="twitter:card" content="${twitterCard}" />
+  <meta name="twitter:title" content="${safeTitle}" />
+  <meta name="twitter:description" content="${safeDesc}" />
+  <meta name="twitter:image" content="${safeImg}" />
+  <meta http-equiv="refresh" content="0;url=${safeTarget}" />
+  <script>window.location.replace(${JSON.stringify(targetUrl)});</script>
+</head>
+<body style="font-family:system-ui,sans-serif;background:#161513;color:#e4dfd7;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;">
+  <p>Opening <a href="${safeTarget}" style="color:#c7a048;">${escapeHtml(docTitle)}</a>…</p>
+</body>
+</html>`;
+
+  return new Response(html, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=300"
+    }
+  });
 }

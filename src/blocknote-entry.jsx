@@ -7,6 +7,56 @@ import "@blocknote/core/style.css";
 import "@blocknote/mantine/style.css";
 
 /**
+ * Tracks the active document reading theme (circadian/manual override or OS dark mode).
+ */
+function useSystemDarkMode() {
+  const getIsDark = () => {
+    if (typeof document !== "undefined" && document.body) {
+      const explicit = document.body.getAttribute("data-doc-theme");
+      if (explicit) return explicit === "dark";
+    }
+    return (
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    );
+  };
+
+  const [isDark, setIsDark] = useState(getIsDark);
+
+  useEffect(() => {
+    const sync = () => setIsDark(getIsDark());
+    sync();
+
+    window.addEventListener("quill-doc-theme-change", sync);
+    const mql =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-color-scheme: dark)")
+        : null;
+    if (mql) {
+      if (typeof mql.addEventListener === "function") {
+        mql.addEventListener("change", sync);
+      } else {
+        mql.addListener(sync);
+      }
+    }
+
+    return () => {
+      window.removeEventListener("quill-doc-theme-change", sync);
+      if (mql) {
+        if (typeof mql.removeEventListener === "function") {
+          mql.removeEventListener("change", sync);
+        } else {
+          mql.removeListener(sync);
+        }
+      }
+    };
+  }, []);
+
+  return isDark;
+}
+
+/**
  * Helper to check if an editor instance can perform undo.
  */
 function checkCanUndo(ed) {
@@ -167,7 +217,8 @@ function PageAnnotationCanvas({
   penColor = "#1971c2",
   penSize = 3.5,
   isTeacher = false,
-  onAddStroke
+  onAddStroke,
+  colorScheme = "light"
 }) {
   const canvasRef = useRef(null);
   const activeStrokeRef = useRef(null);
@@ -389,7 +440,8 @@ function A4PageSheet({
   penColor = "#1971c2",
   penSize = 3.5,
   isTeacher = false,
-  onAddStroke
+  onAddStroke,
+  colorScheme = "light"
 }) {
   const [editor, setEditor] = useState(null);
   const editorRef = useRef(null);
@@ -492,7 +544,7 @@ function A4PageSheet({
         {/* Editor Body */}
         <div className="a4-page-body">
           {editor ? (
-            <BlockNoteView editor={editor} editable={editable} theme="light" />
+            <BlockNoteView editor={editor} editable={editable} theme={colorScheme} />
           ) : (
             <div className="a4-loading-placeholder">
               <i className="fi fi-rr-spinner fi-spin"></i> Loading A4 page canvas...
@@ -765,6 +817,7 @@ export function MultiPageBlockNoteApp({
   uploadFile,
   isTeacher = false
 }) {
+  const isDarkMode = useSystemDarkMode();
   const [docTitle, setDocTitle] = useState(initialDocTitle);
 
   useEffect(() => {
@@ -1685,6 +1738,7 @@ export function MultiPageBlockNoteApp({
             penSize={penSize}
             isTeacher={isTeacher}
             onAddStroke={handleAddStroke}
+            colorScheme={isDarkMode ? "dark" : "light"}
           />
         ))}
       </div>

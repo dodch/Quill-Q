@@ -7,7 +7,8 @@
   <meta name="description" content="Quill-Q full-page distraction-free BlockNote rich text editor." />
 
   <!-- Theme Color -->
-  <meta name="theme-color" content="#faf8f5" />
+  <meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#161513" media="(prefers-color-scheme: dark)" />
 
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
@@ -83,6 +84,7 @@
       html, body {
         background: #ffffff !important;
         background-color: #ffffff !important;
+        color: #1a1816 !important;
         margin: 0 !important;
         padding: 0 !important;
         overflow: visible !important;
@@ -92,8 +94,17 @@
 
       .editor-page {
         background: #ffffff !important;
+        color: #1a1816 !important;
         padding: 0 !important;
         margin: 0 !important;
+      }
+
+      .editor-page .bn-container,
+      .editor-page .bn-block-content,
+      .editor-page .bn-block-content h1,
+      .editor-page .bn-block-content h2,
+      .editor-page .bn-block-content h3 {
+        color: #1a1816 !important;
       }
 
       .editor-main-canvas {
@@ -101,18 +112,21 @@
         width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
+        filter: none !important;
       }
 
       .multipage-editor-root {
         width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
+        filter: none !important;
       }
 
       .a4-pages-canvas {
         width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
+        filter: none !important;
       }
 
       .a4-page-container {
@@ -230,6 +244,18 @@
           <i class="fi fi-rr-menu-dots-vertical"></i>
         </button>
         <div class="editor-more-menu view-hidden" id="editor-more-menu" role="menu">
+          <div class="doc-theme-menu-section" role="group" aria-label="Reading Theme">
+            <div class="doc-theme-menu-header">
+              <span>Reading Theme</span>
+              <span class="doc-theme-active-hint" id="doc-theme-active-hint">Auto</span>
+            </div>
+            <div class="doc-theme-pills" id="doc-theme-pills">
+              <button type="button" class="doc-theme-pill active" data-theme-pref="auto" title="Auto Circadian (Day Light → Evening Warm Paper → Night Dark)">Auto</button>
+              <button type="button" class="doc-theme-pill" data-theme-pref="paper" title="Warm Sepia Paper (Low Blue Light)">Paper</button>
+              <button type="button" class="doc-theme-pill" data-theme-pref="dark" title="Charcoal Dark (Low Glare)">Dark</button>
+              <button type="button" class="doc-theme-pill" data-theme-pref="light" title="Crisp Light Paper">Light</button>
+            </div>
+          </div>
           <button type="button" class="editor-menu-item view-hidden" id="btn-toggle-type" role="menuitem">
             <i class="fi fi-rr-exchange"></i>
             <span id="btn-toggle-type-text">Convert to Exercise</span>
@@ -323,6 +349,15 @@
     </div>
     <div class="submissions-summary-bar" id="submissions-summary-bar">
       <span id="submissions-summary-count">Loading submissions...</span>
+    </div>
+    <div class="submissions-filter-bar">
+      <label for="submissions-status-filter" class="submissions-filter-label">Status</label>
+      <select id="submissions-status-filter" class="submissions-status-select" aria-label="Filter student submissions by status">
+        <option value="all">All Students (0)</option>
+        <option value="submitted">Submitted (0)</option>
+        <option value="in-progress">In Progress (0)</option>
+        <option value="not-started">Not Started (0)</option>
+      </select>
     </div>
     <div class="submissions-students-list" id="submissions-students-list">
       <!-- Populated dynamically -->
