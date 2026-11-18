@@ -12438,7 +12438,8 @@ body.editor-page[data-doc-theme="dark"] .student-card-status-pill.status-in-prog
    SUBJECT HUB (subject.html) — WARM PAPER & CHARCOAL DARK SUPPORT
    ========================================================================== */
 
-body.subject-hub-page .subject-hub-container {
+body.subject-hub-page .subject-top-nav,
+body.subject-hub-page .docs-grid {
   filter: sepia(var(--doc-warmth-sepia, 0)) brightness(var(--doc-warmth-brightness, 1));
   transition: filter 0.6s ease;
 }
