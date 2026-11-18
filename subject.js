@@ -343,7 +343,8 @@
       if (shareBtn) {
         shareBtn.addEventListener("click", async (e) => {
           e.stopPropagation();
-          const originParam = `&origin=${encodeURIComponent(window.location.origin)}`;
+          const appBase = window.location.href.split("?")[0].split("#")[0].replace(/\/[^/]*$/, "");
+          const originParam = `&origin=${encodeURIComponent(appBase)}`;
           const shareUrl = `https://quill-push-dispatcher.dodchadam.workers.dev/share?subject=${encodeURIComponent(currentSubjectId)}${classParam}&docId=${encodeURIComponent(doc.id)}${originParam}`;
 
           if (navigator.share) {

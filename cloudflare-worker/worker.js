@@ -437,12 +437,13 @@ function base64UrlEncodeBytes(bytes) {
 }
 
 function sanitizeOrigin(rawOrigin) {
-  const fallback = "https://quill-q-dodch.web.app";
+  const fallback = "https://dodch.github.io/Quill-Q";
   if (!rawOrigin) return fallback;
   try {
     const parsed = new URL(rawOrigin);
     if (parsed.protocol === "https:" || parsed.protocol === "http:") {
-      return parsed.origin;
+      const cleanPath = parsed.pathname.replace(/\/+$/, "");
+      return `${parsed.origin}${cleanPath}`;
     }
   } catch (e) {}
   return fallback;
